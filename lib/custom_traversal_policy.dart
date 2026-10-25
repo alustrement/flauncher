@@ -41,9 +41,11 @@ class NodeSearcher {
     switch (directionToSearch) {
       case TraversalDirection.up:
         copy.removeWhere((element) => element.isBelowOrEquals(from));
+        _preferSameScrollable(copy, from);
         break;
       case TraversalDirection.down:
         copy.removeWhere((element) => element.isAboveOrEquals(from));
+        _preferSameScrollable(copy, from);
         break;
       case TraversalDirection.right:
         copy.removeWhere((element) => element.isLeftToOrEquals(from) || !element.isOnTheSameRow(from));
@@ -53,6 +55,16 @@ class NodeSearcher {
         break;
     }
     return toCandidateNodes(copy);
+  }
+
+  /// Positions are compared on screen, so a row scrolled out of view can end up "above" a widget laid out outside
+  /// of the scroll view (e.g. the app bar) and be skipped. Staying in the same scroll view as long as possible
+  /// prevents that.
+  void _preferSameScrollable(List<FocusNode> nodes, FocusNode from) {
+    final scrollable = from.outermostVerticalScrollable;
+    if (scrollable != null && nodes.any((node) => node.outermostVerticalScrollable == scrollable)) {
+      nodes.removeWhere((node) => node.outermostVerticalScrollable != scrollable);
+    }
   }
 
   FocusNode findBestFocusNode(List<CandidateNode> nodes, FocusNode from) {
@@ -92,6 +104,19 @@ List<FocusNode> toFocusNodes(List<CandidateNode> nodes) => nodes.map((e) => e.no
 /// A few extension methods to the [FocusNode] to be able to compare their
 /// respective position easily.
 extension Geometry on FocusNode {
+  /// The outermost vertically scrolling ancestor, e.g. the launcher's main scroll view rather than a category grid.
+  ScrollableState? get outermostVerticalScrollable {
+    ScrollableState? outermost;
+    var scrollable = context?.findAncestorStateOfType<ScrollableState>();
+    while (scrollable != null) {
+      if (axisDirectionToAxis(scrollable.axisDirection) == Axis.vertical) {
+        outermost = scrollable;
+      }
+      scrollable = scrollable.context.findAncestorStateOfType<ScrollableState>();
+    }
+    return outermost;
+  }
+
   bool isBelow(FocusNode other) {
     return rect.center.dy.round() > other.rect.center.dy.round();
   }
