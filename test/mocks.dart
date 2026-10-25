@@ -27,15 +27,12 @@ import 'package:flauncher/providers/settings_service.dart';
 import 'package:flauncher/providers/watch_next_service.dart';
 import 'package:mockito/annotations.dart';
 
-@GenerateMocks([
-  FLauncherChannel,
-  AppsService,
-  MediaService,
-  WatchNextService,
-  SettingsService,
-], customMocks: [
-  MockSpec<FLauncherDatabase>(unsupportedMembers: {#alias}),
-])
+@GenerateMocks(
+  [FLauncherChannel, AppsService, MediaService, WatchNextService, SettingsService],
+  customMocks: [
+    MockSpec<FLauncherDatabase>(unsupportedMembers: {#alias}),
+  ],
+)
 void main() {}
 
 App fakeApp({
@@ -46,16 +43,15 @@ App fakeApp({
   Uint8List? icon,
   bool hidden = false,
   bool sideloaded = false,
-}) =>
-    App(
-      packageName: packageName,
-      name: name,
-      version: version,
-      banner: banner,
-      icon: icon,
-      hidden: hidden,
-      sideloaded: sideloaded,
-    );
+}) => App(
+  packageName: packageName,
+  name: name,
+  version: version,
+  banner: banner,
+  icon: icon,
+  hidden: hidden,
+  sideloaded: sideloaded,
+);
 
 Category fakeCategory({
   String name = "Favorites",
@@ -64,13 +60,12 @@ Category fakeCategory({
   CategoryType type = CategoryType.grid,
   int rowHeight = 110,
   int columnsCount = 6,
-}) =>
-    Category(
-      id: Random().nextInt(1 << 32),
-      name: name,
-      sort: sort,
-      type: type,
-      rowHeight: rowHeight,
-      columnsCount: columnsCount,
-      order: order,
-    );
+}) => Category(
+  id: Random().nextInt(1 << 32),
+  name: name,
+  sort: sort,
+  type: type,
+  rowHeight: rowHeight,
+  columnsCount: columnsCount,
+  order: order,
+);

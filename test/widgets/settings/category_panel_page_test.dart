@@ -32,20 +32,23 @@ import '../../mocks.mocks.dart';
 void main() {
   setUpAll(() async {
     final binding = TestWidgetsFlutterBinding.ensureInitialized();
-    binding.window.physicalSizeTestValue = Size(1280, 720);
-    binding.window.devicePixelRatioTestValue = 1.0;
+    binding.platformDispatcher.implicitView!.physicalSize = Size(1280, 720);
+    binding.platformDispatcher.implicitView!.devicePixelRatio = 1.0;
     // Scale-down the font size because the font 'Ahem' used when running tests is much wider than Roboto
     binding.platformDispatcher.textScaleFactorTestValue = 0.8;
   });
 
   testWidgets("Category is displayed", (tester) async {
     final appsService = MockAppsService();
-    final favoritesCategory =
-        fakeCategory(name: "Favorites", sort: CategorySort.alphabetical, type: CategoryType.grid, columnsCount: 6);
-    when(appsService.categoriesWithApps).thenReturn([
-      CategoryWithApps(favoritesCategory, []),
-      CategoryWithApps(fakeCategory(name: "Applications"), []),
-    ]);
+    final favoritesCategory = fakeCategory(
+      name: "Favorites",
+      sort: CategorySort.alphabetical,
+      type: CategoryType.grid,
+      columnsCount: 6,
+    );
+    when(
+      appsService.categoriesWithApps,
+    ).thenReturn([CategoryWithApps(favoritesCategory, []), CategoryWithApps(fakeCategory(name: "Applications"), [])]);
 
     await _pumpWidgetWithProviders(tester, appsService, favoritesCategory.id);
 
@@ -57,12 +60,15 @@ void main() {
 
   testWidgets("'Edit name' opens AddCategoryDialog", (tester) async {
     final appsService = MockAppsService();
-    final favoritesCategory =
-        fakeCategory(name: "Favorites", sort: CategorySort.alphabetical, type: CategoryType.grid, columnsCount: 6);
-    when(appsService.categoriesWithApps).thenReturn([
-      CategoryWithApps(favoritesCategory, []),
-      CategoryWithApps(fakeCategory(name: "Applications"), []),
-    ]);
+    final favoritesCategory = fakeCategory(
+      name: "Favorites",
+      sort: CategorySort.alphabetical,
+      type: CategoryType.grid,
+      columnsCount: 6,
+    );
+    when(
+      appsService.categoriesWithApps,
+    ).thenReturn([CategoryWithApps(favoritesCategory, []), CategoryWithApps(fakeCategory(name: "Applications"), [])]);
 
     await _pumpWidgetWithProviders(tester, appsService, favoritesCategory.id);
 
@@ -75,12 +81,15 @@ void main() {
 
   testWidgets("'Sort' calls AppsService", (tester) async {
     final appsService = MockAppsService();
-    final favoritesCategory =
-        fakeCategory(name: "Favorites", sort: CategorySort.alphabetical, type: CategoryType.grid, columnsCount: 6);
-    when(appsService.categoriesWithApps).thenReturn([
-      CategoryWithApps(favoritesCategory, []),
-      CategoryWithApps(fakeCategory(name: "Applications"), []),
-    ]);
+    final favoritesCategory = fakeCategory(
+      name: "Favorites",
+      sort: CategorySort.alphabetical,
+      type: CategoryType.grid,
+      columnsCount: 6,
+    );
+    when(
+      appsService.categoriesWithApps,
+    ).thenReturn([CategoryWithApps(favoritesCategory, []), CategoryWithApps(fakeCategory(name: "Applications"), [])]);
 
     await _pumpWidgetWithProviders(tester, appsService, favoritesCategory.id);
 
@@ -97,12 +106,15 @@ void main() {
 
   testWidgets("'Type' calls AppsService", (tester) async {
     final appsService = MockAppsService();
-    final favoritesCategory =
-        fakeCategory(name: "Favorites", sort: CategorySort.alphabetical, type: CategoryType.row, rowHeight: 110);
-    when(appsService.categoriesWithApps).thenReturn([
-      CategoryWithApps(favoritesCategory, []),
-      CategoryWithApps(fakeCategory(name: "Applications"), []),
-    ]);
+    final favoritesCategory = fakeCategory(
+      name: "Favorites",
+      sort: CategorySort.alphabetical,
+      type: CategoryType.row,
+      rowHeight: 110,
+    );
+    when(
+      appsService.categoriesWithApps,
+    ).thenReturn([CategoryWithApps(favoritesCategory, []), CategoryWithApps(fakeCategory(name: "Applications"), [])]);
 
     await _pumpWidgetWithProviders(tester, appsService, favoritesCategory.id);
 
@@ -120,12 +132,15 @@ void main() {
 
   testWidgets("'Columns count' calls AppsService", (tester) async {
     final appsService = MockAppsService();
-    final favoritesCategory =
-        fakeCategory(name: "Favorites", sort: CategorySort.alphabetical, type: CategoryType.grid, columnsCount: 6);
-    when(appsService.categoriesWithApps).thenReturn([
-      CategoryWithApps(favoritesCategory, []),
-      CategoryWithApps(fakeCategory(name: "Applications"), []),
-    ]);
+    final favoritesCategory = fakeCategory(
+      name: "Favorites",
+      sort: CategorySort.alphabetical,
+      type: CategoryType.grid,
+      columnsCount: 6,
+    );
+    when(
+      appsService.categoriesWithApps,
+    ).thenReturn([CategoryWithApps(favoritesCategory, []), CategoryWithApps(fakeCategory(name: "Applications"), [])]);
 
     await _pumpWidgetWithProviders(tester, appsService, favoritesCategory.id);
 
@@ -144,12 +159,15 @@ void main() {
 
   testWidgets("'Row height' calls AppsService", (tester) async {
     final appsService = MockAppsService();
-    final favoritesCategory =
-        fakeCategory(name: "Favorites", sort: CategorySort.alphabetical, type: CategoryType.row, rowHeight: 110);
-    when(appsService.categoriesWithApps).thenReturn([
-      CategoryWithApps(favoritesCategory, []),
-      CategoryWithApps(fakeCategory(name: "Applications"), []),
-    ]);
+    final favoritesCategory = fakeCategory(
+      name: "Favorites",
+      sort: CategorySort.alphabetical,
+      type: CategoryType.row,
+      rowHeight: 110,
+    );
+    when(
+      appsService.categoriesWithApps,
+    ).thenReturn([CategoryWithApps(favoritesCategory, []), CategoryWithApps(fakeCategory(name: "Applications"), [])]);
 
     await _pumpWidgetWithProviders(tester, appsService, favoritesCategory.id);
 
@@ -168,12 +186,15 @@ void main() {
 
   testWidgets("'Delete' calls AppsService", (tester) async {
     final appsService = MockAppsService();
-    final favoritesCategory =
-        fakeCategory(name: "Favorites", sort: CategorySort.alphabetical, type: CategoryType.row, rowHeight: 110);
-    when(appsService.categoriesWithApps).thenReturn([
-      CategoryWithApps(favoritesCategory, []),
-      CategoryWithApps(fakeCategory(name: "Applications"), []),
-    ]);
+    final favoritesCategory = fakeCategory(
+      name: "Favorites",
+      sort: CategorySort.alphabetical,
+      type: CategoryType.row,
+      rowHeight: 110,
+    );
+    when(
+      appsService.categoriesWithApps,
+    ).thenReturn([CategoryWithApps(favoritesCategory, []), CategoryWithApps(fakeCategory(name: "Applications"), [])]);
 
     await _pumpWidgetWithProviders(tester, appsService, favoritesCategory.id);
 
@@ -192,10 +213,8 @@ void main() {
 Future<void> _pumpWidgetWithProviders(WidgetTester tester, AppsService appsService, int categoryId) async {
   await tester.pumpWidget(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider<AppsService>.value(value: appsService),
-      ],
-      builder: (_, __) => MaterialApp(
+      providers: [ChangeNotifierProvider<AppsService>.value(value: appsService)],
+      builder: (_, _) => MaterialApp(
         home: Scaffold(body: CategoryPanelPage(categoryId: categoryId)),
       ),
     ),

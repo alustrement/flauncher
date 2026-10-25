@@ -24,13 +24,7 @@ mixin ZenPalette {
   static const surface = Color(0xFF0A1832);
   static const lavender = Color(0xFFC9C4F5);
   static const accent = Color(0xFFB9AEFF);
-  static const waves = [
-    Color(0xFF6F5DF1),
-    Color(0xFF6B50F5),
-    Color(0xFF6840F9),
-    Color(0xFF652BFB),
-    Color(0xFF6500FE),
-  ];
+  static const waves = [Color(0xFF6F5DF1), Color(0xFF6B50F5), Color(0xFF6840F9), Color(0xFF652BFB), Color(0xFF6500FE)];
 
   /// Halo around the focused element, outside of its [accent] border.
   static const focusGlow = [BoxShadow(color: Color(0x476F5DF1), spreadRadius: 4, blurRadius: 6)];

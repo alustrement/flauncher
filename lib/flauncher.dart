@@ -38,120 +38,122 @@ import 'package:provider/provider.dart';
 class FLauncher extends StatelessWidget {
   @override
   Widget build(BuildContext context) => FocusTraversalGroup(
-        policy: RowByRowTraversalPolicy(),
-        child: Stack(
-          children: [
-            _background(),
-            Scaffold(
-              backgroundColor: Colors.transparent,
-              body: Consumer<AppsService>(
-                builder: (context, appsService, _) => appsService.initialized
-                    ? SingleChildScrollView(
-                        // no horizontal margin: the horizontal lists reach the edges of the screen, and the other
-                        // sections have their own margins
-                        padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-                        // scrolling only moves the page's layer instead of painting it again on every frame
-                        child: RepaintBoundary(
-                          child: InitialFocus(
-                            homeService: context.read<HomeService>(),
-                            child: _page(context, appsService.categoriesWithApps),
-                          ),
-                        ),
-                      )
-                    : _emptyState(context),
-              ),
-            ),
-          ],
+    policy: RowByRowTraversalPolicy(),
+    child: Stack(
+      children: [
+        _background(),
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Consumer<AppsService>(
+            builder: (context, appsService, _) => appsService.initialized
+                ? SingleChildScrollView(
+                    // no horizontal margin: the horizontal lists reach the edges of the screen, and the other
+                    // sections have their own margins
+                    padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+                    // scrolling only moves the page's layer instead of painting it again on every frame
+                    child: RepaintBoundary(
+                      child: InitialFocus(
+                        homeService: context.read<HomeService>(),
+                        child: _page(context, appsService.categoriesWithApps),
+                      ),
+                    ),
+                  )
+                : _emptyState(context),
+          ),
         ),
-      );
+      ],
+    ),
+  );
 
   Widget _page(BuildContext context, List<CategoryWithApps> categoriesWithApps) => Column(
-        children: [
-          SkipInitialFocus(child: _topBar(context)),
-          NowPlayingPanel(),
-          WatchNextRow(),
-          ...categoriesWithApps.map((categoryWithApps) {
-            switch (categoryWithApps.category.type) {
-              case CategoryType.row:
-                return Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: CategoryRow(
-                      key: Key(categoryWithApps.category.id.toString()),
-                      category: categoryWithApps.category,
-                      applications: categoryWithApps.applications),
-                );
-              case CategoryType.grid:
-                return Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: AppsGrid(
-                      key: Key(categoryWithApps.category.id.toString()),
-                      category: categoryWithApps.category,
-                      applications: categoryWithApps.applications),
-                );
-            }
-          }),
-        ],
-      );
+    children: [
+      SkipInitialFocus(child: _topBar(context)),
+      NowPlayingPanel(),
+      WatchNextRow(),
+      ...categoriesWithApps.map((categoryWithApps) {
+        switch (categoryWithApps.category.type) {
+          case CategoryType.row:
+            return Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: CategoryRow(
+                key: Key(categoryWithApps.category.id.toString()),
+                category: categoryWithApps.category,
+                applications: categoryWithApps.applications,
+              ),
+            );
+          case CategoryType.grid:
+            return Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: AppsGrid(
+                key: Key(categoryWithApps.category.id.toString()),
+                category: categoryWithApps.category,
+                applications: categoryWithApps.applications,
+              ),
+            );
+        }
+      }),
+    ],
+  );
 
   /// The clock and the settings, which scroll with the page.
   Widget _topBar(BuildContext context) => Container(
-        height: RevealOnFocus.topBarHeight,
-        padding: EdgeInsets.only(bottom: RevealOnFocus.topBarHeight - kToolbarHeight),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            RevealOnFocus(
-                child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Positioned(
-                  left: 2.0,
-                  top: 18.0,
-                  child: ImageFiltered(
-                    imageFilter: ImageFilter.blur(sigmaX: 2, sigmaY: 2, tileMode: TileMode.decal),
-                    child: Icon(Icons.settings_outlined, color: Colors.black54),
-                  ),
+    height: RevealOnFocus.topBarHeight,
+    padding: EdgeInsets.only(bottom: RevealOnFocus.topBarHeight - kToolbarHeight),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        RevealOnFocus(
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Positioned(
+                left: 2.0,
+                top: 18.0,
+                child: ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaX: 2, sigmaY: 2, tileMode: TileMode.decal),
+                  child: Icon(Icons.settings_outlined, color: Colors.black54),
                 ),
-                IconButton(
-                  padding: EdgeInsets.all(2),
-                  constraints: BoxConstraints(),
-                  splashRadius: 20,
-                  color: ZenPalette.lavender,
-                  focusColor: ZenPalette.waves.first.withOpacity(0.4),
-                  icon: Icon(Icons.settings_outlined),
-                  onPressed: () => showDialog(context: context, builder: (_) => SettingsPanel()),
-                ),
-              ],
-            )),
-            Padding(
-              padding: EdgeInsets.only(left: 16, right: 32),
-              child: Align(
-                alignment: Alignment.center,
-                child: TimeWidget(),
               ),
-            ),
-          ],
+              IconButton(
+                padding: EdgeInsets.all(2),
+                constraints: BoxConstraints(),
+                splashRadius: 20,
+                color: ZenPalette.lavender,
+                focusColor: ZenPalette.waves.first.withValues(alpha: 0.4),
+                icon: Icon(Icons.settings_outlined),
+                onPressed: () => showDialog(context: context, builder: (_) => SettingsPanel()),
+              ),
+            ],
+          ),
         ),
-      );
+        Padding(
+          padding: EdgeInsets.only(left: 16, right: 32),
+          child: Align(alignment: Alignment.center, child: TimeWidget()),
+        ),
+      ],
+    ),
+  );
 
   /// The night blue of the Zen look, with its layers of violet waves.
   Widget _background() => Container(
-        key: Key("background"),
-        color: ZenPalette.night,
-        child: RepaintBoundary(child: CustomPaint(painter: ZenWavesPainter(), child: SizedBox.expand())),
-      );
+    key: Key("background"),
+    color: ZenPalette.night,
+    child: RepaintBoundary(
+      child: CustomPaint(painter: ZenWavesPainter(), child: SizedBox.expand()),
+    ),
+  );
 
   /// In the middle of the upper half of the screen, where the splash screen shows FLauncher's name.
   Widget _emptyState(BuildContext context) => Align(
-        alignment: Alignment(0, -0.5),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(ZenPalette.accent)),
-            SizedBox(height: 16),
-            Text("Chargement…", style: Theme.of(context).textTheme.titleLarge!.copyWith(color: ZenPalette.lavender)),
-          ],
-        ),
-      );
+    alignment: Alignment(0, -0.5),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(ZenPalette.accent)),
+        SizedBox(height: 16),
+        Text("Chargement…", style: Theme.of(context).textTheme.titleLarge!.copyWith(color: ZenPalette.lavender)),
+      ],
+    ),
+  );
 }

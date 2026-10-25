@@ -26,15 +26,10 @@ class FocusKeyboardListener extends StatefulWidget {
   final KeyEventResult Function(LogicalKeyboardKey)? onPressed;
   final KeyEventResult Function(LogicalKeyboardKey)? onLongPress;
 
-  FocusKeyboardListener({
-    Key? key,
-    required this.builder,
-    this.onPressed,
-    this.onLongPress,
-  }) : super(key: key);
+  FocusKeyboardListener({super.key, required this.builder, this.onPressed, this.onLongPress});
 
   @override
-  _FocusKeyboardListenerState createState() => _FocusKeyboardListenerState();
+  State<FocusKeyboardListener> createState() => _FocusKeyboardListenerState();
 }
 
 class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
@@ -42,26 +37,28 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
 
   @override
   Widget build(BuildContext context) => Focus(
-        canRequestFocus: false,
-        onKey: (_, rawKeyEvent) => _handleKey(context, rawKeyEvent),
-        child: Builder(builder: widget.builder),
-      );
+    canRequestFocus: false,
+    onKeyEvent: (_, event) => _handleKey(event),
+    child: Builder(builder: widget.builder),
+  );
 
-  KeyEventResult _handleKey(BuildContext context, RawKeyEvent rawKeyEvent) {
-    switch (rawKeyEvent.runtimeType) {
-      case RawKeyDownEvent:
-        return _keyDownEvent(context, rawKeyEvent.logicalKey, (rawKeyEvent.data as RawKeyEventDataAndroid));
-      case RawKeyUpEvent:
-        return _keyUpEvent(context, rawKeyEvent.logicalKey);
+  KeyEventResult _handleKey(KeyEvent event) {
+    switch (event) {
+      case KeyDownEvent():
+        return _keyDownEvent(event.logicalKey, repeated: false);
+      case KeyRepeatEvent():
+        return _keyDownEvent(event.logicalKey, repeated: true);
+      case KeyUpEvent():
+        return _keyUpEvent(event.logicalKey);
     }
     return KeyEventResult.handled;
   }
 
-  KeyEventResult _keyDownEvent(BuildContext context, LogicalKeyboardKey key, RawKeyEventDataAndroid data) {
+  KeyEventResult _keyDownEvent(LogicalKeyboardKey key, {required bool repeated}) {
     if (!longPressableKeys.contains(key)) {
       return widget.onPressed?.call(key) ?? KeyEventResult.ignored;
     }
-    if (data.repeatCount == 0) {
+    if (!repeated) {
       _keyDownAt = DateTime.now().millisecondsSinceEpoch;
       return KeyEventResult.ignored;
     } else if (_longPress()) {
@@ -71,7 +68,7 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
     return KeyEventResult.handled;
   }
 
-  KeyEventResult _keyUpEvent(BuildContext context, LogicalKeyboardKey key) {
+  KeyEventResult _keyUpEvent(LogicalKeyboardKey key) {
     if (_keyDownAt != null) {
       _keyDownAt = null;
       return widget.onPressed?.call(key) ?? KeyEventResult.ignored;

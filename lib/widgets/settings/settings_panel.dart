@@ -26,7 +26,7 @@ import 'package:flutter/material.dart';
 class SettingsPanel extends StatefulWidget {
   final String? initialRoute;
 
-  const SettingsPanel({Key? key, this.initialRoute}) : super(key: key);
+  const SettingsPanel({super.key, this.initialRoute});
 
   @override
   State<SettingsPanel> createState() => _SettingsPanelState();
@@ -36,33 +36,37 @@ class _SettingsPanelState extends State<SettingsPanel> {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
-  Widget build(BuildContext context) => WillPopScope(
-        onWillPop: () async => !await _navigatorKey.currentState!.maybePop(),
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          body: RightPanelDialog(
-            width: 350,
-            child: Navigator(
-              key: _navigatorKey,
-              initialRoute: widget.initialRoute ?? SettingsPanelPage.routeName,
-              onGenerateRoute: (settings) {
-                switch (settings.name) {
-                  case SettingsPanelPage.routeName:
-                    return MaterialPageRoute(builder: (_) => SettingsPanelPage());
-                  case ApplicationsPanelPage.routeName:
-                    return MaterialPageRoute(builder: (_) => ApplicationsPanelPage());
-                  case CategoriesPanelPage.routeName:
-                    return MaterialPageRoute(builder: (_) => CategoriesPanelPage());
-                  case CategoryPanelPage.routeName:
-                    return MaterialPageRoute(
-                      builder: (_) => CategoryPanelPage(categoryId: settings.arguments! as int),
-                    );
-                  default:
-                    throw ArgumentError.value(settings.name, "settings.name", "Route not supported.");
-                }
-              },
-            ),
-          ),
+  Widget build(BuildContext context) => PopScope(
+    canPop: false,
+    // goes back to the previous page of the panel, and closes it from its first page
+    onPopInvokedWithResult: (didPop, _) async {
+      if (!didPop && !await _navigatorKey.currentState!.maybePop() && context.mounted) {
+        Navigator.of(context).pop();
+      }
+    },
+    child: Scaffold(
+      backgroundColor: Colors.transparent,
+      body: RightPanelDialog(
+        width: 350,
+        child: Navigator(
+          key: _navigatorKey,
+          initialRoute: widget.initialRoute ?? SettingsPanelPage.routeName,
+          onGenerateRoute: (settings) {
+            switch (settings.name) {
+              case SettingsPanelPage.routeName:
+                return MaterialPageRoute(builder: (_) => SettingsPanelPage());
+              case ApplicationsPanelPage.routeName:
+                return MaterialPageRoute(builder: (_) => ApplicationsPanelPage());
+              case CategoriesPanelPage.routeName:
+                return MaterialPageRoute(builder: (_) => CategoriesPanelPage());
+              case CategoryPanelPage.routeName:
+                return MaterialPageRoute(builder: (_) => CategoryPanelPage(categoryId: settings.arguments! as int));
+              default:
+                throw ArgumentError.value(settings.name, "settings.name", "Route not supported.");
+            }
+          },
         ),
-      );
+      ),
+    ),
+  );
 }

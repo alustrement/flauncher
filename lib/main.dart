@@ -25,17 +25,10 @@ import 'flauncher_app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Paint.enableDithering = true;
 
   // the database starts opening while the preferences load
   final fLauncherDatabase = FLauncherDatabase(connect());
   final sharedPreferences = await SharedPreferences.getInstance();
   final fLauncherChannel = FLauncherChannel();
-  runApp(
-    FLauncherApp(
-      sharedPreferences,
-      fLauncherChannel,
-      fLauncherDatabase,
-    ),
-  );
+  runApp(FLauncherApp(sharedPreferences, fLauncherChannel, fLauncherDatabase));
 }

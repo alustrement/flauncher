@@ -31,74 +31,74 @@ class SettingsPanelPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Consumer<SettingsService>(
-        builder: (context, settingsService, __) => SingleChildScrollView(
-          child: Column(
-            children: [
-              Text("Paramètres", style: Theme.of(context).textTheme.titleLarge),
-              Divider(),
-              EnsureVisible(
-                alignment: 0.5,
-                child: TextButton(
-                  child: Row(
-                    children: [
-                      Icon(Icons.apps),
-                      Container(width: 8),
-                      Text("Applications", style: Theme.of(context).textTheme.bodyMedium),
-                    ],
-                  ),
-                  onPressed: () => Navigator.of(context).pushNamed(ApplicationsPanelPage.routeName),
-                ),
+    builder: (context, settingsService, _) => SingleChildScrollView(
+      child: Column(
+        children: [
+          Text("Paramètres", style: Theme.of(context).textTheme.titleLarge),
+          Divider(),
+          EnsureVisible(
+            alignment: 0.5,
+            child: TextButton(
+              child: Row(
+                children: [
+                  Icon(Icons.apps),
+                  Container(width: 8),
+                  Text("Applications", style: Theme.of(context).textTheme.bodyMedium),
+                ],
               ),
-              TextButton(
-                child: Row(
-                  children: [
-                    Icon(Icons.category),
-                    Container(width: 8),
-                    Text("Catégories", style: Theme.of(context).textTheme.bodyMedium),
-                  ],
-                ),
-                onPressed: () => Navigator.of(context).pushNamed(CategoriesPanelPage.routeName),
-              ),
-              Divider(),
-              TextButton(
-                child: Row(
-                  children: [
-                    Icon(Icons.settings_outlined),
-                    Container(width: 8),
-                    Text("Paramètres Android", style: Theme.of(context).textTheme.bodyMedium),
-                  ],
-                ),
-                onPressed: () => context.read<AppsService>().openSettings(),
-              ),
-              Divider(),
-              SwitchListTile(
-                contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                value: settingsService.use24HourTimeFormat,
-                onChanged: (value) => settingsService.setUse24HourTimeFormat(value),
-                title: Text("Format 24 heures"),
-                dense: true,
-              ),
-              Divider(),
-              TextButton(
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline),
-                    Container(width: 8),
-                    Text("À propos de FLauncher", style: Theme.of(context).textTheme.bodyMedium),
-                  ],
-                ),
-                onPressed: () => showDialog(
-                  context: context,
-                  builder: (_) => FutureBuilder<PackageInfo>(
-                    future: PackageInfo.fromPlatform(),
-                    builder: (context, snapshot) => snapshot.connectionState == ConnectionState.done
-                        ? FLauncherAboutDialog(packageInfo: snapshot.data!)
-                        : Container(),
-                  ),
-                ),
-              ),
-            ],
+              onPressed: () => Navigator.of(context).pushNamed(ApplicationsPanelPage.routeName),
+            ),
           ),
-        ),
-      );
+          TextButton(
+            child: Row(
+              children: [
+                Icon(Icons.category),
+                Container(width: 8),
+                Text("Catégories", style: Theme.of(context).textTheme.bodyMedium),
+              ],
+            ),
+            onPressed: () => Navigator.of(context).pushNamed(CategoriesPanelPage.routeName),
+          ),
+          Divider(),
+          TextButton(
+            child: Row(
+              children: [
+                Icon(Icons.settings_outlined),
+                Container(width: 8),
+                Text("Paramètres Android", style: Theme.of(context).textTheme.bodyMedium),
+              ],
+            ),
+            onPressed: () => context.read<AppsService>().openSettings(),
+          ),
+          Divider(),
+          SwitchListTile(
+            contentPadding: EdgeInsets.symmetric(horizontal: 8),
+            value: settingsService.use24HourTimeFormat,
+            onChanged: (value) => settingsService.setUse24HourTimeFormat(value),
+            title: Text("Format 24 heures"),
+            dense: true,
+          ),
+          Divider(),
+          TextButton(
+            child: Row(
+              children: [
+                Icon(Icons.info_outline),
+                Container(width: 8),
+                Text("À propos de FLauncher", style: Theme.of(context).textTheme.bodyMedium),
+              ],
+            ),
+            onPressed: () => showDialog(
+              context: context,
+              builder: (_) => FutureBuilder<PackageInfo>(
+                future: PackageInfo.fromPlatform(),
+                builder: (context, snapshot) => snapshot.connectionState == ConnectionState.done
+                    ? FLauncherAboutDialog(packageInfo: snapshot.data!)
+                    : Container(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

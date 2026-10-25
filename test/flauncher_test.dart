@@ -43,8 +43,8 @@ import 'mocks.mocks.dart';
 void main() {
   setUpAll(() async {
     final binding = TestWidgetsFlutterBinding.ensureInitialized();
-    binding.window.physicalSizeTestValue = Size(1280, 720);
-    binding.window.devicePixelRatioTestValue = 1.0;
+    binding.platformDispatcher.implicitView!.physicalSize = Size(1280, 720);
+    binding.platformDispatcher.implicitView!.devicePixelRatio = 1.0;
     // Scale-down the font size because the font 'Ahem' used when running tests is much wider than Roboto
     binding.platformDispatcher.textScaleFactorTestValue = 0.8;
   });
@@ -63,7 +63,7 @@ void main() {
           version: "1.0.0",
           banner: kTransparentImage,
           icon: null,
-        )
+        ),
       ]),
       CategoryWithApps(applicationsCategory, [
         fakeApp(
@@ -72,7 +72,7 @@ void main() {
           version: "2.0.0",
           banner: kTransparentImage,
           icon: null,
-        )
+        ),
       ]),
     ]);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
@@ -94,10 +94,8 @@ void main() {
     when(appsService.initialized).thenReturn(true);
     final applicationsCategory = fakeCategory(name: "Applications", order: 0, type: CategoryType.grid);
     final favoritesCategory = fakeCategory(name: "Favorites", order: 1, type: CategoryType.row);
-    when(appsService.categoriesWithApps).thenReturn([
-      CategoryWithApps(applicationsCategory, []),
-      CategoryWithApps(favoritesCategory, []),
-    ]);
+    when(appsService.categoriesWithApps)
+        .thenReturn([CategoryWithApps(applicationsCategory, []), CategoryWithApps(favoritesCategory, [])]);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
 
     await _pumpWidgetWithProviders(tester, appsService, settingsService);
@@ -183,7 +181,7 @@ void main() {
           version: "1.0.0",
           banner: kTransparentImage,
           icon: kTransparentImage,
-        )
+        ),
       ]),
     ]);
     await _pumpWidgetWithProviders(tester, appsService, settingsService);
@@ -216,7 +214,7 @@ void main() {
           version: "1.0.0",
           banner: kTransparentImage,
           icon: kTransparentImage,
-        )
+        ),
       ]),
     ]);
     await _pumpWidgetWithProviders(tester, appsService, settingsService);
@@ -257,7 +255,7 @@ void main() {
           version: "1.0.0",
           banner: kTransparentImage,
           icon: kTransparentImage,
-        )
+        ),
       ]),
     ]);
     await _pumpWidgetWithProviders(tester, appsService, settingsService);
@@ -312,7 +310,7 @@ void main() {
           version: "1.0.0",
           banner: kTransparentImage,
           icon: kTransparentImage,
-        )
+        ),
       ]),
       CategoryWithApps(fakeCategory(name: "music", order: 1), [
         fakeApp(
@@ -328,7 +326,7 @@ void main() {
           version: "1.0.0",
           banner: kTransparentImage,
           icon: kTransparentImage,
-        )
+        ),
       ]),
       CategoryWithApps(fakeCategory(name: "games", order: 2), [
         fakeApp(
@@ -351,7 +349,7 @@ void main() {
           version: "1.0.0",
           banner: kTransparentImage,
           icon: kTransparentImage,
-        )
+        ),
       ]),
     ]);
 
@@ -538,8 +536,7 @@ void main() {
     });
 
     for (final inLauncher in [true, false]) {
-      testWidgets(
-          "goes back to the top of the page when Home is pressed "
+      testWidgets("goes back to the top of the page when Home is pressed "
           "${inLauncher ? "in the launcher" : "in another app"}", (tester) async {
         final channel = MockFLauncherChannel();
         final homeService = HomeService(channel);
@@ -548,15 +545,20 @@ void main() {
           CategoryWithApps(fakeCategory(name: "tv", order: 0, type: CategoryType.row), [
             for (var i = 1; i <= 10; ++i)
               fakeApp(
-                  packageName: "me.efesser.tv$i", name: "tv $i", banner: kTransparentImage, icon: kTransparentImage),
+                packageName: "me.efesser.tv$i",
+                name: "tv $i",
+                banner: kTransparentImage,
+                icon: kTransparentImage,
+              ),
           ]),
           CategoryWithApps(fakeCategory(name: "music", order: 1, type: CategoryType.row), [
             for (var i = 1; i <= 3; ++i)
               fakeApp(
-                  packageName: "me.efesser.music$i",
-                  name: "music $i",
-                  banner: kTransparentImage,
-                  icon: kTransparentImage),
+                packageName: "me.efesser.music$i",
+                name: "music $i",
+                banner: kTransparentImage,
+                icon: kTransparentImage,
+              ),
           ]),
         ]);
         await _pumpWidgetWithProviders(tester, appsService, settingsService, homeService: homeService);
@@ -751,9 +753,7 @@ Future<void> _pumpWidgetWithProviders(
         ChangeNotifierProvider<SettingsService>.value(value: settingsService),
         ChangeNotifierProvider<HomeService>.value(value: homeService ?? HomeService(MockFLauncherChannel())),
       ],
-      builder: (_, __) => MaterialApp(
-        home: FLauncher(),
-      ),
+      builder: (_, _) => MaterialApp(home: FLauncher()),
     ),
   );
   await tester.pump(Duration(seconds: 30), EnginePhase.sendSemanticsUpdate);

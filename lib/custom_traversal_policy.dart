@@ -110,7 +110,8 @@ class NodeSearcher {
     final row = candidates.where((node) => node.isOnTheSameRow(closest)).toList();
     final visible = row.where((node) => node.isHorizontallyVisible).toList();
     return (visible.isNotEmpty ? visible : row).reduce(
-        (bestNode, challenger) => challenger.rect.left.round() < bestNode.rect.left.round() ? challenger : bestNode);
+      (bestNode, challenger) => challenger.rect.left.round() < bestNode.rect.left.round() ? challenger : bestNode,
+    );
   }
 }
 
@@ -194,7 +195,9 @@ extension Geometry on FocusNode {
   }
 
   double distance(FocusNode other) {
-    return sqrt(pow(rect.center.dx.round() - other.rect.center.dx.round(), 2) +
-        pow(rect.center.dy.round() - other.rect.center.dy.round(), 2));
+    return sqrt(
+      pow(rect.center.dx.round() - other.rect.center.dx.round(), 2) +
+          pow(rect.center.dy.round() - other.rect.center.dy.round(), 2),
+    );
   }
 }

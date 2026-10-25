@@ -34,8 +34,8 @@ import '../../mocks.mocks.dart';
 void main() {
   setUpAll(() async {
     final binding = TestWidgetsFlutterBinding.ensureInitialized();
-    binding.window.physicalSizeTestValue = Size(1280, 720);
-    binding.window.devicePixelRatioTestValue = 1.0;
+    binding.platformDispatcher.implicitView!.physicalSize = Size(1280, 720);
+    binding.platformDispatcher.implicitView!.devicePixelRatio = 1.0;
     // Scale-down the font size because the font 'Ahem' used when running tests is much wider than Roboto
     binding.platformDispatcher.textScaleFactorTestValue = 0.8;
   });
@@ -49,7 +49,7 @@ void main() {
         icon: kTransparentImage,
         sideloaded: false,
         hidden: false,
-      )
+      ),
     ]);
 
     await _pumpWidgetWithProviders(tester, appsService);
@@ -67,7 +67,7 @@ void main() {
         icon: kTransparentImage,
         sideloaded: true,
         hidden: false,
-      )
+      ),
     ]);
 
     await _pumpWidgetWithProviders(tester, appsService);
@@ -90,7 +90,7 @@ void main() {
         icon: kTransparentImage,
         sideloaded: false,
         hidden: true,
-      )
+      ),
     ]);
 
     await _pumpWidgetWithProviders(tester, appsService);
@@ -152,10 +152,8 @@ void main() {
 Future<void> _pumpWidgetWithProviders(WidgetTester tester, AppsService appsService) async {
   await tester.pumpWidget(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider<AppsService>.value(value: appsService),
-      ],
-      builder: (_, __) => MaterialApp(home: ApplicationsPanelPage()),
+      providers: [ChangeNotifierProvider<AppsService>.value(value: appsService)],
+      builder: (_, _) => MaterialApp(home: ApplicationsPanelPage()),
     ),
   );
   await tester.pumpAndSettle();

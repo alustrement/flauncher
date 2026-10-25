@@ -37,15 +37,15 @@ class AppCard extends StatefulWidget {
   final VoidCallback onMoveEnd;
 
   AppCard({
-    Key? key,
+    super.key,
     required this.category,
     required this.application,
     required this.onMove,
     required this.onMoveEnd,
-  }) : super(key: key);
+  });
 
   @override
-  _AppCardState createState() => _AppCardState();
+  State<AppCard> createState() => _AppCardState();
 }
 
 class _AppCardState extends State<AppCard> {
@@ -53,125 +53,125 @@ class _AppCardState extends State<AppCard> {
 
   @override
   Widget build(BuildContext context) => FocusKeyboardListener(
-        onPressed: (key) => _onPressed(context, key),
-        onLongPress: (key) => _onLongPress(context, key),
-        builder: (context) => AspectRatio(
-          aspectRatio: 16 / 9,
-          child: AnimatedContainer(
-            duration: Duration(milliseconds: 200),
-            curve: Curves.easeInOut,
-            transformAlignment: Alignment.center,
-            transform: _scaleTransform(context),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(_radius),
-              boxShadow: Focus.of(context).hasFocus ? ZenPalette.focusGlow : [],
-            ),
-            child: Material(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(_radius),
-                side: widget.application.banner == null
-                    ? BorderSide(color: ZenPalette.lavender.withOpacity(0.18))
-                    : BorderSide.none,
-              ),
-              color: ZenPalette.surface,
-              clipBehavior: Clip.antiAlias,
-              elevation: Focus.of(context).hasFocus ? 16 : 0,
-              shadowColor: Colors.black,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  InkWell(
-                    focusColor: Colors.transparent,
-                    onTap: () => _onPressed(context, null),
-                    onLongPress: () => _onLongPress(context, null),
-                    child: widget.application.banner != null
-                        ? Ink.image(image: MemoryImage(widget.application.banner!), fit: BoxFit.cover)
-                        : Padding(
-                            padding: EdgeInsets.all(12),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  flex: 2,
-                                  child: Center(
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image(image: MemoryImage(widget.application.icon!), gaplessPlayback: true),
-                                    ),
-                                  ),
+    onPressed: (key) => _onPressed(context, key),
+    onLongPress: (key) => _onLongPress(context, key),
+    builder: (context) => AspectRatio(
+      aspectRatio: 16 / 9,
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        transformAlignment: Alignment.center,
+        transform: _scaleTransform(context),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(_radius),
+          boxShadow: Focus.of(context).hasFocus ? ZenPalette.focusGlow : [],
+        ),
+        child: Material(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(_radius),
+            side: widget.application.banner == null
+                ? BorderSide(color: ZenPalette.lavender.withValues(alpha: 0.18))
+                : BorderSide.none,
+          ),
+          color: ZenPalette.surface,
+          clipBehavior: Clip.antiAlias,
+          elevation: Focus.of(context).hasFocus ? 16 : 0,
+          shadowColor: Colors.black,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              InkWell(
+                focusColor: Colors.transparent,
+                onTap: () => _onPressed(context, null),
+                onLongPress: () => _onLongPress(context, null),
+                child: widget.application.banner != null
+                    ? Ink.image(image: MemoryImage(widget.application.banner!), fit: BoxFit.cover)
+                    : Padding(
+                        padding: EdgeInsets.all(12),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: Center(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image(image: MemoryImage(widget.application.icon!), gaplessPlayback: true),
                                 ),
-                                Flexible(
-                                  flex: 3,
-                                  child: Padding(
-                                    padding: EdgeInsets.only(left: 12),
-                                    child: Text(
-                                      widget.application.name,
-                                      style: Theme.of(context).textTheme.bodySmall,
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 3,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                  ),
-                  if (_moving) ..._arrows(),
-                  IgnorePointer(
-                    child: AnimatedContainer(
-                      duration: Duration(milliseconds: 200),
-                      curve: Curves.easeInOut,
-                      // a translucent color rather than an opacity, which would take a layer for each card
-                      decoration: BoxDecoration(
-                        color: Focus.of(context).hasFocus ? Colors.transparent : Colors.black.withOpacity(0.10),
-                        border: Focus.of(context).hasFocus ? Border.all(color: ZenPalette.accent, width: 2) : null,
-                        borderRadius: BorderRadius.circular(_radius),
+                            Flexible(
+                              flex: 3,
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 12),
+                                child: Text(
+                                  widget.application.name,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 3,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
-                ],
               ),
-            ),
+              if (_moving) ..._arrows(),
+              IgnorePointer(
+                child: AnimatedContainer(
+                  duration: Duration(milliseconds: 200),
+                  curve: Curves.easeInOut,
+                  // a translucent color rather than an opacity, which would take a layer for each card
+                  decoration: BoxDecoration(
+                    color: Focus.of(context).hasFocus ? Colors.transparent : Colors.black.withValues(alpha: 0.10),
+                    border: Focus.of(context).hasFocus ? Border.all(color: ZenPalette.accent, width: 2) : null,
+                    borderRadius: BorderRadius.circular(_radius),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      );
+      ),
+    ),
+  );
 
   Matrix4 _scaleTransform(BuildContext context) {
     final scale = _moving
         ? 1.0
         : Focus.of(context).hasFocus
-            ? 1.06
-            : 1.0;
+        ? 1.06
+        : 1.0;
     return Matrix4.diagonal3Values(scale, scale, 1.0);
   }
 
   List<Widget> _arrows() => [
-        _arrow(Alignment.centerLeft, Icons.keyboard_arrow_left),
-        _arrow(Alignment.topCenter, Icons.keyboard_arrow_up),
-        _arrow(Alignment.bottomCenter, Icons.keyboard_arrow_down),
-        _arrow(Alignment.centerRight, Icons.keyboard_arrow_right),
-      ];
+    _arrow(Alignment.centerLeft, Icons.keyboard_arrow_left),
+    _arrow(Alignment.topCenter, Icons.keyboard_arrow_up),
+    _arrow(Alignment.bottomCenter, Icons.keyboard_arrow_down),
+    _arrow(Alignment.centerRight, Icons.keyboard_arrow_right),
+  ];
 
   Widget _arrow(Alignment alignment, IconData icon) => Align(
-        alignment: alignment,
-        child: Padding(
-          padding: EdgeInsets.all(4),
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Theme.of(context).primaryColor.withOpacity(0.8),
-            ),
-            child: Icon(
-              icon,
-              size: 16,
-            ),
-          ),
-        ),
-      );
+    alignment: alignment,
+    child: Padding(
+      padding: EdgeInsets.all(4),
+      child: Container(
+        decoration: BoxDecoration(shape: BoxShape.circle, color: Theme.of(context).primaryColor.withValues(alpha: 0.8)),
+        child: Icon(icon, size: 16),
+      ),
+    ),
+  );
 
   KeyEventResult _onPressed(BuildContext context, LogicalKeyboardKey? key) {
     if (_moving) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => Scrollable.ensureVisible(context,
-          alignment: 0.1, duration: Duration(milliseconds: 100), curve: Curves.easeInOut));
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => Scrollable.ensureVisible(
+          context,
+          alignment: 0.1,
+          duration: Duration(milliseconds: 100),
+          curve: Curves.easeInOut,
+        ),
+      );
       if (key == LogicalKeyboardKey.arrowLeft) {
         widget.onMove(AxisDirection.left);
       } else if (key == LogicalKeyboardKey.arrowUp) {
@@ -203,10 +203,7 @@ class _AppCardState extends State<AppCard> {
   Future<void> _showPanel(BuildContext context) async {
     final result = await showDialog<ApplicationInfoPanelResult>(
       context: context,
-      builder: (context) => ApplicationInfoPanel(
-        category: widget.category,
-        application: widget.application,
-      ),
+      builder: (context) => ApplicationInfoPanel(category: widget.category, application: widget.application),
     );
     if (result == ApplicationInfoPanelResult.reorderApp) {
       setState(() => _moving = true);

@@ -56,14 +56,16 @@ void main() {
     final mediaService = MockMediaService();
     final appsService = MockAppsService();
     when(mediaService.permissionGranted).thenReturn(true);
-    when(mediaService.nowPlaying).thenReturn(NowPlaying(
-      packageName: "com.spotify.tv.android",
-      title: "Bittersweet",
-      artist: "Lianne La Havas",
-      album: "Bittersweet (Radio Edit)",
-      duration: Duration(minutes: 3, seconds: 56),
-      position: Duration(minutes: 1, seconds: 5),
-    ));
+    when(mediaService.nowPlaying).thenReturn(
+      NowPlaying(
+        packageName: "com.spotify.tv.android",
+        title: "Bittersweet",
+        artist: "Lianne La Havas",
+        album: "Bittersweet (Radio Edit)",
+        duration: Duration(minutes: 3, seconds: 56),
+        position: Duration(minutes: 1, seconds: 5),
+      ),
+    );
     when(appsService.applications).thenReturn([fakeApp(packageName: "com.spotify.tv.android", name: "Spotify")]);
 
     await _pumpWidgetWithProviders(tester, mediaService, appsService);
@@ -82,11 +84,11 @@ void main() {
     when(mediaService.permissionGranted).thenReturn(true);
     when(appsService.applications).thenReturn([]);
     NowPlaying at(Duration position) => NowPlaying(
-          packageName: "com.spotify.tv.android",
-          title: "Bittersweet",
-          duration: Duration(minutes: 12, seconds: 34),
-          position: position,
-        );
+      packageName: "com.spotify.tv.android",
+      title: "Bittersweet",
+      duration: Duration(minutes: 12, seconds: 34),
+      position: position,
+    );
 
     when(mediaService.nowPlaying).thenReturn(at(Duration(seconds: 1)));
     await _pumpWidgetWithProviders(tester, mediaService, appsService);
@@ -103,11 +105,8 @@ void main() {
     final mediaService = MockMediaService();
     final appsService = MockAppsService();
     when(mediaService.permissionGranted).thenReturn(true);
-    when(mediaService.nowPlaying).thenReturn(NowPlaying(
-      packageName: "fr.francetv.pluzz",
-      title: "C dans l'air",
-      artist: "C dans l'air",
-    ));
+    when(mediaService.nowPlaying)
+        .thenReturn(NowPlaying(packageName: "fr.francetv.pluzz", title: "C dans l'air", artist: "C dans l'air"));
     when(appsService.applications).thenReturn([]);
 
     await _pumpWidgetWithProviders(tester, mediaService, appsService);
@@ -135,13 +134,15 @@ void main() {
     final appsService = MockAppsService();
     when(mediaService.permissionGranted).thenReturn(true);
     when(mediaService.nowPlaying).thenReturn(null);
-    when(mediaService.lastSpotify).thenReturn(NowPlaying(
-      packageName: "com.spotify.tv.android",
-      title: "Bittersweet",
-      artist: "Lianne La Havas",
-      duration: Duration(minutes: 4),
-      position: Duration(minutes: 1),
-    ));
+    when(mediaService.lastSpotify).thenReturn(
+      NowPlaying(
+        packageName: "com.spotify.tv.android",
+        title: "Bittersweet",
+        artist: "Lianne La Havas",
+        duration: Duration(minutes: 4),
+        position: Duration(minutes: 1),
+      ),
+    );
     when(appsService.applications).thenReturn([]);
 
     await _pumpWidgetWithProviders(tester, mediaService, appsService);
@@ -209,8 +210,9 @@ void main() {
     await _pumpWidgetWithProviders(tester, mediaService, appsService, settle: false);
     expect(tester.hasRunningAnimations, isFalse);
 
-    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
-        FakeAccessibilityFeatures(disableAnimations: true);
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue = FakeAccessibilityFeatures(
+      disableAnimations: true,
+    );
     addTearDown(tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue);
     when(mediaService.nowPlaying)
         .thenReturn(NowPlaying(packageName: "com.spotify.tv.android", art: art, playing: true));
@@ -234,11 +236,8 @@ Future<void> _pumpWidgetWithProviders(
         ChangeNotifierProvider<MediaService>.value(value: mediaService),
         ChangeNotifierProvider<AppsService>.value(value: appsService),
       ],
-      builder: (_, __) => MaterialApp(
-        shortcuts: {
-          ...WidgetsApp.defaultShortcuts,
-          SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
-        },
+      builder: (_, _) => MaterialApp(
+        shortcuts: {...WidgetsApp.defaultShortcuts, SingleActivator(LogicalKeyboardKey.enter): ActivateIntent()},
         home: Scaffold(body: SingleChildScrollView(child: NowPlayingPanel())),
       ),
     ),

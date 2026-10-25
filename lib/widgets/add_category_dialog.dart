@@ -21,30 +21,28 @@ import 'package:flutter/material.dart';
 class AddCategoryDialog extends StatelessWidget {
   final String? initialValue;
 
-  AddCategoryDialog({
-    this.initialValue,
-  });
+  AddCategoryDialog({this.initialValue});
 
   @override
   Widget build(BuildContext context) => SimpleDialog(
-        insetPadding: EdgeInsets.only(bottom: 120),
-        contentPadding: EdgeInsets.all(24),
-        title: Text(initialValue != null ? "Renommer la catégorie" : "Ajouter une catégorie"),
-        children: [
-          TextFormField(
-            autofocus: true,
-            initialValue: initialValue,
-            decoration: InputDecoration(labelText: "Nom"),
-            validator: (value) => value!.trim().isEmpty ? "Ne doit pas être vide" : null,
-            autovalidateMode: AutovalidateMode.always,
-            keyboardType: TextInputType.text,
-            textCapitalization: TextCapitalization.sentences,
-            onFieldSubmitted: (value) {
-              if (value.trim().isNotEmpty) {
-                Navigator.of(context).pop(value);
-              }
-            },
-          )
-        ],
-      );
+    insetPadding: EdgeInsets.only(bottom: 120),
+    contentPadding: EdgeInsets.all(24),
+    title: Text(initialValue != null ? "Renommer la catégorie" : "Ajouter une catégorie"),
+    children: [
+      TextFormField(
+        autofocus: true,
+        initialValue: initialValue,
+        decoration: InputDecoration(labelText: "Nom"),
+        validator: (value) => value!.trim().isEmpty ? "Ne doit pas être vide" : null,
+        autovalidateMode: AutovalidateMode.always,
+        keyboardType: TextInputType.text,
+        textCapitalization: TextCapitalization.sentences,
+        onFieldSubmitted: (value) {
+          if (value.trim().isNotEmpty) {
+            Navigator.of(context).pop(value);
+          }
+        },
+      ),
+    ],
+  );
 }

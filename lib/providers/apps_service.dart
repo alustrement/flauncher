@@ -22,9 +22,7 @@ import 'dart:collection';
 import 'package:drift/drift.dart';
 import 'package:flauncher/database.dart';
 import 'package:flauncher/flauncher_channel.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' hide Category;
-import 'package:flutter/material.dart';
 
 class AppsService extends ChangeNotifier {
   final FLauncherChannel _fLauncherChannel;
@@ -84,48 +82,39 @@ class AppsService extends ChangeNotifier {
   }
 
   AppsCompanion _buildAppCompanion(dynamic data) => AppsCompanion(
-        packageName: Value(data["packageName"]),
-        name: Value(data["name"]),
-        version: Value(data["version"] ?? "(unknown)"),
-        banner: Value(data["banner"]),
-        icon: Value(data["icon"]),
-        hidden: Value.absent(),
-        sideloaded: Value(data["sideloaded"]),
-      );
+    packageName: Value(data["packageName"]),
+    name: Value(data["name"]),
+    version: Value(data["version"] ?? "(unknown)"),
+    banner: Value(data["banner"]),
+    icon: Value(data["icon"]),
+    hidden: Value.absent(),
+    sideloaded: Value(data["sideloaded"]),
+  );
 
   Future<void> _initDefaultCategories() => _database.transaction(() async {
-        final tvApplications = _applications.where((element) => element.sideloaded == false);
-        final nonTvApplications = _applications.where((element) => element.sideloaded == true);
-        if (tvApplications.isNotEmpty) {
-          await addCategory("Applis TV", shouldNotifyListeners: false);
-          final tvAppsCategory =
-              _categoriesWithApps.map((e) => e.category).firstWhere((element) => element.name == "Applis TV");
-          await setCategoryType(
-            tvAppsCategory,
-            CategoryType.grid,
-            shouldNotifyListeners: false,
-          );
-          for (final app in tvApplications) {
-            await addToCategory(app, tvAppsCategory, shouldNotifyListeners: false);
-          }
-        }
-        if (nonTvApplications.isNotEmpty) {
-          await addCategory(
-            "Applis non TV",
-            shouldNotifyListeners: false,
-          );
-          final nonTvAppsCategory =
-              _categoriesWithApps.map((e) => e.category).firstWhere((element) => element.name == "Applis non TV");
-          for (final app in nonTvApplications) {
-            await addToCategory(
-              app,
-              nonTvAppsCategory,
-              shouldNotifyListeners: false,
-            );
-          }
-        }
-        await _reloadCategories();
-      });
+    final tvApplications = _applications.where((element) => element.sideloaded == false);
+    final nonTvApplications = _applications.where((element) => element.sideloaded == true);
+    if (tvApplications.isNotEmpty) {
+      await addCategory("Applis TV", shouldNotifyListeners: false);
+      final tvAppsCategory = _categoriesWithApps
+          .map((e) => e.category)
+          .firstWhere((element) => element.name == "Applis TV");
+      await setCategoryType(tvAppsCategory, CategoryType.grid, shouldNotifyListeners: false);
+      for (final app in tvApplications) {
+        await addToCategory(app, tvAppsCategory, shouldNotifyListeners: false);
+      }
+    }
+    if (nonTvApplications.isNotEmpty) {
+      await addCategory("Applis non TV", shouldNotifyListeners: false);
+      final nonTvAppsCategory = _categoriesWithApps
+          .map((e) => e.category)
+          .firstWhere((element) => element.name == "Applis non TV");
+      for (final app in nonTvApplications) {
+        await addToCategory(app, nonTvAppsCategory, shouldNotifyListeners: false);
+      }
+    }
+    await _reloadCategories();
+  });
 
   Future<void> _refreshState({bool shouldNotifyListeners = true}) async {
     await _database.transaction(() async {
@@ -191,11 +180,7 @@ class AppsService extends ChangeNotifier {
   Future<void> addToCategory(App app, Category category, {bool shouldNotifyListeners = true}) async {
     int index = await _database.nextAppCategoryOrder(category.id) ?? 0;
     await _database.insertAppsCategories([
-      AppsCategoriesCompanion.insert(
-        categoryId: category.id,
-        appPackageName: app.packageName,
-        order: index,
-      )
+      AppsCategoriesCompanion.insert(categoryId: category.id, appPackageName: app.packageName, order: index),
     ]);
     await _reloadCategories();
     if (shouldNotifyListeners) {
@@ -213,11 +198,13 @@ class AppsService extends ChangeNotifier {
     final applications = _categoriesWithApps.firstWhere((element) => element.category.id == category.id).applications;
     final orderedAppCategories = <AppsCategoriesCompanion>[];
     for (int i = 0; i < applications.length; ++i) {
-      orderedAppCategories.add(AppsCategoriesCompanion(
-        categoryId: Value(category.id),
-        appPackageName: Value(applications[i].packageName),
-        order: Value(i),
-      ));
+      orderedAppCategories.add(
+        AppsCategoriesCompanion(
+          categoryId: Value(category.id),
+          appPackageName: Value(applications[i].packageName),
+          order: Value(i),
+        ),
+      );
     }
     await _database.replaceAppsCategories(orderedAppCategories);
     await _reloadCategories();

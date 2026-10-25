@@ -33,48 +33,45 @@ class AppsGrid extends StatelessWidget {
   final Category category;
   final List<App> applications;
 
-  AppsGrid({
-    Key? key,
-    required this.category,
-    required this.applications,
-  }) : super(key: key);
+  AppsGrid({super.key, required this.category, required this.applications});
 
   @override
   Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: EdgeInsets.only(left: 32),
-            child: Text(
-              category.name,
-              style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                  color: ZenPalette.lavender,
-                  shadows: [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 8)]),
-            ),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: EdgeInsets.only(left: 32),
+        child: Text(
+          category.name,
+          style: Theme.of(context).textTheme.titleLarge!.copyWith(
+            color: ZenPalette.lavender,
+            shadows: [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 8)],
           ),
-          applications.isNotEmpty
-              ? GridView.custom(
-                  shrinkWrap: true,
-                  primary: false,
-                  gridDelegate: _buildSliverGridDelegate(),
-                  padding: EdgeInsets.fromLTRB(32, 16, 32, 16),
-                  childrenDelegate: SliverChildBuilderDelegate(
-                    (context, index) => RevealOnFocus(
-                      key: Key("${category.id}-${applications[index].packageName}"),
-                      child: AppCard(
-                        category: category,
-                        application: applications[index],
-                        onMove: (direction) => _onMove(context, direction, index),
-                        onMoveEnd: () => _saveOrder(context),
-                      ),
-                    ),
-                    childCount: applications.length,
-                    findChildIndexCallback: _findChildIndex,
+        ),
+      ),
+      applications.isNotEmpty
+          ? GridView.custom(
+              shrinkWrap: true,
+              primary: false,
+              gridDelegate: _buildSliverGridDelegate(),
+              padding: EdgeInsets.fromLTRB(32, 16, 32, 16),
+              childrenDelegate: SliverChildBuilderDelegate(
+                (context, index) => RevealOnFocus(
+                  key: Key("${category.id}-${applications[index].packageName}"),
+                  child: AppCard(
+                    category: category,
+                    application: applications[index],
+                    onMove: (direction) => _onMove(context, direction, index),
+                    onMoveEnd: () => _saveOrder(context),
                   ),
-                )
-              : _emptyState(context),
-        ],
-      );
+                ),
+                childCount: applications.length,
+                findChildIndexCallback: _findChildIndex,
+              ),
+            )
+          : _emptyState(context),
+    ],
+  );
 
   int _findChildIndex(Key key) =>
       applications.indexWhere((app) => "${category.id}-${app.packageName}" == (key as ValueKey<String>).value);
@@ -118,41 +115,35 @@ class AppsGrid extends StatelessWidget {
   }
 
   SliverGridDelegate _buildSliverGridDelegate() => SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: category.columnsCount,
-        childAspectRatio: 16 / 9,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-      );
+    crossAxisCount: category.columnsCount,
+    childAspectRatio: 16 / 9,
+    mainAxisSpacing: 16,
+    crossAxisSpacing: 16,
+  );
 
   Widget _emptyState(BuildContext context) => SkipInitialFocus(
+    child: Padding(
+      padding: EdgeInsets.only(top: 8),
+      child: SizedBox(
+        height: 110,
+        child: RevealOnFocus(
           child: Padding(
-        padding: EdgeInsets.only(top: 8),
-        child: SizedBox(
-          height: 110,
-          child: RevealOnFocus(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: Card(
-                    clipBehavior: Clip.antiAlias,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    child: InkWell(
-                      onTap: () => showDialog(
-                        context: context,
-                        builder: (_) => SettingsPanel(initialRoute: CategoriesPanelPage.routeName),
-                      ),
-                      child: Padding(
-                        padding: EdgeInsets.all(8),
-                        child: Center(
-                          child: Text(
-                            "Cette catégorie est vide.",
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
+            padding: EdgeInsets.symmetric(horizontal: 24),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Card(
+                  clipBehavior: Clip.antiAlias,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  child: InkWell(
+                    onTap: () => showDialog(
+                      context: context,
+                      builder: (_) => SettingsPanel(initialRoute: CategoriesPanelPage.routeName),
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Center(child: Text("Cette catégorie est vide.", textAlign: TextAlign.center)),
                     ),
                   ),
                 ),
@@ -160,5 +151,7 @@ class AppsGrid extends StatelessWidget {
             ),
           ),
         ),
-      ));
+      ),
+    ),
+  );
 }

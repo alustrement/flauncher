@@ -17,30 +17,30 @@
  */
 
 import 'package:flauncher/actions.dart';
+import 'package:flauncher/palette.dart';
 import 'package:flutter/material.dart';
 
 class RightPanelDialog extends StatelessWidget {
   final Widget child;
   final double width;
 
-  RightPanelDialog({
-    required this.child,
-    this.width = 250,
-  });
+  RightPanelDialog({required this.child, this.width = 250});
 
   @override
   Widget build(BuildContext context) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: EdgeInsets.zero,
-        child: Align(
-          alignment: Alignment.centerRight,
-          child: Container(
-            padding: EdgeInsets.all(16),
-            // ignore: deprecated_member_use
-            color: Theme.of(context).backgroundColor,
-            width: width,
-            child: Actions(actions: {BackIntent: BackAction(context)}, child: child),
-          ),
+    backgroundColor: Colors.transparent,
+    insetPadding: EdgeInsets.zero,
+    child: Align(
+      alignment: Alignment.centerRight,
+      // a Material rather than a colored box, on which the list tiles paint their focus and ink
+      child: Material(
+        color: ZenPalette.night,
+        child: Container(
+          padding: EdgeInsets.all(16),
+          width: width,
+          child: Actions(actions: {BackIntent: BackAction(context)}, child: child),
         ),
-      );
+      ),
+    ),
+  );
 }

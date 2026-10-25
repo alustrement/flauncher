@@ -31,88 +31,83 @@ class CategoryRow extends StatelessWidget {
   final Category category;
   final List<App> applications;
 
-  CategoryRow({
-    Key? key,
-    required this.category,
-    required this.applications,
-  }) : super(key: key);
+  CategoryRow({super.key, required this.category, required this.applications});
 
   @override
   Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: EdgeInsets.only(left: 32, bottom: 8),
-            child: Text(category.name,
-                style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                    color: ZenPalette.lavender,
-                    shadows: [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 8)])),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: EdgeInsets.only(left: 32, bottom: 8),
+        child: Text(
+          category.name,
+          style: Theme.of(context).textTheme.titleLarge!.copyWith(
+            color: ZenPalette.lavender,
+            shadows: [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 8)],
           ),
-          applications.isNotEmpty
-              ? SizedBox(
-                  height: category.rowHeight.toDouble(),
-                  child: ListView.custom(
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                    scrollDirection: Axis.horizontal,
-                    childrenDelegate: SliverChildBuilderDelegate(
-                      (context, index) => RevealOnFocus(
-                        key: Key("${category.id}-${applications[index].packageName}"),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8),
-                          child: AppCard(
-                            category: category,
-                            application: applications[index],
-                            onMove: (direction) => _onMove(context, direction, index),
-                            onMoveEnd: () => _onMoveEnd(context),
-                          ),
-                        ),
+        ),
+      ),
+      applications.isNotEmpty
+          ? SizedBox(
+              height: category.rowHeight.toDouble(),
+              child: ListView.custom(
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                scrollDirection: Axis.horizontal,
+                childrenDelegate: SliverChildBuilderDelegate(
+                  (context, index) => RevealOnFocus(
+                    key: Key("${category.id}-${applications[index].packageName}"),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: AppCard(
+                        category: category,
+                        application: applications[index],
+                        onMove: (direction) => _onMove(context, direction, index),
+                        onMoveEnd: () => _onMoveEnd(context),
                       ),
-                      childCount: applications.length,
-                      findChildIndexCallback: _findChildIndex,
                     ),
                   ),
-                )
-              : _emptyState(context),
-        ],
-      );
+                  childCount: applications.length,
+                  findChildIndexCallback: _findChildIndex,
+                ),
+              ),
+            )
+          : _emptyState(context),
+    ],
+  );
 
   int _findChildIndex(Key key) =>
       applications.indexWhere((app) => "${category.id}-${app.packageName}" == (key as ValueKey<String>).value);
 
   Widget _emptyState(BuildContext context) => SkipInitialFocus(
-          child: SizedBox(
-        height: 110,
-        child: RevealOnFocus(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: AspectRatio(
-                aspectRatio: 16 / 9,
-                child: Card(
-                  clipBehavior: Clip.antiAlias,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  child: InkWell(
-                    onTap: () => showDialog(
-                      context: context,
-                      builder: (_) => SettingsPanel(initialRoute: CategoriesPanelPage.routeName),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.all(8),
-                      child: Center(
-                        child: Text(
-                          "Cette catégorie est vide.",
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
+    child: SizedBox(
+      height: 110,
+      child: RevealOnFocus(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Card(
+                clipBehavior: Clip.antiAlias,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                child: InkWell(
+                  onTap: () => showDialog(
+                    context: context,
+                    builder: (_) => SettingsPanel(initialRoute: CategoriesPanelPage.routeName),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Center(child: Text("Cette catégorie est vide.", textAlign: TextAlign.center)),
                   ),
                 ),
               ),
             ),
           ),
         ),
-      ));
+      ),
+    ),
+  );
 
   void _onMove(BuildContext context, AxisDirection direction, int index) {
     int? newIndex;

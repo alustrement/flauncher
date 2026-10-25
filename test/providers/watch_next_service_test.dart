@@ -25,11 +25,11 @@ import 'package:mockito/mockito.dart';
 import '../mocks.mocks.dart';
 
 Map<String, dynamic> _programMap(int id, {String packageName = "fr.francetv.pluzz"}) => {
-      "id": id,
-      "packageName": packageName,
-      "watchNextType": 0,
-      "title": "Program $id",
-    };
+  "id": id,
+  "packageName": packageName,
+  "watchNextType": 0,
+  "title": "Program $id",
+};
 
 void main() {
   group("WatchNextService", () {
@@ -53,7 +53,7 @@ void main() {
             "position": 74000,
             "duration": 1380000,
             "intentUri": "https://www.france.tv/watchNext/833581",
-          }
+          },
         ],
       });
 
@@ -89,15 +89,15 @@ void main() {
       var notifications = 0;
       watchNextService.addListener(() => ++notifications);
       Map<String, dynamic> event(int position) => {
-            "permissionGranted": true,
-            "programs": [
-              {
-                ..._programMap(1),
-                "image": Uint8List.fromList([1, 2, 3]),
-                "position": position
-              }
-            ],
-          };
+        "permissionGranted": true,
+        "programs": [
+          {
+            ..._programMap(1),
+            "image": Uint8List.fromList([1, 2, 3]),
+            "position": position,
+          },
+        ],
+      };
 
       listener(event(1000));
       final image = watchNextService.programs.single.image;
@@ -134,11 +134,9 @@ void main() {
       final channel = MockFLauncherChannel();
       final watchNextService = WatchNextService(channel);
 
-      await watchNextService.open(WatchNextProgram(
-        id: 1,
-        packageName: "tv.arte.plus7",
-        intentUri: "arte://program/127458-000-A",
-      ));
+      await watchNextService.open(
+        WatchNextProgram(id: 1, packageName: "tv.arte.plus7", intentUri: "arte://program/127458-000-A"),
+      );
 
       verify(channel.openWatchNextProgram("tv.arte.plus7", "arte://program/127458-000-A"));
     });
@@ -147,32 +145,39 @@ void main() {
   group("WatchNextProgram", () {
     test("subtitle with season, episode number and title", () {
       final program = WatchNextProgram(
-          id: 1,
-          packageName: "app",
-          title: "Malcolm",
-          seasonNumber: "1",
-          episodeNumber: "4",
-          episodeTitle: "Caméra cachée");
+        id: 1,
+        packageName: "app",
+        title: "Malcolm",
+        seasonNumber: "1",
+        episodeNumber: "4",
+        episodeTitle: "Caméra cachée",
+      );
 
       expect(program.subtitle, "S1 E4 · Caméra cachée");
     });
 
     test("subtitle skips episode number already in title", () {
       final program = WatchNextProgram(
-          id: 1,
-          packageName: "app",
-          title: "Les mystérieuses cités d'or - S2 E6",
-          seasonNumber: "2",
-          episodeNumber: "6");
+        id: 1,
+        packageName: "app",
+        title: "Les mystérieuses cités d'or - S2 E6",
+        seasonNumber: "2",
+        episodeNumber: "6",
+      );
 
       expect(program.subtitle, isNull);
     });
 
     test("progress", () {
       expect(
-          WatchNextProgram(id: 1, packageName: "app", position: Duration(minutes: 5), duration: Duration(minutes: 20))
-              .progress,
-          0.25);
+        WatchNextProgram(
+          id: 1,
+          packageName: "app",
+          position: Duration(minutes: 5),
+          duration: Duration(minutes: 20),
+        ).progress,
+        0.25,
+      );
       expect(WatchNextProgram(id: 1, packageName: "app", position: Duration(minutes: 5)).progress, isNull);
     });
   });

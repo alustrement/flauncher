@@ -32,48 +32,54 @@ void main() {
     test("with empty database", () async {
       final channel = MockFLauncherChannel();
       final database = MockFLauncherDatabase();
-      when(channel.getApplications()).thenAnswer((_) => Future.value([
-            {
-              'packageName': 'me.efesser.flauncher',
-              'name': 'FLauncher',
-              'version': null,
-              'banner': null,
-              'icon': null,
-              'sideloaded': false
-            },
-            {
-              'packageName': 'me.efesser.flauncher.2',
-              'name': 'FLauncher 2',
-              'version': '2.0.0',
-              'banner': null,
-              'icon': null,
-              'sideloaded': true
-            }
-          ]));
-      when(database.listApplications()).thenAnswer((_) => Future.value([
-            fakeApp(
-              packageName: "me.efesser.flauncher",
-              name: "FLauncher",
-              version: "1.0.0",
-              banner: null,
-              icon: null,
-              sideloaded: false,
-            ),
-            fakeApp(
-              packageName: "me.efesser.flauncher.2",
-              name: "FLauncher 2",
-              version: "2.0.0",
-              banner: null,
-              icon: null,
-              sideloaded: true,
-            ),
-          ]));
+      when(channel.getApplications()).thenAnswer(
+        (_) => Future.value([
+          {
+            'packageName': 'me.efesser.flauncher',
+            'name': 'FLauncher',
+            'version': null,
+            'banner': null,
+            'icon': null,
+            'sideloaded': false,
+          },
+          {
+            'packageName': 'me.efesser.flauncher.2',
+            'name': 'FLauncher 2',
+            'version': '2.0.0',
+            'banner': null,
+            'icon': null,
+            'sideloaded': true,
+          },
+        ]),
+      );
+      when(database.listApplications()).thenAnswer(
+        (_) => Future.value([
+          fakeApp(
+            packageName: "me.efesser.flauncher",
+            name: "FLauncher",
+            version: "1.0.0",
+            banner: null,
+            icon: null,
+            sideloaded: false,
+          ),
+          fakeApp(
+            packageName: "me.efesser.flauncher.2",
+            name: "FLauncher 2",
+            version: "2.0.0",
+            banner: null,
+            icon: null,
+            sideloaded: true,
+          ),
+        ]),
+      );
       final tvApplicationsCategory = fakeCategory(name: "Applis TV");
       final nonTvApplicationsCategory = fakeCategory(name: "Applis non TV");
-      when(database.listCategoriesWithVisibleApps()).thenAnswer((_) => Future.value([
-            CategoryWithApps(tvApplicationsCategory, []),
-            CategoryWithApps(nonTvApplicationsCategory, []),
-          ]));
+      when(database.listCategoriesWithVisibleApps()).thenAnswer(
+        (_) => Future.value([
+          CategoryWithApps(tvApplicationsCategory, []),
+          CategoryWithApps(nonTvApplicationsCategory, []),
+        ]),
+      );
       when(database.nextAppCategoryOrder(any)).thenAnswer((_) => Future.value(0));
       when(database.transaction(any)).thenAnswer((realInvocation) => realInvocation.positionalArguments[0]());
       when(database.wasCreated).thenReturn(true);
@@ -103,29 +109,22 @@ void main() {
         database.deleteApps([]),
         database.listCategoriesWithVisibleApps(),
         database.listApplications(),
-        database.insertCategory(
-          CategoriesCompanion.insert(name: "Applis TV", order: 0),
-        ),
-        database.updateCategory(
-          tvApplicationsCategory.id,
-          CategoriesCompanion(type: Value(CategoryType.grid)),
-        ),
+        database.insertCategory(CategoriesCompanion.insert(name: "Applis TV", order: 0)),
+        database.updateCategory(tvApplicationsCategory.id, CategoriesCompanion(type: Value(CategoryType.grid))),
         database.insertAppsCategories([
           AppsCategoriesCompanion.insert(
             categoryId: tvApplicationsCategory.id,
             appPackageName: "me.efesser.flauncher",
             order: 0,
-          )
+          ),
         ]),
-        database.insertCategory(
-          CategoriesCompanion.insert(name: "Applis non TV", order: 0),
-        ),
+        database.insertCategory(CategoriesCompanion.insert(name: "Applis non TV", order: 0)),
         database.insertAppsCategories([
           AppsCategoriesCompanion.insert(
             categoryId: nonTvApplicationsCategory.id,
             appPackageName: "me.efesser.flauncher.2",
             order: 0,
-          )
+          ),
         ]),
         database.listCategoriesWithVisibleApps(),
       ]);
@@ -134,31 +133,35 @@ void main() {
     test("with newly installed, uninstalled and existing apps", () async {
       final channel = MockFLauncherChannel();
       final database = MockFLauncherDatabase();
-      when(channel.getApplications()).thenAnswer((_) => Future.value([
-            {
-              'packageName': 'me.efesser.flauncher',
-              'name': 'FLauncher',
-              'version': '2.0.0',
-              'banner': null,
-              'icon': null,
-              'sideloaded': false,
-            },
-            {
-              'packageName': 'me.efesser.flauncher.2',
-              'name': 'FLauncher 2',
-              'version': '1.0.0',
-              'banner': null,
-              'icon': null,
-              'sideloaded': false,
-            }
-          ]));
+      when(channel.getApplications()).thenAnswer(
+        (_) => Future.value([
+          {
+            'packageName': 'me.efesser.flauncher',
+            'name': 'FLauncher',
+            'version': '2.0.0',
+            'banner': null,
+            'icon': null,
+            'sideloaded': false,
+          },
+          {
+            'packageName': 'me.efesser.flauncher.2',
+            'name': 'FLauncher 2',
+            'version': '1.0.0',
+            'banner': null,
+            'icon': null,
+            'sideloaded': false,
+          },
+        ]),
+      );
       when(channel.applicationExists("uninstalled.app")).thenAnswer((_) => Future.value(false));
       when(channel.applicationExists("not.uninstalled.app")).thenAnswer((_) => Future.value(true));
-      when(database.listApplications()).thenAnswer((_) => Future.value([
-            fakeApp(packageName: "me.efesser.flauncher", name: "FLauncher", version: "1.0.0"),
-            fakeApp(packageName: "uninstalled.app", name: "Uninstalled Application", version: "1.0.0"),
-            fakeApp(packageName: "not.uninstalled.app", name: "Not Uninstalled Application", version: "1.0.0")
-          ]));
+      when(database.listApplications()).thenAnswer(
+        (_) => Future.value([
+          fakeApp(packageName: "me.efesser.flauncher", name: "FLauncher", version: "1.0.0"),
+          fakeApp(packageName: "uninstalled.app", name: "Uninstalled Application", version: "1.0.0"),
+          fakeApp(packageName: "not.uninstalled.app", name: "Not Uninstalled Application", version: "1.0.0"),
+        ]),
+      );
       when(database.listCategoriesWithVisibleApps()).thenAnswer((_) => Future.value([]));
       when(database.transaction(any)).thenAnswer((realInvocation) => realInvocation.positionalArguments[0]());
       when(database.wasCreated).thenReturn(false);
@@ -183,7 +186,7 @@ void main() {
             banner: Value(null),
             icon: Value(null),
             sideloaded: Value(false),
-          )
+          ),
         ]),
         database.deleteApps(["uninstalled.app"]),
         database.listCategoriesWithVisibleApps(),
@@ -200,9 +203,11 @@ void main() {
       final category = fakeCategory();
       final app = fakeApp();
       when(database.listApplications()).thenAnswer((_) => Future.value([app]));
-      when(database.listCategoriesWithVisibleApps()).thenAnswer((_) => Future.value([
-            CategoryWithApps(category, [app])
-          ]));
+      when(database.listCategoriesWithVisibleApps()).thenAnswer(
+        (_) => Future.value([
+          CategoryWithApps(category, [app]),
+        ]),
+      );
       when(database.transaction(any)).thenAnswer((realInvocation) => realInvocation.positionalArguments[0]());
       when(database.wasCreated).thenReturn(false);
       final appsService = AppsService(channel, database);
@@ -226,9 +231,11 @@ void main() {
       when(channel.getApplications()).thenAnswer((_) => Future.value([]));
       when(channel.applicationExists(any)).thenAnswer((_) => Future.value(true));
       when(database.listApplications()).thenAnswer((_) => Future.value([unchanged(), changed(version)]));
-      when(database.listCategoriesWithVisibleApps()).thenAnswer((_) => Future.value([
-            CategoryWithApps(category, [unchanged(), changed(version)])
-          ]));
+      when(database.listCategoriesWithVisibleApps()).thenAnswer(
+        (_) => Future.value([
+          CategoryWithApps(category, [unchanged(), changed(version)]),
+        ]),
+      );
       when(database.transaction(any)).thenAnswer((realInvocation) => realInvocation.positionalArguments[0]());
       when(database.wasCreated).thenReturn(false);
       final appsService = AppsService(channel, database);
@@ -318,8 +325,11 @@ void main() {
 
     await appsService.addToCategory(fakeApp(packageName: "app.to.be.added"), category);
 
-    verify(database.insertAppsCategories(
-        [AppsCategoriesCompanion.insert(categoryId: category.id, appPackageName: "app.to.be.added", order: 1)]));
+    verify(
+      database.insertAppsCategories([
+        AppsCategoriesCompanion.insert(categoryId: category.id, appPackageName: "app.to.be.added", order: 1),
+      ]),
+    );
     verify(database.listCategoriesWithVisibleApps());
   });
 
@@ -341,15 +351,17 @@ void main() {
     final database = MockFLauncherDatabase();
     final category = fakeCategory(name: "Category");
     final appsService = await _buildInitialisedAppsService(channel, database, [
-      CategoryWithApps(category, [fakeApp(packageName: "app.1"), fakeApp(packageName: "app.2")])
+      CategoryWithApps(category, [fakeApp(packageName: "app.1"), fakeApp(packageName: "app.2")]),
     ]);
 
     await appsService.saveOrderInCategory(category);
 
-    verify(database.replaceAppsCategories([
-      AppsCategoriesCompanion.insert(categoryId: category.id, appPackageName: "app.1", order: 0),
-      AppsCategoriesCompanion.insert(categoryId: category.id, appPackageName: "app.2", order: 1)
-    ]));
+    verify(
+      database.replaceAppsCategories([
+        AppsCategoriesCompanion.insert(categoryId: category.id, appPackageName: "app.1", order: 0),
+        AppsCategoriesCompanion.insert(categoryId: category.id, appPackageName: "app.2", order: 1),
+      ]),
+    );
     verify(database.listCategoriesWithVisibleApps());
   });
 
@@ -358,7 +370,7 @@ void main() {
     final database = MockFLauncherDatabase();
     final category = fakeCategory(name: "Category");
     final appsService = await _buildInitialisedAppsService(channel, database, [
-      CategoryWithApps(category, [fakeApp(packageName: "app.1"), fakeApp(packageName: "app.2")])
+      CategoryWithApps(category, [fakeApp(packageName: "app.1"), fakeApp(packageName: "app.2")]),
     ]);
 
     appsService.reorderApplication(category, 1, 0);
@@ -371,11 +383,7 @@ void main() {
     final channel = MockFLauncherChannel();
     final database = MockFLauncherDatabase();
     final existingCategory = fakeCategory(name: "Existing Category", order: 0);
-    final appsService = await _buildInitialisedAppsService(
-      channel,
-      database,
-      [CategoryWithApps(existingCategory, [])],
-    );
+    final appsService = await _buildInitialisedAppsService(channel, database, [CategoryWithApps(existingCategory, [])]);
 
     await appsService.addCategory("New Category");
 
@@ -388,11 +396,7 @@ void main() {
     final channel = MockFLauncherChannel();
     final database = MockFLauncherDatabase();
     final category = fakeCategory(name: "Old name", order: 0);
-    final appsService = await _buildInitialisedAppsService(
-      channel,
-      database,
-      [CategoryWithApps(category, [])],
-    );
+    final appsService = await _buildInitialisedAppsService(channel, database, [CategoryWithApps(category, [])]);
 
     await appsService.renameCategory(category, "New name");
 
@@ -408,14 +412,10 @@ void main() {
     final appInDefaultCategory = fakeApp();
     final appInCategoryToDelete = fakeApp(packageName: "app.to.be.moved.1");
     final hiddenAppInCategoryToDelete = fakeApp(packageName: "app.to.be.moved.2", hidden: true);
-    final appsService = await _buildInitialisedAppsService(
-      channel,
-      database,
-      [
-        CategoryWithApps(defaultCategory, [appInDefaultCategory]),
-        CategoryWithApps(categoryToDelete, [appInCategoryToDelete, hiddenAppInCategoryToDelete])
-      ],
-    );
+    final appsService = await _buildInitialisedAppsService(channel, database, [
+      CategoryWithApps(defaultCategory, [appInDefaultCategory]),
+      CategoryWithApps(categoryToDelete, [appInCategoryToDelete, hiddenAppInCategoryToDelete]),
+    ]);
 
     await appsService.deleteCategory(categoryToDelete);
 
@@ -428,21 +428,20 @@ void main() {
     final database = MockFLauncherDatabase();
     final applicationsCategory = fakeCategory(name: "Applications", order: 0);
     final favoritesCategory = fakeCategory(name: "Favorites", order: 1);
-    final appsService = await _buildInitialisedAppsService(
-      channel,
-      database,
-      [CategoryWithApps(applicationsCategory, []), CategoryWithApps(favoritesCategory, [])],
-    );
+    final appsService = await _buildInitialisedAppsService(channel, database, [
+      CategoryWithApps(applicationsCategory, []),
+      CategoryWithApps(favoritesCategory, []),
+    ]);
     when(database.nextAppCategoryOrder(applicationsCategory.id)).thenAnswer((_) => Future.value(1));
 
     await appsService.moveCategory(1, 0);
 
-    verify(database.updateCategories(
-      [
+    verify(
+      database.updateCategories([
         CategoriesCompanion(id: Value(favoritesCategory.id), order: Value(0)),
-        CategoriesCompanion(id: Value(applicationsCategory.id), order: Value(1))
-      ],
-    ));
+        CategoriesCompanion(id: Value(applicationsCategory.id), order: Value(1)),
+      ]),
+    );
     verify(database.listCategoriesWithVisibleApps());
   });
 

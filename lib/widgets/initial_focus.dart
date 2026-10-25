@@ -38,7 +38,7 @@ class InitialFocus extends StatefulWidget {
   final HomeService? homeService;
   final Widget child;
 
-  InitialFocus({Key? key, this.homeService, required this.child}) : super(key: key);
+  InitialFocus({super.key, this.homeService, required this.child});
 
   @override
   State<InitialFocus> createState() => _InitialFocusState();
@@ -82,15 +82,15 @@ class _InitialFocusState extends State<InitialFocus> {
 
   @override
   Widget build(BuildContext context) => NotificationListener<SizeChangedLayoutNotification>(
-        onNotification: (_) {
-          WidgetsBinding.instance.addPostFrameCallback((_) => _focusTop());
-          return false;
-        },
-        child: Focus(
-          focusNode: _focusNode,
-          child: SizeChangedLayoutNotifier(child: widget.child),
-        ),
-      );
+    onNotification: (_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _focusTop());
+      return false;
+    },
+    child: Focus(
+      focusNode: _focusNode,
+      child: SizeChangedLayoutNotifier(child: widget.child),
+    ),
+  );
 
   Future<void> _backToTop() async {
     _moved = false;
@@ -99,11 +99,15 @@ class _InitialFocusState extends State<InitialFocus> {
         if (node.context != null) ..._scrollPositions(node.context!),
     }.where((position) => position.pixels != position.minScrollExtent);
     if (widget.homeService?.inLauncher ?? true) {
-      await Future.wait(positions.map((position) => position.animateTo(
+      await Future.wait(
+        positions.map(
+          (position) => position.animateTo(
             position.minScrollExtent,
             duration: RevealOnFocus.duration,
             curve: RevealOnFocus.curve,
-          )));
+          ),
+        ),
+      );
     } else {
       for (final position in positions.toList()) {
         position.jumpTo(position.minScrollExtent);
@@ -116,9 +120,11 @@ class _InitialFocusState extends State<InitialFocus> {
 
   /// The positions of the page and of the row or grid [context] is in.
   Iterable<ScrollPosition> _scrollPositions(BuildContext context) sync* {
-    for (var scrollable = Scrollable.maybeOf(context);
-        scrollable != null;
-        scrollable = Scrollable.maybeOf(scrollable.context)) {
+    for (
+      var scrollable = Scrollable.maybeOf(context);
+      scrollable != null;
+      scrollable = Scrollable.maybeOf(scrollable.context)
+    ) {
       yield scrollable.position;
     }
   }
@@ -128,7 +134,8 @@ class _InitialFocusState extends State<InitialFocus> {
       return;
     }
     final candidates = _focusNode.traversalDescendants.where(
-        (node) => node.canRequestFocus && node.context?.findAncestorWidgetOfExactType<SkipInitialFocus>() == null);
+      (node) => node.canRequestFocus && node.context?.findAncestorWidgetOfExactType<SkipInitialFocus>() == null,
+    );
     if (candidates.isEmpty) {
       return;
     }
@@ -147,7 +154,7 @@ class _InitialFocusState extends State<InitialFocus> {
 class SkipInitialFocus extends StatelessWidget {
   final Widget child;
 
-  SkipInitialFocus({Key? key, required this.child}) : super(key: key);
+  SkipInitialFocus({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) => child;

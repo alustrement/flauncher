@@ -29,72 +29,71 @@ class CategoriesPanelPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        children: [
-          Text("Catégories", style: Theme.of(context).textTheme.titleLarge),
-          Divider(),
-          Selector<AppsService, List<CategoryWithApps>>(
-            selector: (_, appsService) => appsService.categoriesWithApps,
-            builder: (_, categories, __) => Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: categories.asMap().keys.map((index) => _category(context, categories, index)).toList(),
-                ),
-              ),
-            ),
-          ),
-          TextButton.icon(
-            icon: Icon(Icons.add),
-            label: Text("Ajouter une catégorie"),
-            onPressed: () async {
-              final categoryName = await showDialog<String>(context: context, builder: (_) => AddCategoryDialog());
-              if (categoryName != null) {
-                await context.read<AppsService>().addCategory(categoryName);
-              }
-            },
-          ),
-        ],
-      );
-
-  Widget _category(BuildContext context, List<CategoryWithApps> categories, int index) => Padding(
-        key: Key(categories[index].category.id.toString()),
-        padding: EdgeInsets.only(bottom: 8),
-        child: Card(
-          margin: EdgeInsets.zero,
-          child: EnsureVisible(
-            alignment: 0.5,
-            child: ListTile(
-              dense: true,
-              title: Text(categories[index].category.name, style: Theme.of(context).textTheme.bodyMedium),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    constraints: BoxConstraints(),
-                    splashRadius: 20,
-                    icon: Icon(Icons.arrow_upward),
-                    onPressed: index > 0 ? () => _move(context, index, index - 1) : null,
-                  ),
-                  IconButton(
-                    constraints: BoxConstraints(),
-                    splashRadius: 20,
-                    icon: Icon(Icons.arrow_downward),
-                    onPressed: index < categories.length - 1 ? () => _move(context, index, index + 1) : null,
-                  ),
-                  IconButton(
-                    constraints: BoxConstraints(),
-                    splashRadius: 20,
-                    icon: Icon(Icons.settings),
-                    onPressed: () => Navigator.of(context).pushNamed(
-                      CategoryPanelPage.routeName,
-                      arguments: categories[index].category.id,
-                    ),
-                  ),
-                ],
-              ),
+    children: [
+      Text("Catégories", style: Theme.of(context).textTheme.titleLarge),
+      Divider(),
+      Selector<AppsService, List<CategoryWithApps>>(
+        selector: (_, appsService) => appsService.categoriesWithApps,
+        builder: (_, categories, _) => Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              children: categories.asMap().keys.map((index) => _category(context, categories, index)).toList(),
             ),
           ),
         ),
-      );
+      ),
+      TextButton.icon(
+        icon: Icon(Icons.add),
+        label: Text("Ajouter une catégorie"),
+        onPressed: () async {
+          final categoryName = await showDialog<String>(context: context, builder: (_) => AddCategoryDialog());
+          if (categoryName != null) {
+            await context.read<AppsService>().addCategory(categoryName);
+          }
+        },
+      ),
+    ],
+  );
+
+  Widget _category(BuildContext context, List<CategoryWithApps> categories, int index) => Padding(
+    key: Key(categories[index].category.id.toString()),
+    padding: EdgeInsets.only(bottom: 8),
+    child: Card(
+      margin: EdgeInsets.zero,
+      child: EnsureVisible(
+        alignment: 0.5,
+        child: ListTile(
+          dense: true,
+          title: Text(categories[index].category.name, style: Theme.of(context).textTheme.bodyMedium),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                constraints: BoxConstraints(),
+                splashRadius: 20,
+                icon: Icon(Icons.arrow_upward),
+                onPressed: index > 0 ? () => _move(context, index, index - 1) : null,
+              ),
+              IconButton(
+                constraints: BoxConstraints(),
+                splashRadius: 20,
+                icon: Icon(Icons.arrow_downward),
+                onPressed: index < categories.length - 1 ? () => _move(context, index, index + 1) : null,
+              ),
+              IconButton(
+                constraints: BoxConstraints(),
+                splashRadius: 20,
+                icon: Icon(Icons.settings),
+                onPressed: () =>
+                    Navigator.of(context)
+                        .pushNamed(CategoryPanelPage.routeName, arguments: categories[index].category.id),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 
   Future<void> _move(BuildContext context, int oldIndex, int newIndex) async {
     await context.read<AppsService>().moveCategory(oldIndex, newIndex);

@@ -25,7 +25,7 @@ import 'package:provider/provider.dart';
 
 class TimeWidget extends StatefulWidget {
   @override
-  _TimeWidgetState createState() => _TimeWidgetState();
+  State<TimeWidget> createState() => _TimeWidgetState();
 }
 
 class _TimeWidgetState extends State<TimeWidget> {
@@ -46,18 +46,18 @@ class _TimeWidgetState extends State<TimeWidget> {
 
   @override
   Widget build(BuildContext context) => Selector<SettingsService, bool>(
-        selector: (_, settingsService) => settingsService.use24HourTimeFormat,
-        builder: (context, use24HourTimeFormat, _) => Text(
-          use24HourTimeFormat ? DateFormat.Hm().format(_now) : DateFormat.jm().format(_now),
-          style: Theme.of(context).textTheme.titleLarge!.copyWith(
-            fontSize: 24,
-            fontWeight: FontWeight.w300,
-            letterSpacing: 0.5,
-            shadows: [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 8)],
-          ),
-          textAlign: TextAlign.end,
-        ),
-      );
+    selector: (_, settingsService) => settingsService.use24HourTimeFormat,
+    builder: (context, use24HourTimeFormat, _) => Text(
+      use24HourTimeFormat ? DateFormat.Hm().format(_now) : DateFormat.jm().format(_now),
+      style: Theme.of(context).textTheme.titleLarge!.copyWith(
+        fontSize: 24,
+        fontWeight: FontWeight.w300,
+        letterSpacing: 0.5,
+        shadows: [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 8)],
+      ),
+      textAlign: TextAlign.end,
+    ),
+  );
 
   /// Only when the minute changes, rather than every second.
   void _refreshTime() {

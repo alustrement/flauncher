@@ -37,7 +37,7 @@ class RevealOnFocus extends StatelessWidget {
 
   final Widget child;
 
-  RevealOnFocus({Key? key, required this.child}) : super(key: key);
+  RevealOnFocus({super.key, required this.child});
 
   /// The top bar at the top of the page, with the clock and the settings, and its margin with the first section.
   static const topBarHeight = kToolbarHeight + 16;
@@ -47,15 +47,15 @@ class RevealOnFocus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Focus(
-        canRequestFocus: false,
-        onFocusChange: (focused) {
-          if (focused) {
-            _revealHorizontally(context);
-            _revealVertically(context);
-          }
-        },
-        child: child,
-      );
+    canRequestFocus: false,
+    onFocusChange: (focused) {
+      if (focused) {
+        _revealHorizontally(context);
+        _revealVertically(context);
+      }
+    },
+    child: child,
+  );
 
   void _revealHorizontally(BuildContext context) {
     final scrollable = Scrollable.maybeOf(context);
@@ -78,8 +78,9 @@ class RevealOnFocus extends StatelessWidget {
     }
     final position = scrollable.position;
     final top = box.localToGlobal(Offset.zero, ancestor: viewport).dy;
-    final target =
-        (position.pixels + top - _rowTop(context)).clamp(position.minScrollExtent, position.maxScrollExtent).toDouble();
+    final target = (position.pixels + top - _rowTop(context))
+        .clamp(position.minScrollExtent, position.maxScrollExtent)
+        .toDouble();
     if ((target - position.pixels).abs() > 0.5) {
       position.animateTo(target, duration: duration, curve: curve);
     }
@@ -90,7 +91,7 @@ class RevealOnFocus extends StatelessWidget {
     final title = TextPainter(
       text: TextSpan(text: " ", style: Theme.of(context).textTheme.titleLarge),
       textDirection: TextDirection.ltr,
-      textScaleFactor: MediaQuery.of(context).textScaleFactor,
+      textScaler: MediaQuery.textScalerOf(context),
     )..layout();
     return pageTop(context) + _spaceAboveRow + title.height;
   }

@@ -87,7 +87,7 @@ class ZenWavesPainter extends CustomPainter {
     canvas.save();
     canvas.scale(size.width / width, size.height / height);
     for (var i = 0; i < waveCount; ++i) {
-      canvas.drawPath(wave(i), Paint()..color = ZenPalette.waves[i].withOpacity(_opacity));
+      canvas.drawPath(wave(i), Paint()..color = ZenPalette.waves[i].withValues(alpha: _opacity));
     }
     canvas.restore();
   }

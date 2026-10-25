@@ -108,11 +108,8 @@ Future<void> _pumpWidgetWithProviders(
         ChangeNotifierProvider<WatchNextService>.value(value: watchNextService),
         ChangeNotifierProvider<AppsService>.value(value: appsService),
       ],
-      builder: (_, __) => MaterialApp(
-        shortcuts: {
-          ...WidgetsApp.defaultShortcuts,
-          SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
-        },
+      builder: (_, _) => MaterialApp(
+        shortcuts: {...WidgetsApp.defaultShortcuts, SingleActivator(LogicalKeyboardKey.enter): ActivateIntent()},
         home: Scaffold(body: SingleChildScrollView(child: WatchNextRow())),
       ),
     ),

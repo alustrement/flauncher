@@ -66,7 +66,7 @@ void main() {
       final listener = verify(channel.addMediaSessionListener(captureAny)).captured.single;
       final session = {
         "packageName": "com.spotify.tv.android",
-        "art": Uint8List.fromList([1, 2, 3])
+        "art": Uint8List.fromList([1, 2, 3]),
       };
 
       listener({"permissionGranted": true, "session": session});
@@ -75,8 +75,8 @@ void main() {
         "permissionGranted": true,
         "session": {
           ...session,
-          "art": Uint8List.fromList([1, 2, 3])
-        }
+          "art": Uint8List.fromList([1, 2, 3]),
+        },
       });
 
       expect(identical(mediaService.nowPlaying!.art, firstArt), isTrue);
@@ -89,7 +89,7 @@ void main() {
 
       listener({
         "permissionGranted": true,
-        "session": {"packageName": "com.spotify.tv.android"}
+        "session": {"packageName": "com.spotify.tv.android"},
       });
       listener({"permissionGranted": true, "session": null});
 
@@ -123,7 +123,7 @@ void main() {
 
       listener({
         "permissionGranted": true,
-        "session": {"packageName": "fr.francetv.pluzz"}
+        "session": {"packageName": "fr.francetv.pluzz"},
       });
 
       expect(mediaService.lastSpotify, isNull);
@@ -133,17 +133,14 @@ void main() {
       final channel = MockFLauncherChannel();
       final mediaService = MediaService(channel);
       final listener = verify(channel.addMediaSessionListener(captureAny)).captured.single;
-      final media = {
-        "packageName": "com.spotify.tv.android",
-        "title": "Bittersweet",
-      };
+      final media = {"packageName": "com.spotify.tv.android", "title": "Bittersweet"};
 
       listener({
         "permissionGranted": true,
         "session": null,
         "lastSpotify": {
           ...media,
-          "art": Uint8List.fromList([1, 2, 3])
+          "art": Uint8List.fromList([1, 2, 3]),
         },
       });
       final art = mediaService.lastSpotify!.art;
@@ -152,7 +149,7 @@ void main() {
         "session": {
           ...media,
           "art": Uint8List.fromList([1, 2, 3]),
-          "playing": true
+          "playing": true,
         },
       });
 
@@ -186,7 +183,7 @@ void main() {
       final listener = verify(channel.addMediaSessionListener(captureAny)).captured.single;
       listener({
         "permissionGranted": true,
-        "session": {"packageName": "com.spotify.tv.android"}
+        "session": {"packageName": "com.spotify.tv.android"},
       });
 
       await mediaService.openPlayer();

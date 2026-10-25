@@ -38,44 +38,49 @@ const _textShadows = [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRa
 class NowPlayingPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Consumer<MediaService>(
-        builder: (context, mediaService, _) {
-          if (!mediaService.permissionGranted) {
-            return _section(context, "En cours de lecture", SkipInitialFocus(child: _PermissionHint()));
-          }
-          final nowPlaying = mediaService.nowPlaying;
-          if (nowPlaying != null) {
-            return _section(
-                context, "En cours de lecture", _Panel(nowPlaying: nowPlaying, onPressed: mediaService.openPlayer));
-          }
-          final lastSpotify = mediaService.lastSpotify;
-          if (lastSpotify != null) {
-            return _section(context, "Reprendre la lecture sur Spotify",
-                _Panel(nowPlaying: lastSpotify, onPressed: mediaService.resumeSpotify));
-          }
-          return SizedBox.shrink();
-        },
-      );
+    builder: (context, mediaService, _) {
+      if (!mediaService.permissionGranted) {
+        return _section(context, "En cours de lecture", SkipInitialFocus(child: _PermissionHint()));
+      }
+      final nowPlaying = mediaService.nowPlaying;
+      if (nowPlaying != null) {
+        return _section(
+          context,
+          "En cours de lecture",
+          _Panel(nowPlaying: nowPlaying, onPressed: mediaService.openPlayer),
+        );
+      }
+      final lastSpotify = mediaService.lastSpotify;
+      if (lastSpotify != null) {
+        return _section(
+          context,
+          "Reprendre la lecture sur Spotify",
+          _Panel(nowPlaying: lastSpotify, onPressed: mediaService.resumeSpotify),
+        );
+      }
+      return SizedBox.shrink();
+    },
+  );
 
   Widget _section(BuildContext context, String title, Widget child) => Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: EdgeInsets.only(left: 32, bottom: 8),
-              child: Text(title,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge!
-                      .copyWith(color: ZenPalette.lavender, shadows: _textShadows)),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 32, vertical: 8),
-              child: RevealOnFocus(child: child),
-            ),
-          ],
+    padding: EdgeInsets.symmetric(vertical: 8),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.only(left: 32, bottom: 8),
+          child: Text(
+            title,
+            style: Theme.of(context).textTheme.titleLarge!.copyWith(color: ZenPalette.lavender, shadows: _textShadows),
+          ),
         ),
-      );
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+          child: RevealOnFocus(child: child),
+        ),
+      ],
+    ),
+  );
 }
 
 class _Panel extends StatefulWidget {
@@ -102,8 +107,10 @@ class _PanelState extends State<_Panel> {
     final textTheme = Theme.of(context).textTheme;
     final title = nowPlaying.title ?? application?.name ?? nowPlaying.packageName;
     // some apps repeat the title as artist
-    final subtitle =
-        [nowPlaying.artist, nowPlaying.album].where((text) => (text?.isNotEmpty ?? false) && text != title).join(" · ");
+    final subtitle = [
+      nowPlaying.artist,
+      nowPlaying.album,
+    ].where((text) => (text?.isNotEmpty ?? false) && text != title).join(" · ");
 
     return AnimatedScale(
       scale: _focused ? 1.02 : 1.0,
@@ -119,7 +126,7 @@ class _PanelState extends State<_Panel> {
         child: Material(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(_radius),
-            side: BorderSide(color: ZenPalette.lavender.withOpacity(0.18)),
+            side: BorderSide(color: ZenPalette.lavender.withValues(alpha: 0.18)),
           ),
           clipBehavior: Clip.antiAlias,
           elevation: _focused ? 16 : 8,
@@ -128,7 +135,11 @@ class _PanelState extends State<_Panel> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              IgnorePointer(child: RepaintBoundary(child: _ArtworkWaves(image: artImage, playing: nowPlaying.playing))),
+              IgnorePointer(
+                child: RepaintBoundary(
+                  child: _ArtworkWaves(image: artImage, playing: nowPlaying.playing),
+                ),
+              ),
               InkWell(
                 focusColor: Colors.transparent,
                 onFocusChange: (focused) => setState(() => _focused = focused),
@@ -148,8 +159,10 @@ class _PanelState extends State<_Panel> {
                             SizedBox(height: 4),
                             Text(
                               title,
-                              style:
-                                  textTheme.headlineSmall!.copyWith(fontWeight: FontWeight.w500, shadows: _textShadows),
+                              style: textTheme.headlineSmall!.copyWith(
+                                fontWeight: FontWeight.w500,
+                                shadows: _textShadows,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -157,7 +170,10 @@ class _PanelState extends State<_Panel> {
                               Text(
                                 subtitle,
                                 style: textTheme.titleMedium!.copyWith(
-                                    color: ZenPalette.lavender, fontWeight: FontWeight.w300, shadows: _textShadows),
+                                  color: ZenPalette.lavender,
+                                  fontWeight: FontWeight.w300,
+                                  shadows: _textShadows,
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -244,19 +260,19 @@ class _ArtworkWavesState extends State<_ArtworkWaves> with SingleTickerProviderS
 
   @override
   Widget build(BuildContext context) => Stack(
-        fit: StackFit.expand,
-        children: [
-          // its own layer, so that the blurred artwork is cached instead of being blurred again on every frame
-          if (widget.image != null)
-            RepaintBoundary(
-              child: ImageFiltered(
-                imageFilter: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                child: Image(image: widget.image!, fit: BoxFit.cover, gaplessPlayback: true),
-              ),
-            ),
-          RepaintBoundary(child: CustomPaint(painter: _ArtworkWavesPainter(_swell))),
-        ],
-      );
+    fit: StackFit.expand,
+    children: [
+      // its own layer, so that the blurred artwork is cached instead of being blurred again on every frame
+      if (widget.image != null)
+        RepaintBoundary(
+          child: ImageFiltered(
+            imageFilter: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+            child: Image(image: widget.image!, fit: BoxFit.cover, gaplessPlayback: true),
+          ),
+        ),
+      RepaintBoundary(child: CustomPaint(painter: _ArtworkWavesPainter(_swell))),
+    ],
+  );
 }
 
 class _ArtworkWavesPainter extends CustomPainter {
@@ -288,7 +304,7 @@ class _ArtworkWavesPainter extends CustomPainter {
     final paint = Paint()..blendMode = BlendMode.src;
     canvas.drawRect(
       Rect.fromLTWH(0, _top, ZenWavesPainter.width, size.height / scale),
-      paint..color = ZenPalette.surface.withOpacity(_tints[0]),
+      paint..color = ZenPalette.surface.withValues(alpha: _tints[0]),
     );
     for (var i = 0; i < ZenWavesPainter.waveCount; ++i) {
       final phase = i * _phaseShift - 2 * pi * swell.value;
@@ -296,7 +312,7 @@ class _ArtworkWavesPainter extends CustomPainter {
         i,
         move: (point) => point.translate(0, _amplitude * sin(2 * pi * point.dx / _wavelength + phase)),
       );
-      canvas.drawPath(wave, paint..color = ZenPalette.surface.withOpacity(_tints[i + 1]));
+      canvas.drawPath(wave, paint..color = ZenPalette.surface.withValues(alpha: _tints[i + 1]));
     }
     canvas.restore();
   }
@@ -312,18 +328,15 @@ class _AppLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        children: [
-          if (application?.icon != null) ...[
-            Image.memory(application!.icon!, height: 18, gaplessPlayback: true),
-            SizedBox(width: 6),
-          ],
-          if (application != null)
-            Text(
-              application!.name,
-              style: Theme.of(context).textTheme.labelLarge!.copyWith(color: ZenPalette.lavender),
-            ),
-        ],
-      );
+    children: [
+      if (application?.icon != null) ...[
+        Image.memory(application!.icon!, height: 18, gaplessPlayback: true),
+        SizedBox(width: 6),
+      ],
+      if (application != null)
+        Text(application!.name, style: Theme.of(context).textTheme.labelLarge!.copyWith(color: ZenPalette.lavender)),
+    ],
+  );
 }
 
 /// The artwork keeps its own aspect ratio (e.g. square album covers, 16:9 video thumbnails) so that it isn't cropped.
@@ -335,29 +348,29 @@ class _Art extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: _artSize * 16 / 9, maxHeight: _artSize),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [BoxShadow(color: Colors.black45, blurRadius: 8, offset: Offset(0, 2))],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: image != null
-                ? Image(image: image!, height: _artSize, fit: BoxFit.contain, gaplessPlayback: true)
-                : _placeholder(),
-          ),
-        ),
-      );
+    constraints: BoxConstraints(maxWidth: _artSize * 16 / 9, maxHeight: _artSize),
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [BoxShadow(color: Colors.black45, blurRadius: 8, offset: Offset(0, 2))],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: image != null
+            ? Image(image: image!, height: _artSize, fit: BoxFit.contain, gaplessPlayback: true)
+            : _placeholder(),
+      ),
+    ),
+  );
 
   Widget _placeholder() => Container(
-        width: _artSize,
-        height: _artSize,
-        color: ZenPalette.night,
-        child: application?.icon != null
-            ? Padding(padding: EdgeInsets.all(24), child: Image.memory(application!.icon!))
-            : Icon(Icons.music_note, size: 64, color: ZenPalette.lavender),
-      );
+    width: _artSize,
+    height: _artSize,
+    color: ZenPalette.night,
+    child: application?.icon != null
+        ? Padding(padding: EdgeInsets.all(24), child: Image.memory(application!.icon!))
+        : Icon(Icons.music_note, size: 64, color: ZenPalette.lavender),
+  );
 }
 
 class _ProgressBar extends StatefulWidget {
@@ -401,38 +414,43 @@ class _ProgressBarState extends State<_ProgressBar> {
   Widget build(BuildContext context) {
     final duration = widget.nowPlaying.duration!;
     final position = widget.nowPlaying.currentPosition(DateTime.now()) ?? Duration.zero;
-    final textStyle = Theme.of(context)
-        .textTheme
-        .labelMedium!
+    final textStyle = Theme.of(context).textTheme.labelMedium!
         .copyWith(color: ZenPalette.lavender, fontFeatures: [ui.FontFeature.tabularFigures()]);
     final timeWidth = _cachedTimeWidth(context, duration, textStyle);
     // its own layer, as it is repainted twice a second
     return RepaintBoundary(
-        child: Row(
-      children: [
-        SizedBox(width: timeWidth, child: Text(_format(position), style: textStyle, textAlign: TextAlign.end)),
-        SizedBox(width: 8),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(2),
-            child: LinearProgressIndicator(
-              value: duration.inMilliseconds > 0 ? position.inMilliseconds / duration.inMilliseconds : 0,
-              minHeight: 4,
-              backgroundColor: Colors.white.withOpacity(0.14),
-              valueColor: AlwaysStoppedAnimation(ZenPalette.accent),
+      child: Row(
+        children: [
+          SizedBox(
+            width: timeWidth,
+            child: Text(_format(position), style: textStyle, textAlign: TextAlign.end),
+          ),
+          SizedBox(width: 8),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: LinearProgressIndicator(
+                value: duration.inMilliseconds > 0 ? position.inMilliseconds / duration.inMilliseconds : 0,
+                minHeight: 4,
+                backgroundColor: Colors.white.withValues(alpha: 0.14),
+                valueColor: AlwaysStoppedAnimation(ZenPalette.accent),
+              ),
             ),
           ),
-        ),
-        SizedBox(width: 8),
-        SizedBox(width: timeWidth, child: Text(_format(duration), style: textStyle)),
-      ],
-    ));
+          SizedBox(width: 8),
+          SizedBox(
+            width: timeWidth,
+            child: Text(_format(duration), style: textStyle),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Measuring the digits takes a dozen text layouts, which are only done again when the duration's format changes.
   double _cachedTimeWidth(BuildContext context, Duration duration, TextStyle style) {
     final key =
-        "${_format(duration).replaceAll(RegExp(r"\d"), "0")} ${MediaQuery.textScaleFactorOf(context)} ${style.hashCode}";
+        "${_format(duration).replaceAll(RegExp(r"\d"), "0")} ${MediaQuery.textScalerOf(context).hashCode} ${style.hashCode}";
     if (key != _timeWidthKey) {
       _timeWidthKey = key;
       _timeWidth = _measureTimeWidth(context, duration, style);
@@ -444,11 +462,10 @@ class _ProgressBarState extends State<_ProgressBar> {
   /// position moves, whatever the digits of the font.
   double _measureTimeWidth(BuildContext context, Duration duration, TextStyle style) {
     double width(String text) => (TextPainter(
-          text: TextSpan(text: text, style: style),
-          textDirection: TextDirection.ltr,
-          textScaleFactor: MediaQuery.textScaleFactorOf(context),
-        )..layout())
-            .width;
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout()).width;
     final widestDigit = List.generate(10, (digit) => "$digit").reduce((a, b) => width(b) > width(a) ? b : a);
     return width(_format(duration).replaceAll(RegExp(r"\d"), widestDigit)).ceilToDouble();
   }
@@ -466,30 +483,32 @@ class _ProgressBarState extends State<_ProgressBar> {
 class _PermissionHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Icon(Icons.music_off, size: 32, color: Colors.white70),
-              SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("L'accès aux notifications est nécessaire pour afficher la lecture en cours.",
-                        style: Theme.of(context).textTheme.titleSmall),
-                    SizedBox(height: 4),
-                    SelectableText(
-                      "adb shell cmd notification allow_listener "
-                      "me.efesser.flauncher/me.efesser.flauncher.MediaNotificationListener",
-                      style: Theme.of(context).textTheme.bodySmall!.copyWith(fontFamily: "monospace"),
-                    ),
-                  ],
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    child: Padding(
+      padding: EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Icon(Icons.music_off, size: 32, color: Colors.white70),
+          SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "L'accès aux notifications est nécessaire pour afficher la lecture en cours.",
+                  style: Theme.of(context).textTheme.titleSmall,
                 ),
-              ),
-            ],
+                SizedBox(height: 4),
+                SelectableText(
+                  "adb shell cmd notification allow_listener "
+                  "me.efesser.flauncher/me.efesser.flauncher.MediaNotificationListener",
+                  style: Theme.of(context).textTheme.bodySmall!.copyWith(fontFamily: "monospace"),
+                ),
+              ],
+            ),
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 }

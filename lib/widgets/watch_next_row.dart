@@ -36,56 +36,54 @@ const _textShadows = [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRa
 class WatchNextRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Consumer<WatchNextService>(
-        builder: (context, watchNextService, _) {
-          if (!watchNextService.permissionGranted) {
-            return _section(
-                context, SkipInitialFocus(child: _PermissionHint(onPressed: watchNextService.requestPermission)));
-          }
-          if (watchNextService.programs.isEmpty) {
-            return SizedBox.shrink();
-          }
-          final programs = watchNextService.programs;
-          return _section(
-            context,
-            SizedBox(
-              height: _rowHeight,
-              child: ListView.builder(
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                scrollDirection: Axis.horizontal,
-                itemCount: programs.length,
-                itemBuilder: (context, index) => RevealOnFocus(
-                  key: Key("watch-next-${programs[index].id}"),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8),
-                    child: _ProgramCard(
-                      program: programs[index],
-                      onPressed: () => watchNextService.open(programs[index]),
-                    ),
-                  ),
-                ),
+    builder: (context, watchNextService, _) {
+      if (!watchNextService.permissionGranted) {
+        return _section(
+          context,
+          SkipInitialFocus(child: _PermissionHint(onPressed: watchNextService.requestPermission)),
+        );
+      }
+      if (watchNextService.programs.isEmpty) {
+        return SizedBox.shrink();
+      }
+      final programs = watchNextService.programs;
+      return _section(
+        context,
+        SizedBox(
+          height: _rowHeight,
+          child: ListView.builder(
+            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            scrollDirection: Axis.horizontal,
+            itemCount: programs.length,
+            itemBuilder: (context, index) => RevealOnFocus(
+              key: Key("watch-next-${programs[index].id}"),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8),
+                child: _ProgramCard(program: programs[index], onPressed: () => watchNextService.open(programs[index])),
               ),
             ),
-          );
-        },
-      );
-
-  Widget _section(BuildContext context, Widget child) => Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: EdgeInsets.only(left: 32, bottom: 8),
-              child: Text("Continuer à regarder",
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge!
-                      .copyWith(color: ZenPalette.lavender, shadows: _textShadows)),
-            ),
-            child,
-          ],
+          ),
         ),
       );
+    },
+  );
+
+  Widget _section(BuildContext context, Widget child) => Padding(
+    padding: EdgeInsets.symmetric(vertical: 8),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.only(left: 32, bottom: 8),
+          child: Text(
+            "Continuer à regarder",
+            style: Theme.of(context).textTheme.titleLarge!.copyWith(color: ZenPalette.lavender, shadows: _textShadows),
+          ),
+        ),
+        child,
+      ],
+    ),
+  );
 }
 
 class _ProgramCard extends StatefulWidget {
@@ -146,7 +144,7 @@ class _ProgramCardState extends State<_ProgramCard> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         stops: [0.35, 1.0],
-                        colors: [ZenPalette.night.withOpacity(0), ZenPalette.night.withOpacity(0.88)],
+                        colors: [ZenPalette.night.withValues(alpha: 0), ZenPalette.night.withValues(alpha: 0.88)],
                       ),
                     ),
                   ),
@@ -198,7 +196,7 @@ class _ProgramCardState extends State<_ProgramCard> {
                         child: LinearProgressIndicator(
                           value: progress,
                           minHeight: _progressHeight,
-                          backgroundColor: Colors.white.withOpacity(0.18),
+                          backgroundColor: Colors.white.withValues(alpha: 0.18),
                           valueColor: AlwaysStoppedAnimation(ZenPalette.accent),
                         ),
                       ),
@@ -230,11 +228,7 @@ class _ProgramCardState extends State<_ProgramCard> {
     } else {
       return _placeholder(application);
     }
-    return Ink.image(
-      image: image,
-      fit: BoxFit.cover,
-      onImageError: (_, __) {},
-    );
+    return Ink.image(image: image, fit: BoxFit.cover, onImageError: (_, _) {});
   }
 
   Widget _placeholder(App? application) => application?.banner != null
@@ -249,36 +243,38 @@ class _PermissionHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: EdgeInsets.symmetric(horizontal: 32, vertical: 8),
-        child: RevealOnFocus(
-            child: Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Icon(Icons.history, size: 32, color: Colors.white70),
-                SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                          "L'accès aux programmes TV est nécessaire pour afficher ce que vous pouvez continuer à regarder.",
-                          style: Theme.of(context).textTheme.titleSmall),
-                      SizedBox(height: 4),
-                      SelectableText(
-                        "adb shell pm grant me.efesser.flauncher android.permission.READ_TV_LISTINGS",
-                        style: Theme.of(context).textTheme.bodySmall!.copyWith(fontFamily: "monospace"),
-                      ),
-                    ],
-                  ),
+    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+    child: RevealOnFocus(
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Icon(Icons.history, size: 32, color: Colors.white70),
+              SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "L'accès aux programmes TV est nécessaire pour afficher ce que vous pouvez continuer à regarder.",
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    SizedBox(height: 4),
+                    SelectableText(
+                      "adb shell pm grant me.efesser.flauncher android.permission.READ_TV_LISTINGS",
+                      style: Theme.of(context).textTheme.bodySmall!.copyWith(fontFamily: "monospace"),
+                    ),
+                  ],
                 ),
-                SizedBox(width: 16),
-                ElevatedButton(onPressed: onPressed, child: Text("Autoriser")),
-              ],
-            ),
+              ),
+              SizedBox(width: 16),
+              ElevatedButton(onPressed: onPressed, child: Text("Autoriser")),
+            ],
           ),
-        )),
-      );
+        ),
+      ),
+    ),
+  );
 }

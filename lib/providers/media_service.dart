@@ -59,8 +59,9 @@ class NowPlaying {
       artUri: map["artUri"],
       playing: map["playing"] ?? false,
       position: map["position"] != null ? Duration(milliseconds: map["position"]) : null,
-      positionUpdatedAt:
-          map["positionUpdatedAt"] != null ? DateTime.fromMillisecondsSinceEpoch(map["positionUpdatedAt"]) : null,
+      positionUpdatedAt: map["positionUpdatedAt"] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map["positionUpdatedAt"])
+          : null,
       speed: map["speed"] ?? 1.0,
     );
   }
