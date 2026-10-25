@@ -27,6 +27,10 @@ import 'package:provider/provider.dart';
 
 const _rowHeight = 170.0;
 const _radius = 12.0;
+
+/// Margin of the progress bar inside the card, so that it clears its rounded corners.
+const _progressInset = 10.0;
+const _progressHeight = 4.0;
 const _textShadows = [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 8)];
 
 class WatchNextRow extends StatelessWidget {
@@ -152,13 +156,16 @@ class _ProgramCardState extends State<_ProgramCard> {
                     top: 6,
                     left: 6,
                     child: IgnorePointer(
-                      child: Image.memory(application!.icon!, height: 24, gaplessPlayback: true),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(5),
+                        child: Image.memory(application!.icon!, height: 24, gaplessPlayback: true),
+                      ),
                     ),
                   ),
                 Positioned(
                   left: 8,
                   right: 8,
-                  bottom: progress != null ? 12 : 8,
+                  bottom: progress != null ? _progressInset + _progressHeight + 6 : 8,
                   child: IgnorePointer(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,14 +189,19 @@ class _ProgramCardState extends State<_ProgramCard> {
                 ),
                 if (progress != null)
                   Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 4,
-                      backgroundColor: Colors.white.withOpacity(0.18),
-                      valueColor: AlwaysStoppedAnimation(ZenPalette.accent),
+                    left: _progressInset,
+                    right: _progressInset,
+                    bottom: _progressInset,
+                    child: IgnorePointer(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(_progressHeight / 2),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: _progressHeight,
+                          backgroundColor: Colors.white.withOpacity(0.18),
+                          valueColor: AlwaysStoppedAnimation(ZenPalette.accent),
+                        ),
+                      ),
                     ),
                   ),
                 IgnorePointer(
