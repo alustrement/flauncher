@@ -37,7 +37,7 @@ void main() {
 
     await _pumpWidgetWithProviders(tester, watchNextService, MockAppsService());
 
-    expect(find.text("Continue watching"), findsNothing);
+    expect(find.text("Continuer à regarder"), findsNothing);
   });
 
   testWidgets("permission hint requests permission", (tester) async {
@@ -46,7 +46,7 @@ void main() {
     when(watchNextService.programs).thenReturn([]);
 
     await _pumpWidgetWithProviders(tester, watchNextService, MockAppsService());
-    await tester.tap(find.text("Grant access"));
+    await tester.tap(find.text("Autoriser"));
 
     verify(watchNextService.requestPermission());
   });
@@ -73,7 +73,7 @@ void main() {
 
     await mockNetworkImagesFor(() => _pumpWidgetWithProviders(tester, watchNextService, appsService));
 
-    expect(find.text("Continue watching"), findsOneWidget);
+    expect(find.text("Continuer à regarder"), findsOneWidget);
     expect(find.text("Malcolm"), findsOneWidget);
     expect(find.text("S1 E4 · Caméra cachée"), findsOneWidget);
     expect(find.text("L'amanite tue-mouche"), findsOneWidget);

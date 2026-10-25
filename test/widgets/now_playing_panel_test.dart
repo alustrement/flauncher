@@ -39,7 +39,7 @@ void main() {
 
     await _pumpWidgetWithProviders(tester, mediaService, MockAppsService());
 
-    expect(find.text("Now playing"), findsNothing);
+    expect(find.text("En cours de lecture"), findsNothing);
   });
 
   testWidgets("shows permission hint when access is missing", (tester) async {
@@ -49,7 +49,7 @@ void main() {
 
     await _pumpWidgetWithProviders(tester, mediaService, MockAppsService());
 
-    expect(find.textContaining("Notification access is required"), findsOneWidget);
+    expect(find.textContaining("L'accès aux notifications est nécessaire"), findsOneWidget);
   });
 
   testWidgets("shows media session info", (tester) async {
@@ -68,7 +68,7 @@ void main() {
 
     await _pumpWidgetWithProviders(tester, mediaService, appsService);
 
-    expect(find.text("Now playing"), findsOneWidget);
+    expect(find.text("En cours de lecture"), findsOneWidget);
     expect(find.text("Spotify"), findsOneWidget);
     expect(find.text("Bittersweet"), findsOneWidget);
     expect(find.text("Lianne La Havas · Bittersweet (Radio Edit)"), findsOneWidget);
@@ -147,7 +147,7 @@ void main() {
     await _pumpWidgetWithProviders(tester, mediaService, appsService);
 
     expect(find.text("Reprendre la lecture sur Spotify"), findsOneWidget);
-    expect(find.text("Now playing"), findsNothing);
+    expect(find.text("En cours de lecture"), findsNothing);
     expect(find.text("Bittersweet"), findsOneWidget);
     expect(tester.widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator)).value, 0.25);
 
@@ -169,7 +169,7 @@ void main() {
 
     await _pumpWidgetWithProviders(tester, mediaService, appsService);
 
-    expect(find.text("Now playing"), findsOneWidget);
+    expect(find.text("En cours de lecture"), findsOneWidget);
     expect(find.text("Dans l'air"), findsOneWidget);
     expect(find.text("Reprendre la lecture sur Spotify"), findsNothing);
     expect(find.text("Bittersweet"), findsNothing);

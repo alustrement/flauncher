@@ -101,7 +101,7 @@ class CategoryRow extends StatelessWidget {
                       padding: EdgeInsets.all(8),
                       child: Center(
                         child: Text(
-                          "This category is empty.",
+                          "Cette catégorie est vide.",
                           textAlign: TextAlign.center,
                         ),
                       ),

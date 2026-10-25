@@ -66,8 +66,8 @@ void main() {
               sideloaded: true,
             ),
           ]));
-      final tvApplicationsCategory = fakeCategory(name: "TV Applications");
-      final nonTvApplicationsCategory = fakeCategory(name: "Non-TV Applications");
+      final tvApplicationsCategory = fakeCategory(name: "Applis TV");
+      final nonTvApplicationsCategory = fakeCategory(name: "Applis non TV");
       when(database.listCategoriesWithVisibleApps()).thenAnswer((_) => Future.value([
             CategoryWithApps(tvApplicationsCategory, []),
             CategoryWithApps(nonTvApplicationsCategory, []),
@@ -102,7 +102,7 @@ void main() {
         database.listCategoriesWithVisibleApps(),
         database.listApplications(),
         database.insertCategory(
-          CategoriesCompanion.insert(name: "TV Applications", order: 0),
+          CategoriesCompanion.insert(name: "Applis TV", order: 0),
         ),
         database.updateCategory(
           tvApplicationsCategory.id,
@@ -116,7 +116,7 @@ void main() {
           )
         ]),
         database.insertCategory(
-          CategoriesCompanion.insert(name: "Non-TV Applications", order: 0),
+          CategoriesCompanion.insert(name: "Applis non TV", order: 0),
         ),
         database.insertAppsCategories([
           AppsCategoriesCompanion.insert(

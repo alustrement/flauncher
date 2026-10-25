@@ -46,7 +46,7 @@ void main() {
 
     await _pumpWidgetWithProviders(tester, settingsService, wallpaperService);
 
-    expect(find.text("Photo by John Doe on Unsplash"), findsOneWidget);
+    expect(find.text("Photo de John Doe sur Unsplash"), findsOneWidget);
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
     expect(find.byKey(Key("UnsplashPanelPage")), findsOneWidget);
@@ -96,7 +96,7 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pumpAndSettle();
       expect(find.byType(SnackBar), findsOneWidget);
-      expect(find.text("Please install a file explorer in order to pick an image."), findsOneWidget);
+      expect(find.text("Installez un explorateur de fichiers pour choisir une image."), findsOneWidget);
     });
   });
 }

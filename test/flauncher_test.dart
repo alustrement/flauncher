@@ -116,7 +116,7 @@ void main() {
     expect(find.text("Favorites"), findsOneWidget);
     expect(find.byType(CategoryRow), findsOneWidget);
     expect(find.byType(AppsGrid), findsOneWidget);
-    expect(find.text("This category is empty."), findsNWidgets(2));
+    expect(find.text("Cette catégorie est vide."), findsNWidgets(2));
   });
 
   testWidgets("Home page displays background image", (tester) async {

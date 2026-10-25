@@ -33,7 +33,7 @@ class AddToCategoryDialog extends StatelessWidget {
             .map((categoryWithApps) => categoryWithApps.category)
             .toList(),
         builder: (context, categories, _) => SimpleDialog(
-          title: Text("Add to..."),
+          title: Text("Ajouter à…"),
           contentPadding: EdgeInsets.all(16),
           children: categories
               .map(

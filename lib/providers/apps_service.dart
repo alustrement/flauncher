@@ -86,9 +86,9 @@ class AppsService extends ChangeNotifier {
         final tvApplications = _applications.where((element) => element.sideloaded == false);
         final nonTvApplications = _applications.where((element) => element.sideloaded == true);
         if (tvApplications.isNotEmpty) {
-          await addCategory("TV Applications", shouldNotifyListeners: false);
+          await addCategory("Applis TV", shouldNotifyListeners: false);
           final tvAppsCategory =
-              _categoriesWithApps.map((e) => e.category).firstWhere((element) => element.name == "TV Applications");
+              _categoriesWithApps.map((e) => e.category).firstWhere((element) => element.name == "Applis TV");
           await setCategoryType(
             tvAppsCategory,
             CategoryType.grid,
@@ -100,11 +100,11 @@ class AppsService extends ChangeNotifier {
         }
         if (nonTvApplications.isNotEmpty) {
           await addCategory(
-            "Non-TV Applications",
+            "Applis non TV",
             shouldNotifyListeners: false,
           );
           final nonTvAppsCategory =
-              _categoriesWithApps.map((e) => e.category).firstWhere((element) => element.name == "Non-TV Applications");
+              _categoriesWithApps.map((e) => e.category).firstWhere((element) => element.name == "Applis non TV");
           for (final app in nonTvApplications) {
             await addToCategory(
               app,

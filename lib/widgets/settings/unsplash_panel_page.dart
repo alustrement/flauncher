@@ -38,8 +38,8 @@ class UnsplashPanelPage extends StatelessWidget {
               type: MaterialType.transparency,
               child: TabBar(
                 tabs: [
-                  Tab(child: Row(children: [Icon(Icons.sync), SizedBox(width: 8), Text("Random")])),
-                  Tab(child: Row(children: [Icon(Icons.search), SizedBox(width: 8), Text("Search")])),
+                  Tab(child: Row(children: [Icon(Icons.sync), SizedBox(width: 8), Text("Aléatoire")])),
+                  Tab(child: Row(children: [Icon(Icons.search), SizedBox(width: 8), Text("Rechercher")])),
                 ],
               ),
             ),
@@ -66,19 +66,20 @@ class _RandomTabState extends State<_RandomTab> {
           mainAxisSpacing: 8,
           crossAxisSpacing: 8,
           children: [
-            _randomCard("Landscape", AssetImage("assets/landscape.png"), autofocus: true),
-            _randomCard("Abstract", AssetImage("assets/abstract.png")),
-            _randomCard("Minimal", AssetImage("assets/minimal.png")),
-            _randomCard("Texture", AssetImage("assets/texture.png")),
-            _randomCard("Architecture", AssetImage("assets/architecture.png")),
-            _randomCard("Plant", AssetImage("assets/plant.png")),
-            _randomCard("Technology", AssetImage("assets/technology.png")),
-            _randomCard("Animal", AssetImage("assets/animal.png")),
-            _randomCard("Colorful", AssetImage("assets/colorful.png")),
-            _randomCard("Space", AssetImage("assets/space.png")),
+            _randomCard("Paysage", "landscape", AssetImage("assets/landscape.png"), autofocus: true),
+            _randomCard("Abstrait", "abstract", AssetImage("assets/abstract.png")),
+            _randomCard("Minimaliste", "minimal", AssetImage("assets/minimal.png")),
+            _randomCard("Texture", "texture", AssetImage("assets/texture.png")),
+            _randomCard("Architecture", "architecture", AssetImage("assets/architecture.png")),
+            _randomCard("Plante", "plant", AssetImage("assets/plant.png")),
+            _randomCard("Technologie", "technology", AssetImage("assets/technology.png")),
+            _randomCard("Animal", "animal", AssetImage("assets/animal.png")),
+            _randomCard("Coloré", "colorful", AssetImage("assets/colorful.png")),
+            _randomCard("Espace", "space", AssetImage("assets/space.png")),
           ]);
 
-  Widget _randomCard(String text, AssetImage assetImage, {bool autofocus = false}) => Focus(
+  /// [query] is the theme searched on Unsplash, in English.
+  Widget _randomCard(String text, String query, AssetImage assetImage, {bool autofocus = false}) => Focus(
         canRequestFocus: false,
         child: Builder(
           builder: (context) => Stack(
@@ -93,7 +94,7 @@ class _RandomTabState extends State<_RandomTab> {
                     if (enabled) {
                       setState(() => enabled = false);
                       try {
-                        await context.read<WallpaperService>().randomFromUnsplash("${text.toLowerCase()} wallpaper");
+                        await context.read<WallpaperService>().randomFromUnsplash("$query wallpaper");
                       } finally {
                         setState(() => enabled = true);
                       }
@@ -153,7 +154,7 @@ class _SearchTabState extends State<_SearchTab> {
                 return KeyEventResult.ignored;
               },
               builder: (context) => TextField(
-                decoration: InputDecoration(labelText: "Search", isDense: true),
+                decoration: InputDecoration(labelText: "Rechercher", isDense: true),
                 keyboardType: TextInputType.text,
                 onSubmitted: (value) async {
                   if (enabled) {

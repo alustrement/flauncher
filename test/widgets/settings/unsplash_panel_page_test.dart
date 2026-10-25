@@ -42,7 +42,7 @@ void main() {
 
     await _pumpWidgetWithProviders(tester, wallpaperService);
 
-    expect(find.text("Landscape"), findsOneWidget);
+    expect(find.text("Paysage"), findsOneWidget);
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     verify(wallpaperService.randomFromUnsplash("landscape wallpaper"));
   });

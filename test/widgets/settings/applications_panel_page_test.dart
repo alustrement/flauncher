@@ -54,7 +54,7 @@ void main() {
 
     await _pumpWidgetWithProviders(tester, appsService);
 
-    expect(find.text("TV Applications"), findsOneWidget);
+    expect(find.text("Applis TV"), findsOneWidget);
     expect(find.text("FLauncher"), findsOneWidget);
   });
 
@@ -77,7 +77,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
 
-    expect(find.text("Non-TV Applications"), findsOneWidget);
+    expect(find.text("Applis non TV"), findsOneWidget);
     expect(find.text("FLauncher"), findsOneWidget);
   });
 
@@ -101,7 +101,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
 
-    expect(find.text("Hidden Applications"), findsOneWidget);
+    expect(find.text("Applis masquées"), findsOneWidget);
     expect(find.text("FLauncher"), findsOneWidget);
   });
 

@@ -18,5 +18,5 @@
   -->
 
 <resources>
-    <string name="recents_accessibility_service_description">Shows the recent apps when Home is pressed twice, like the default launcher does. FLauncher doesn\'t read anything on screen.</string>
+    <string name="recents_accessibility_service_description">Affiche les applis récentes quand on appuie deux fois sur Accueil, comme le launcher par défaut. FLauncher ne lit rien à l\'écran.</string>
 </resources>

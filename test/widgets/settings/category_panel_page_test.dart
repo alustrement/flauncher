@@ -50,8 +50,8 @@ void main() {
     await _pumpWidgetWithProviders(tester, appsService, favoritesCategory.id);
 
     expect(find.text("Favorites"), findsNWidgets(2));
-    expect(find.text("Alphabetical"), findsOneWidget);
-    expect(find.text("Grid"), findsOneWidget);
+    expect(find.text("Alphabétique"), findsOneWidget);
+    expect(find.text("Grille"), findsOneWidget);
     expect(find.text("6"), findsOneWidget);
   });
 

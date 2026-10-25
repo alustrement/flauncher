@@ -40,11 +40,12 @@ class NowPlayingPanel extends StatelessWidget {
   Widget build(BuildContext context) => Consumer<MediaService>(
         builder: (context, mediaService, _) {
           if (!mediaService.permissionGranted) {
-            return _section(context, "Now playing", SkipInitialFocus(child: _PermissionHint()));
+            return _section(context, "En cours de lecture", SkipInitialFocus(child: _PermissionHint()));
           }
           final nowPlaying = mediaService.nowPlaying;
           if (nowPlaying != null) {
-            return _section(context, "Now playing", _Panel(nowPlaying: nowPlaying, onPressed: mediaService.openPlayer));
+            return _section(
+                context, "En cours de lecture", _Panel(nowPlaying: nowPlaying, onPressed: mediaService.openPlayer));
           }
           final lastSpotify = mediaService.lastSpotify;
           if (lastSpotify != null) {
@@ -461,7 +462,7 @@ class _PermissionHint extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Notification access is required to display what's playing.",
+                    Text("L'accès aux notifications est nécessaire pour afficher la lecture en cours.",
                         style: Theme.of(context).textTheme.titleSmall),
                     SizedBox(height: 4),
                     SelectableText(

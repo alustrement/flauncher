@@ -28,7 +28,7 @@ class GradientPanelPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Column(
         children: [
-          Text("Gradient", style: Theme.of(context).textTheme.titleLarge),
+          Text("Dégradé", style: Theme.of(context).textTheme.titleLarge),
           Divider(),
           Expanded(
             child: GridView.count(

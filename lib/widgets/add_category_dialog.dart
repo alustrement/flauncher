@@ -29,13 +29,13 @@ class AddCategoryDialog extends StatelessWidget {
   Widget build(BuildContext context) => SimpleDialog(
         insetPadding: EdgeInsets.only(bottom: 120),
         contentPadding: EdgeInsets.all(24),
-        title: Text(initialValue != null ? "Rename Category" : "Add Category"),
+        title: Text(initialValue != null ? "Renommer la catégorie" : "Ajouter une catégorie"),
         children: [
           TextFormField(
             autofocus: true,
             initialValue: initialValue,
-            decoration: InputDecoration(labelText: "Name"),
-            validator: (value) => value!.trim().isEmpty ? "Must not be empty" : null,
+            decoration: InputDecoration(labelText: "Nom"),
+            validator: (value) => value!.trim().isEmpty ? "Ne doit pas être vide" : null,
             autovalidateMode: AutovalidateMode.always,
             keyboardType: TextInputType.text,
             textCapitalization: TextCapitalization.sentences,

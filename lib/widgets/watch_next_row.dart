@@ -72,7 +72,7 @@ class WatchNextRow extends StatelessWidget {
           children: [
             Padding(
               padding: EdgeInsets.only(left: 32, bottom: 8),
-              child: Text("Continue watching",
+              child: Text("Continuer à regarder",
                   style: Theme.of(context)
                       .textTheme
                       .titleLarge!
@@ -251,7 +251,8 @@ class _PermissionHint extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Access to TV listings is required to display what you can continue watching.",
+                      Text(
+                          "L'accès aux programmes TV est nécessaire pour afficher ce que vous pouvez continuer à regarder.",
                           style: Theme.of(context).textTheme.titleSmall),
                       SizedBox(height: 4),
                       SelectableText(
@@ -262,7 +263,7 @@ class _PermissionHint extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: 16),
-                ElevatedButton(onPressed: onPressed, child: Text("Grant access")),
+                ElevatedButton(onPressed: onPressed, child: Text("Autoriser")),
               ],
             ),
           ),

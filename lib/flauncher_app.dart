@@ -28,6 +28,7 @@ import 'package:flauncher/providers/watch_next_service.dart';
 import 'package:flauncher/unsplash_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -80,6 +81,9 @@ class FLauncherApp extends StatelessWidget {
           Provider<TickerModel>(create: (context) => TickerModel(null))
         ],
         child: MaterialApp(
+          locale: Locale("fr"),
+          supportedLocales: [Locale("fr")],
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
           shortcuts: {
             ...WidgetsApp.defaultShortcuts,
             SingleActivator(LogicalKeyboardKey.select): ActivateIntent(),
