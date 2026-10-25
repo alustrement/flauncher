@@ -151,6 +151,40 @@ void main() {
     await tester.pump();
     expect(rowNodes[2].hasFocus, isTrue);
   });
+
+  testWidgets("going left from the first element of a row stays there, even when the row above is scrolled",
+      (tester) async {
+    final firstRowNodes = List.generate(6, (index) => FocusNode(debugLabel: "first row item $index"));
+    final secondRowNodes = List.generate(2, (index) => FocusNode(debugLabel: "second row item $index"));
+    final scrollController = ScrollController();
+    await tester.pumpWidget(MaterialApp(
+      home: FocusTraversalGroup(
+        policy: RowByRowTraversalPolicy(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: 100,
+              child: ListView(
+                controller: scrollController,
+                scrollDirection: Axis.horizontal,
+                children: firstRowNodes.map((node) => _focusable(node, height: 100, width: 200)).toList(),
+              ),
+            ),
+            Row(children: secondRowNodes.map((node) => _focusable(node, height: 100, width: 200)).toList()),
+          ],
+        ),
+      ),
+    ));
+    // the first items of the first row are on the left of the screen
+    scrollController.jumpTo(450);
+    secondRowNodes.first.requestFocus();
+    await tester.pump();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pump();
+    expect(secondRowNodes.first.hasFocus, isTrue);
+  });
 }
 
 Widget _focusable(FocusNode focusNode, {required double height, double width = 100}) => Focus(

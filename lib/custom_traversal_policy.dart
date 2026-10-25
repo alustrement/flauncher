@@ -21,6 +21,11 @@ class RowByRowTraversalPolicy extends FocusTraversalPolicy with DirectionalFocus
     NodeSearcher searcher = NodeSearcher(direction);
     List<CandidateNode> candidates = searcher.findCandidates(nodes, currentNode);
     if (candidates.isEmpty) {
+      // the first element of a row stays focused: the default policy would go to the closest element on the left
+      // anywhere, e.g. in the row above when it is scrolled
+      if (direction == TraversalDirection.left) {
+        return false;
+      }
       return super.inDirection(currentNode, direction);
     }
     FocusNode nextNode = searcher.findBestFocusNode(candidates, currentNode);
