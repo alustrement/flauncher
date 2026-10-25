@@ -153,13 +153,15 @@ class FLauncher extends StatelessWidget {
                   : null,
             );
 
-  Widget _emptyState(BuildContext context) => Center(
+  /// In the middle of the upper half of the screen, where the splash screen shows FLauncher's name.
+  Widget _emptyState(BuildContext context) => Align(
+        alignment: Alignment(0, -0.5),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(),
+            CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(ZenPalette.accent)),
             SizedBox(height: 16),
-            Text("Loading...", style: Theme.of(context).textTheme.titleLarge),
+            Text("Loading...", style: Theme.of(context).textTheme.titleLarge!.copyWith(color: ZenPalette.lavender)),
           ],
         ),
       );
