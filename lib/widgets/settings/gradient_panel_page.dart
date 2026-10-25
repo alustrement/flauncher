@@ -56,9 +56,14 @@ class GradientPanelPage extends StatelessWidget {
                   clipBehavior: Clip.antiAlias,
                   shape: _cardBorder(Focus.of(context).hasFocus),
                   child: InkWell(
-                    autofocus: fLauncherGradient == FLauncherGradients.greatWhale,
+                    autofocus: fLauncherGradient == FLauncherGradients.zen,
                     onTap: () => context.read<WallpaperService>().setGradient(fLauncherGradient),
-                    child: Container(decoration: BoxDecoration(gradient: fLauncherGradient.gradient)),
+                    child: Container(
+                      decoration: BoxDecoration(gradient: fLauncherGradient.gradient),
+                      child: fLauncherGradient.painter != null
+                          ? CustomPaint(painter: fLauncherGradient.painter, child: SizedBox.expand())
+                          : null,
+                    ),
                   ),
                 ),
               ),

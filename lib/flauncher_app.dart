@@ -17,6 +17,7 @@
  */
 
 import 'package:flauncher/actions.dart';
+import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/media_service.dart';
 import 'package:flauncher/providers/settings_service.dart';
@@ -42,17 +43,17 @@ class FLauncherApp extends StatelessWidget {
   final UnsplashService _unsplashService;
   final bool _unsplashEnabled;
 
-  static const MaterialColor _swatch = MaterialColor(0xFF011526, <int, Color>{
-    50: Color(0xFF36A0FA),
-    100: Color(0xFF067BDE),
-    200: Color(0xFF045CA7),
-    300: Color(0xFF033662),
-    400: Color(0xFF022544),
-    500: Color(0xFF011526),
-    600: Color(0xFF000508),
-    700: Color(0xFF000000),
-    800: Color(0xFF000000),
-    900: Color(0xFF000000),
+  static const MaterialColor _swatch = MaterialColor(0xFF6F5DF1, <int, Color>{
+    50: Color(0xFFEEEBFF),
+    100: Color(0xFFD6CFFF),
+    200: Color(0xFFB9AEFF),
+    300: Color(0xFF8E7CFF),
+    400: Color(0xFF7A69F3),
+    500: Color(0xFF6F5DF1),
+    600: Color(0xFF6840F9),
+    700: Color(0xFF652BFB),
+    800: Color(0xFF6500FE),
+    900: Color(0xFF4A00BA),
   });
 
   FLauncherApp(
@@ -95,22 +96,24 @@ class FLauncherApp extends StatelessWidget {
             primarySwatch: _swatch,
             // ignore: deprecated_member_use
             accentColor: _swatch[200],
-            cardColor: _swatch[300],
-            canvasColor: _swatch[300],
-            dialogBackgroundColor: _swatch[400],
+            cardColor: ZenPalette.surface,
+            canvasColor: ZenPalette.surface,
+            dialogBackgroundColor: ZenPalette.night,
             // ignore: deprecated_member_use
-            backgroundColor: _swatch[400],
-            scaffoldBackgroundColor: _swatch[400],
+            backgroundColor: ZenPalette.night,
+            scaffoldBackgroundColor: ZenPalette.night,
             textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(foregroundColor: Colors.white)),
             appBarTheme: AppBarTheme(elevation: 0, backgroundColor: Colors.transparent),
             typography: Typography.material2018(),
+            fontFamily: "Outfit",
+            textTheme: TextTheme(titleLarge: TextStyle(fontWeight: FontWeight.w400)),
             inputDecorationTheme: InputDecorationTheme(
               focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white)),
               labelStyle: Typography.material2018().white.bodyMedium,
             ),
             textSelectionTheme: TextSelectionThemeData(
               cursorColor: Colors.white,
-              selectionColor: _swatch[200],
+              selectionColor: _swatch[300],
               selectionHandleColor: _swatch[200],
             ),
           ),

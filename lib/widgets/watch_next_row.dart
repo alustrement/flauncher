@@ -17,6 +17,7 @@
  */
 
 import 'package:flauncher/database.dart';
+import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/watch_next_service.dart';
 import 'package:flauncher/widgets/ensure_visible.dart';
@@ -24,6 +25,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 const _rowHeight = 170.0;
+const _radius = 12.0;
 const _textShadows = [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 8)];
 
 class WatchNextRow extends StatelessWidget {
@@ -71,7 +73,10 @@ class WatchNextRow extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.only(left: 16, bottom: 8),
                 child: Text("Continue watching",
-                    style: Theme.of(context).textTheme.titleLarge!.copyWith(shadows: _textShadows)),
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge!
+                        .copyWith(color: ZenPalette.lavender, shadows: _textShadows)),
               ),
               child,
             ],
@@ -131,91 +136,98 @@ class _ProgramCardState extends State<_ProgramCard> {
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: AnimatedScale(
-        scale: _focused ? 1.1 : 1.0,
+        scale: _focused ? 1.06 : 1.0,
         duration: Duration(milliseconds: 200),
         curve: Curves.easeInOut,
-        child: Material(
-          borderRadius: BorderRadius.circular(8),
-          clipBehavior: Clip.antiAlias,
-          elevation: _focused ? 16 : 0,
-          shadowColor: Colors.black,
-          color: Theme.of(context).cardColor,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              InkWell(
-                focusColor: Colors.transparent,
-                onFocusChange: (focused) => setState(() => _focused = focused),
-                onTap: widget.onPressed,
-                child: _image(program, application),
-              ),
-              IgnorePointer(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      stops: [0.35, 1.0],
-                      colors: [Colors.transparent, Colors.black.withOpacity(0.85)],
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(_radius),
+            boxShadow: _focused ? ZenPalette.focusGlow : [],
+          ),
+          child: Material(
+            borderRadius: BorderRadius.circular(_radius),
+            clipBehavior: Clip.antiAlias,
+            elevation: _focused ? 16 : 0,
+            shadowColor: Colors.black,
+            color: Theme.of(context).cardColor,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                InkWell(
+                  focusColor: Colors.transparent,
+                  onFocusChange: (focused) => setState(() => _focused = focused),
+                  onTap: widget.onPressed,
+                  child: _image(program, application),
+                ),
+                IgnorePointer(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        stops: [0.35, 1.0],
+                        colors: [ZenPalette.night.withOpacity(0), ZenPalette.night.withOpacity(0.88)],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              if (application?.icon != null)
-                Positioned(
-                  top: 6,
-                  left: 6,
-                  child: IgnorePointer(
-                    child: Image.memory(application!.icon!, height: 24, gaplessPlayback: true),
+                if (application?.icon != null)
+                  Positioned(
+                    top: 6,
+                    left: 6,
+                    child: IgnorePointer(
+                      child: Image.memory(application!.icon!, height: 24, gaplessPlayback: true),
+                    ),
                   ),
-                ),
-              Positioned(
-                left: 8,
-                right: 8,
-                bottom: progress != null ? 12 : 8,
-                child: IgnorePointer(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        program.title ?? application?.name ?? program.packageName,
-                        style: textTheme.titleSmall!.copyWith(fontWeight: FontWeight.bold, shadows: _textShadows),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (subtitle != null)
+                Positioned(
+                  left: 8,
+                  right: 8,
+                  bottom: progress != null ? 12 : 8,
+                  child: IgnorePointer(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          subtitle,
-                          style: textTheme.bodySmall!.copyWith(color: Colors.white70, shadows: _textShadows),
+                          program.title ?? application?.name ?? program.packageName,
+                          style: textTheme.titleSmall!.copyWith(fontWeight: FontWeight.w500, shadows: _textShadows),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                    ],
+                        if (subtitle != null)
+                          Text(
+                            subtitle,
+                            style: textTheme.bodySmall!.copyWith(color: ZenPalette.lavender, shadows: _textShadows),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              if (progress != null)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 4,
-                    backgroundColor: Colors.white24,
-                    valueColor: AlwaysStoppedAnimation(Colors.red.shade600),
+                if (progress != null)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 4,
+                      backgroundColor: Colors.white.withOpacity(0.18),
+                      valueColor: AlwaysStoppedAnimation(ZenPalette.accent),
+                    ),
+                  ),
+                IgnorePointer(
+                  child: AnimatedContainer(
+                    duration: Duration(milliseconds: 200),
+                    decoration: BoxDecoration(
+                      border: _focused ? Border.all(color: ZenPalette.accent, width: 2) : null,
+                      borderRadius: BorderRadius.circular(_radius),
+                    ),
                   ),
                 ),
-              IgnorePointer(
-                child: AnimatedContainer(
-                  duration: Duration(milliseconds: 200),
-                  decoration: BoxDecoration(
-                    border: _focused ? Border.all(color: Colors.white, width: 3) : null,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -240,7 +252,7 @@ class _ProgramCardState extends State<_ProgramCard> {
 
   Widget _placeholder(App? application) => application?.banner != null
       ? Ink.image(image: MemoryImage(application!.banner!), fit: BoxFit.cover)
-      : Center(child: Icon(Icons.movie_outlined, size: 48, color: Colors.white54));
+      : Center(child: Icon(Icons.movie_outlined, size: 48, color: ZenPalette.lavender));
 }
 
 class _PermissionHint extends StatelessWidget {

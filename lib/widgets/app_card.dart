@@ -19,11 +19,11 @@
 import 'dart:async';
 
 import 'package:flauncher/database.dart';
+import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/settings_service.dart';
 import 'package:flauncher/providers/ticker_model.dart';
 import 'package:flauncher/widgets/application_info_panel.dart';
-import 'package:flauncher/widgets/color_helpers.dart';
 import 'package:flauncher/widgets/focus_keyboard_listener.dart';
 import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter/material.dart';
@@ -31,6 +31,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 const _validationKeys = [LogicalKeyboardKey.select, LogicalKeyboardKey.enter, LogicalKeyboardKey.gameButtonA];
+const _radius = 12.0;
 
 class AppCard extends StatefulWidget {
   final Category category;
@@ -61,7 +62,6 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
       milliseconds: 800,
     ),
   );
-  Color _lastBorderColor = Colors.white;
 
   @override
   void initState() {
@@ -106,8 +106,18 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
             curve: Curves.easeInOut,
             transformAlignment: Alignment.center,
             transform: _scaleTransform(context),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(_radius),
+              boxShadow: Focus.of(context).hasFocus ? ZenPalette.focusGlow : [],
+            ),
             child: Material(
-              borderRadius: BorderRadius.circular(8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(_radius),
+                side: widget.application.banner == null
+                    ? BorderSide(color: ZenPalette.lavender.withOpacity(0.18))
+                    : BorderSide.none,
+              ),
+              color: ZenPalette.surface,
               clipBehavior: Clip.antiAlias,
               elevation: Focus.of(context).hasFocus ? 16 : 0,
               shadowColor: Colors.black,
@@ -122,20 +132,22 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
                     child: widget.application.banner != null
                         ? Ink.image(image: _cachedMemoryImage(widget.application.banner!), fit: BoxFit.cover)
                         : Padding(
-                            padding: EdgeInsets.all(8),
+                            padding: EdgeInsets.all(12),
                             child: Row(
                               children: [
                                 Expanded(
                                   flex: 2,
-                                  child: Ink.image(
-                                    image: _cachedMemoryImage(widget.application.icon!),
-                                    height: double.infinity,
+                                  child: Center(
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image(image: _cachedMemoryImage(widget.application.icon!)),
+                                    ),
                                   ),
                                 ),
                                 Flexible(
                                   flex: 3,
                                   child: Padding(
-                                    padding: EdgeInsets.only(left: 8),
+                                    padding: EdgeInsets.only(left: 12),
                                     child: Text(
                                       widget.application.name,
                                       style: Theme.of(context).textTheme.bodySmall,
@@ -162,27 +174,24 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
                     builder: (context, appHighlightAnimationEnabled, __) {
                       if (appHighlightAnimationEnabled) {
                         _animation.forward();
-                        return AnimatedBuilder(
-                          animation: _animation,
-                          builder: (context, child) => IgnorePointer(
-                            child: AnimatedContainer(
-                              duration: Duration(milliseconds: 200),
-                              curve: Curves.easeInOut,
-                              decoration: BoxDecoration(
-                                border: Focus.of(context).hasFocus
-                                    ? Border.all(
-                                        color: _lastBorderColor =
-                                            computeBorderColor(_animation.value, _lastBorderColor),
-                                        width: 3)
-                                    : null,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
+                      } else {
+                        _animation.stop();
+                      }
+                      return AnimatedBuilder(
+                        animation: _animation,
+                        builder: (context, child) => IgnorePointer(
+                          child: AnimatedContainer(
+                            duration: Duration(milliseconds: 200),
+                            curve: Curves.easeInOut,
+                            decoration: BoxDecoration(
+                              border: Focus.of(context).hasFocus
+                                  ? Border.all(color: _borderColor(appHighlightAnimationEnabled), width: 2)
+                                  : null,
+                              borderRadius: BorderRadius.circular(_radius),
                             ),
                           ),
-                        );
-                      }
-                      _animation.stop();
-                      return SizedBox();
+                        ),
+                      );
                     },
                   ),
                 ],
@@ -192,11 +201,15 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
         ),
       );
 
+  /// The border slowly pulses between the accent color and white when the highlight animation is enabled.
+  Color _borderColor(bool animated) =>
+      animated ? Color.lerp(ZenPalette.accent, Colors.white, _animation.value)! : ZenPalette.accent;
+
   Matrix4 _scaleTransform(BuildContext context) {
     final scale = _moving
         ? 1.0
         : Focus.of(context).hasFocus
-            ? 1.1
+            ? 1.06
             : 1.0;
     return Matrix4.diagonal3Values(scale, scale, 1.0);
   }

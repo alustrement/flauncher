@@ -17,9 +17,9 @@
  */
 
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flauncher/database.dart';
+import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/media_service.dart';
 import 'package:flauncher/widgets/ensure_visible.dart';
@@ -28,6 +28,7 @@ import 'package:provider/provider.dart';
 
 const _panelHeight = 150.0;
 const _artSize = 126.0;
+const _radius = 16.0;
 const _textShadows = [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 8)];
 
 class NowPlayingPanel extends StatelessWidget {
@@ -54,8 +55,11 @@ class NowPlayingPanel extends StatelessWidget {
             children: [
               Padding(
                 padding: EdgeInsets.only(left: 16, bottom: 8),
-                child:
-                    Text("Now playing", style: Theme.of(context).textTheme.titleLarge!.copyWith(shadows: _textShadows)),
+                child: Text("Now playing",
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge!
+                        .copyWith(color: ZenPalette.lavender, shadows: _textShadows)),
               ),
               Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: child),
             ],
@@ -94,23 +98,25 @@ class _PanelState extends State<_Panel> {
       scale: _focused ? 1.02 : 1.0,
       duration: Duration(milliseconds: 200),
       curve: Curves.easeInOut,
-      child: SizedBox(
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 200),
         height: _panelHeight,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(_radius),
+          boxShadow: _focused ? ZenPalette.focusGlow : [],
+        ),
         child: Material(
-          borderRadius: BorderRadius.circular(12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(_radius),
+            side: BorderSide(color: ZenPalette.lavender.withOpacity(0.18)),
+          ),
           clipBehavior: Clip.antiAlias,
           elevation: _focused ? 16 : 8,
           shadowColor: Colors.black,
-          color: Theme.of(context).cardColor,
+          color: ZenPalette.surface,
           child: Stack(
             fit: StackFit.expand,
             children: [
-              if (artImage != null)
-                ImageFiltered(
-                  imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
-                  child: Image(image: artImage, fit: BoxFit.cover, gaplessPlayback: true),
-                ),
-              Container(color: Colors.black.withOpacity(artImage != null ? 0.45 : 0.2)),
               InkWell(
                 focusColor: Colors.transparent,
                 onFocusChange: (focused) => setState(() => _focused = focused),
@@ -120,7 +126,7 @@ class _PanelState extends State<_Panel> {
                   child: Row(
                     children: [
                       _Art(image: artImage, application: application),
-                      SizedBox(width: 20),
+                      SizedBox(width: 24),
                       Expanded(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -130,15 +136,15 @@ class _PanelState extends State<_Panel> {
                             SizedBox(height: 4),
                             Text(
                               title,
-                              style:
-                                  textTheme.headlineSmall!.copyWith(fontWeight: FontWeight.bold, shadows: _textShadows),
+                              style: textTheme.headlineSmall!.copyWith(fontWeight: FontWeight.w500),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                             if (subtitle.isNotEmpty)
                               Text(
                                 subtitle,
-                                style: textTheme.titleMedium!.copyWith(color: Colors.white70, shadows: _textShadows),
+                                style: textTheme.titleMedium!
+                                    .copyWith(color: ZenPalette.lavender, fontWeight: FontWeight.w300),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -158,8 +164,8 @@ class _PanelState extends State<_Panel> {
                 child: AnimatedContainer(
                   duration: Duration(milliseconds: 200),
                   decoration: BoxDecoration(
-                    border: _focused ? Border.all(color: Colors.white, width: 3) : null,
-                    borderRadius: BorderRadius.circular(12),
+                    border: _focused ? Border.all(color: ZenPalette.accent, width: 2) : null,
+                    borderRadius: BorderRadius.circular(_radius),
                   ),
                 ),
               ),
@@ -195,7 +201,7 @@ class _AppLabel extends StatelessWidget {
           if (application != null)
             Text(
               application!.name,
-              style: Theme.of(context).textTheme.labelLarge!.copyWith(color: Colors.white70, shadows: _textShadows),
+              style: Theme.of(context).textTheme.labelLarge!.copyWith(color: ZenPalette.lavender),
             ),
         ],
       );
@@ -213,11 +219,11 @@ class _Art extends StatelessWidget {
         constraints: BoxConstraints(maxWidth: _artSize * 16 / 9, maxHeight: _artSize),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
             boxShadow: [BoxShadow(color: Colors.black45, blurRadius: 8, offset: Offset(0, 2))],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
             child: image != null
                 ? Image(image: image!, height: _artSize, fit: BoxFit.contain, gaplessPlayback: true)
                 : _placeholder(),
@@ -228,10 +234,10 @@ class _Art extends StatelessWidget {
   Widget _placeholder() => Container(
         width: _artSize,
         height: _artSize,
-        color: Colors.black26,
+        color: ZenPalette.night,
         child: application?.icon != null
             ? Padding(padding: EdgeInsets.all(24), child: Image.memory(application!.icon!))
-            : Icon(Icons.music_note, size: 64, color: Colors.white54),
+            : Icon(Icons.music_note, size: 64, color: ZenPalette.lavender),
       );
 }
 
@@ -274,7 +280,7 @@ class _ProgressBarState extends State<_ProgressBar> {
   Widget build(BuildContext context) {
     final duration = widget.nowPlaying.duration!;
     final position = widget.nowPlaying.currentPosition(DateTime.now()) ?? Duration.zero;
-    final textStyle = Theme.of(context).textTheme.labelMedium!.copyWith(color: Colors.white70, shadows: _textShadows);
+    final textStyle = Theme.of(context).textTheme.labelMedium!.copyWith(color: ZenPalette.lavender);
     return Row(
       children: [
         Text(_format(position), style: textStyle),
@@ -285,8 +291,8 @@ class _ProgressBarState extends State<_ProgressBar> {
             child: LinearProgressIndicator(
               value: duration.inMilliseconds > 0 ? position.inMilliseconds / duration.inMilliseconds : 0,
               minHeight: 4,
-              backgroundColor: Colors.white24,
-              valueColor: AlwaysStoppedAnimation(Colors.white),
+              backgroundColor: Colors.white.withOpacity(0.14),
+              valueColor: AlwaysStoppedAnimation(ZenPalette.accent),
             ),
           ),
         ),

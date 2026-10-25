@@ -18,6 +18,8 @@
 
 import 'dart:math';
 
+import 'package:flauncher/palette.dart';
+import 'package:flauncher/widgets/zen_waves_painter.dart';
 import 'package:flutter/widgets.dart';
 
 class FLauncherGradient {
@@ -25,10 +27,19 @@ class FLauncherGradient {
   final String name;
   final Gradient gradient;
 
-  FLauncherGradient(this.uuid, this.name, this.gradient);
+  /// Shapes drawn over the gradient, if any.
+  final CustomPainter? painter;
+
+  FLauncherGradient(this.uuid, this.name, this.gradient, {this.painter});
 }
 
 mixin FLauncherGradients {
+  static final zen = FLauncherGradient(
+    "e8298c58-45d8-4888-a41f-0ab933971c3f",
+    "Zen",
+    LinearGradient(colors: [ZenPalette.night, ZenPalette.night]),
+    painter: ZenWavesPainter(),
+  );
   static final greatWhale = FLauncherGradient(
     "8bbdc190-ff6c-496e-8033-3c217e78da36",
     "Great Whale",
@@ -85,6 +96,7 @@ mixin FLauncherGradients {
   );
 
   static List<FLauncherGradient> get all => [
+        zen,
         greatWhale,
         viciousStance,
         teenNotebook,

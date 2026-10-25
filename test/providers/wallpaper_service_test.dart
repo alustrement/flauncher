@@ -164,7 +164,7 @@ void main() {
 
       final gradient = wallpaperService.gradient;
 
-      expect(gradient, FLauncherGradients.greatWhale);
+      expect(gradient, FLauncherGradients.zen);
     });
 
     test("with uuid from settings", () async {

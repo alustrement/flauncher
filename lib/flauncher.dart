@@ -21,6 +21,8 @@ import 'dart:ui';
 
 import 'package:flauncher/custom_traversal_policy.dart';
 import 'package:flauncher/database.dart';
+import 'package:flauncher/gradients.dart';
+import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/wallpaper_service.dart';
 import 'package:flauncher/widgets/apps_grid.dart';
@@ -39,7 +41,7 @@ class FLauncher extends StatelessWidget {
         child: Stack(
           children: [
             Consumer<WallpaperService>(
-              builder: (_, wallpaper, __) => _wallpaper(context, wallpaper.wallpaperBytes, wallpaper.gradient.gradient),
+              builder: (_, wallpaper, __) => _wallpaper(context, wallpaper.wallpaperBytes, wallpaper.gradient),
             ),
             Scaffold(
               backgroundColor: Colors.transparent,
@@ -101,6 +103,8 @@ class FLauncher extends StatelessWidget {
                 padding: EdgeInsets.all(2),
                 constraints: BoxConstraints(),
                 splashRadius: 20,
+                color: ZenPalette.lavender,
+                focusColor: ZenPalette.waves.first.withOpacity(0.4),
                 icon: Icon(Icons.settings_outlined),
                 onPressed: () => showDialog(context: context, builder: (_) => SettingsPanel()),
               ),
@@ -116,15 +120,22 @@ class FLauncher extends StatelessWidget {
         ],
       );
 
-  Widget _wallpaper(BuildContext context, Uint8List? wallpaperImage, Gradient gradient) => wallpaperImage != null
-      ? Image.memory(
-          wallpaperImage,
-          key: Key("background"),
-          fit: BoxFit.cover,
-          height: window.physicalSize.height,
-          width: window.physicalSize.width,
-        )
-      : Container(key: Key("background"), decoration: BoxDecoration(gradient: gradient));
+  Widget _wallpaper(BuildContext context, Uint8List? wallpaperImage, FLauncherGradient gradient) =>
+      wallpaperImage != null
+          ? Image.memory(
+              wallpaperImage,
+              key: Key("background"),
+              fit: BoxFit.cover,
+              height: window.physicalSize.height,
+              width: window.physicalSize.width,
+            )
+          : Container(
+              key: Key("background"),
+              decoration: BoxDecoration(gradient: gradient.gradient),
+              child: gradient.painter != null
+                  ? RepaintBoundary(child: CustomPaint(painter: gradient.painter, child: SizedBox.expand()))
+                  : null,
+            );
 
   Widget _emptyState(BuildContext context) => Center(
         child: Column(

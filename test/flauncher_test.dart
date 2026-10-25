@@ -29,6 +29,7 @@ import 'package:flauncher/widgets/application_info_panel.dart';
 import 'package:flauncher/widgets/apps_grid.dart';
 import 'package:flauncher/widgets/category_row.dart';
 import 'package:flauncher/widgets/settings/settings_panel_page.dart';
+import 'package:flauncher/widgets/zen_waves_painter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -144,6 +145,24 @@ void main() {
     await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
 
     expect(tester.widget(find.byKey(Key("background"))), isA<Container>());
+  });
+
+  testWidgets("Home page paints the waves of the Zen gradient", (tester) async {
+    final wallpaperService = MockWallpaperService();
+    final appsService = MockAppsService();
+    final settingsService = MockSettingsService();
+    when(appsService.initialized).thenReturn(true);
+    when(appsService.categoriesWithApps).thenReturn([]);
+    when(wallpaperService.wallpaperBytes).thenReturn(null);
+    when(wallpaperService.gradient).thenReturn(FLauncherGradients.zen);
+    when(settingsService.use24HourTimeFormat).thenReturn(false);
+
+    await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
+
+    final background = find.byKey(Key("background"));
+    final waves = find.descendant(of: background, matching: find.byType(CustomPaint));
+    expect(tester.widget<CustomPaint>(waves).painter, isA<ZenWavesPainter>());
+    expect(tester.getSize(waves), tester.getSize(background));
   });
 
   testWidgets("Pressing select on settings icon opens SettingsPanel", (tester) async {
