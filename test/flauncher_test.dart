@@ -411,23 +411,26 @@ void main() {
     // then
     Element? tv1 = findAppCardByPackageName(tester, "me.efesser.tv1");
     expect(tv1, isNotNull);
-    Element? music2 = findAppCardByPackageName(tester, "me.efesser.music2");
-    expect(music2, isNotNull);
+    Element? music1 = findAppCardByPackageName(tester, "me.efesser.music1");
+    expect(music1, isNotNull);
     expect(Focus.of(tv1!).hasFocus, isFalse);
-    expect(Focus.of(music2!).hasFocus, isTrue); // this is new, before it was going straight to the third row
+    // going down leads to the first app of the next row, whatever the position in the current one
+    expect(Focus.of(music1!).hasFocus, isTrue);
 
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-    Element? game2 = findAppCardByPackageName(tester, "me.efesser.game2");
-    expect(game2, isNotNull);
+    Element? game1 = findAppCardByPackageName(tester, "me.efesser.game1");
+    expect(game1, isNotNull);
     expect(Focus.of(tv1).hasFocus, isFalse);
-    expect(Focus.of(music2).hasFocus, isFalse);
-    expect(Focus.of(game2!).hasFocus, isTrue);
+    expect(Focus.of(music1).hasFocus, isFalse);
+    expect(Focus.of(game1!).hasFocus, isTrue);
 
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
     expect(Focus.of(tv1).hasFocus, isFalse);
-    expect(Focus.of(music2).hasFocus, isTrue);
-    expect(Focus.of(game2).hasFocus, isFalse);
+    expect(Focus.of(music1).hasFocus, isTrue);
+    expect(Focus.of(game1).hasFocus, isFalse);
   });
 
   testWidgets("Moving left or right stays on the same row", (tester) async {
@@ -538,14 +541,14 @@ void main() {
     // expect(Focus.of(settings!).hasFocus, isTrue);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
-    Element? tv2 = findAppCardByPackageName(tester, "me.efesser.tv2");
-    expect(tv2, isNotNull);
-    expect(Focus.of(tv2!).hasFocus, isTrue);
+    expect(Focus.of(tv1).hasFocus, isTrue);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-    expect(Focus.of(music2).hasFocus, isTrue);
+    expect(Focus.of(music1).hasFocus, isTrue);
 
     // check left direction
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    expect(Focus.of(music2).hasFocus, isTrue);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
     expect(Focus.of(music1).hasFocus, isTrue);
 
@@ -629,17 +632,15 @@ void main() {
     expect(Focus.of(settingsIcon!).hasFocus, isTrue);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-    Element? tv2 = findAppCardByPackageName(tester, "me.efesser.tv2");
-    expect(tv2, isNotNull);
     expect(Focus.of(settingsIcon).hasFocus, isFalse);
-    expect(Focus.of(tv1).hasFocus, isFalse);
-    expect(Focus.of(tv2!).hasFocus, isTrue);
+    expect(Focus.of(tv1).hasFocus, isTrue);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
     expect(Focus.of(settingsIcon).hasFocus, isTrue);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     expect(Focus.of(settingsIcon).hasFocus, isTrue);

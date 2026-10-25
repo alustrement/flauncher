@@ -70,22 +70,42 @@ class NodeSearcher {
   FocusNode findBestFocusNode(List<CandidateNode> nodes, FocusNode from) {
     List<FocusNode> candidates = toFocusNodes(nodes);
 
-    return candidates.reduce((bestNode, challenger) {
+    switch (directionToSearch) {
+      case TraversalDirection.up:
+      case TraversalDirection.down:
+        return _leftmostVisibleOfClosestRow(candidates);
+      case TraversalDirection.left:
+      case TraversalDirection.right:
+        return candidates.reduce((bestNode, challenger) {
+          if (directionToSearch == TraversalDirection.left && challenger.isRightTo(bestNode)) {
+            return challenger;
+          } else if (directionToSearch == TraversalDirection.right && challenger.isLeftTo(bestNode)) {
+            return challenger;
+          }
+          // compute the element which is the closest horizontally
+          if (challenger.isOnTheSameRow(bestNode) && challenger.distance(from) < bestNode.distance(from)) {
+            return challenger;
+          }
+          return bestNode;
+        });
+    }
+  }
+
+  /// Going up or down always leads to the leftmost visible element of the next row, whatever the position of the
+  /// current element in its own row.
+  FocusNode _leftmostVisibleOfClosestRow(List<FocusNode> candidates) {
+    final closest = candidates.reduce((bestNode, challenger) {
       if (directionToSearch == TraversalDirection.down && challenger.isAbove(bestNode)) {
         return challenger;
       } else if (directionToSearch == TraversalDirection.up && challenger.isBelow(bestNode)) {
         return challenger;
-      } else if (directionToSearch == TraversalDirection.left && challenger.isRightTo(bestNode)) {
-        return challenger;
-      } else if (directionToSearch == TraversalDirection.right && challenger.isLeftTo(bestNode)) {
-        return challenger;
-      }
-      // compute the element which is the closest horizontally
-      if (challenger.isOnTheSameRow(bestNode) && challenger.distance(from) < bestNode.distance(from)) {
-        return challenger;
       }
       return bestNode;
     });
+    final row = candidates.where((node) => node.isOnTheSameRow(closest)).toList();
+    final visible = row.where((node) => node.isHorizontallyVisible).toList();
+    return (visible.isNotEmpty ? visible : row).reduce(
+        (bestNode, challenger) => challenger.rect.left.round() < bestNode.rect.left.round() ? challenger : bestNode);
   }
 }
 
@@ -115,6 +135,21 @@ extension Geometry on FocusNode {
       scrollable = scrollable.context.findAncestorStateOfType<ScrollableState>();
     }
     return outermost;
+  }
+
+  /// Whether the node starts within the viewport of its horizontal scroll view, if any: elements scrolled out of
+  /// view, even partially, on the left are not visible.
+  bool get isHorizontallyVisible {
+    var scrollable = context?.findAncestorStateOfType<ScrollableState>();
+    while (scrollable != null && axisDirectionToAxis(scrollable.axisDirection) != Axis.horizontal) {
+      scrollable = scrollable.context.findAncestorStateOfType<ScrollableState>();
+    }
+    final viewport = scrollable?.context.findRenderObject();
+    if (viewport is! RenderBox || !viewport.hasSize) {
+      return true;
+    }
+    final viewportRect = viewport.localToGlobal(Offset.zero) & viewport.size;
+    return rect.left.round() >= viewportRect.left.round() && rect.left.round() < viewportRect.right.round();
   }
 
   bool isBelow(FocusNode other) {

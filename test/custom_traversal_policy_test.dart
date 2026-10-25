@@ -66,9 +66,94 @@ void main() {
     await tester.pump();
     expect(topBarNode.hasFocus, isTrue);
   });
+
+  testWidgets("going down from a wide element leads to the first element of the row", (tester) async {
+    final panelNode = FocusNode(debugLabel: "panel");
+    final rowNodes = List.generate(4, (index) => FocusNode(debugLabel: "row item $index"));
+    await tester.pumpWidget(MaterialApp(
+      home: FocusTraversalGroup(
+        policy: RowByRowTraversalPolicy(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _focusable(panelNode, height: 100, width: 800),
+            Row(children: rowNodes.map((node) => _focusable(node, height: 100, width: 200)).toList()),
+          ],
+        ),
+      ),
+    ));
+    panelNode.requestFocus();
+    await tester.pump();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    expect(rowNodes.first.hasFocus, isTrue);
+  });
+
+  testWidgets("going up or down leads to the first element of the row, wherever the current one is", (tester) async {
+    final topNodes = List.generate(4, (index) => FocusNode(debugLabel: "top item $index"));
+    final bottomNodes = List.generate(4, (index) => FocusNode(debugLabel: "bottom item $index"));
+    await tester.pumpWidget(MaterialApp(
+      home: FocusTraversalGroup(
+        policy: RowByRowTraversalPolicy(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: topNodes.map((node) => _focusable(node, height: 100, width: 200)).toList()),
+            Row(children: bottomNodes.map((node) => _focusable(node, height: 100, width: 150)).toList()),
+          ],
+        ),
+      ),
+    ));
+    topNodes[2].requestFocus();
+    await tester.pump();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    expect(bottomNodes.first.hasFocus, isTrue);
+
+    bottomNodes[3].requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await tester.pump();
+    expect(topNodes.first.hasFocus, isTrue);
+  });
+
+  testWidgets("going down skips elements scrolled out of view on the left", (tester) async {
+    final topNode = FocusNode(debugLabel: "top");
+    final rowNodes = List.generate(6, (index) => FocusNode(debugLabel: "row item $index"));
+    final scrollController = ScrollController();
+    await tester.pumpWidget(MaterialApp(
+      home: FocusTraversalGroup(
+        policy: RowByRowTraversalPolicy(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _focusable(topNode, height: 100),
+            SizedBox(
+              height: 100,
+              child: ListView(
+                controller: scrollController,
+                scrollDirection: Axis.horizontal,
+                children: rowNodes.map((node) => _focusable(node, height: 100, width: 200)).toList(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ));
+    // item 0 is out of view, item 1 partially
+    scrollController.jumpTo(250);
+    topNode.requestFocus();
+    await tester.pump();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    expect(rowNodes[2].hasFocus, isTrue);
+  });
 }
 
-Widget _focusable(FocusNode focusNode, {required double height}) => Focus(
+Widget _focusable(FocusNode focusNode, {required double height, double width = 100}) => Focus(
       focusNode: focusNode,
-      child: SizedBox(height: height, width: 100),
+      child: SizedBox(height: height, width: width),
     );
