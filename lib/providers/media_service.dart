@@ -31,8 +31,6 @@ class NowPlaying {
   final Duration? position;
   final DateTime? positionUpdatedAt;
   final double speed;
-  final bool canSkipNext;
-  final bool canSkipPrevious;
 
   NowPlaying({
     required this.packageName,
@@ -46,8 +44,6 @@ class NowPlaying {
     this.position,
     this.positionUpdatedAt,
     this.speed = 1.0,
-    this.canSkipNext = false,
-    this.canSkipPrevious = false,
   });
 
   /// [previousArt] is reused when the artwork did not change, so that image widgets don't reload it.
@@ -66,8 +62,6 @@ class NowPlaying {
       positionUpdatedAt:
           map["positionUpdatedAt"] != null ? DateTime.fromMillisecondsSinceEpoch(map["positionUpdatedAt"]) : null,
       speed: map["speed"] ?? 1.0,
-      canSkipNext: map["canSkipNext"] ?? false,
-      canSkipPrevious: map["canSkipPrevious"] ?? false,
     );
   }
 
@@ -106,12 +100,6 @@ class MediaService extends ChangeNotifier {
     _nowPlaying = session != null ? NowPlaying.fromMap(session, previousArt: _nowPlaying?.art) : null;
     notifyListeners();
   }
-
-  Future<void> playPause() => _fLauncherChannel.mediaPlayPause();
-
-  Future<void> skipToNext() => _fLauncherChannel.mediaSkipToNext();
-
-  Future<void> skipToPrevious() => _fLauncherChannel.mediaSkipToPrevious();
 
   Future<void> openPlayer() async {
     if (_nowPlaying != null) {

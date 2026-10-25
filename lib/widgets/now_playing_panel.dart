@@ -64,14 +64,21 @@ class NowPlayingPanel extends StatelessWidget {
       );
 }
 
-class _Panel extends StatelessWidget {
+class _Panel extends StatefulWidget {
   final NowPlaying nowPlaying;
 
   _Panel({required this.nowPlaying});
 
   @override
+  State<_Panel> createState() => _PanelState();
+}
+
+class _PanelState extends State<_Panel> {
+  bool _focused = false;
+
+  @override
   Widget build(BuildContext context) {
-    final mediaService = context.read<MediaService>();
+    final nowPlaying = widget.nowPlaying;
     final application = context.select<AppsService, App?>((appsService) {
       final matches = appsService.applications.where((app) => app.packageName == nowPlaying.packageName);
       return matches.isNotEmpty ? matches.first : null;
@@ -83,77 +90,81 @@ class _Panel extends StatelessWidget {
     final subtitle =
         [nowPlaying.artist, nowPlaying.album].where((text) => (text?.isNotEmpty ?? false) && text != title).join(" · ");
 
-    return SizedBox(
-      height: _panelHeight,
-      child: Material(
-        borderRadius: BorderRadius.circular(12),
-        clipBehavior: Clip.antiAlias,
-        elevation: 8,
-        shadowColor: Colors.black,
-        color: Theme.of(context).cardColor,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (artImage != null)
-              ImageFiltered(
-                imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
-                child: Image(image: artImage, fit: BoxFit.cover, gaplessPlayback: true),
-              ),
-            Container(color: Colors.black.withOpacity(artImage != null ? 0.45 : 0.2)),
-            Padding(
-              padding: EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  _ArtCard(image: artImage, application: application, onPressed: mediaService.openPlayer),
-                  SizedBox(width: 20),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _AppLabel(application: application),
-                        SizedBox(height: 4),
-                        Text(
-                          title,
-                          style: textTheme.headlineSmall!.copyWith(fontWeight: FontWeight.bold, shadows: _textShadows),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+    return AnimatedScale(
+      scale: _focused ? 1.02 : 1.0,
+      duration: Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      child: SizedBox(
+        height: _panelHeight,
+        child: Material(
+          borderRadius: BorderRadius.circular(12),
+          clipBehavior: Clip.antiAlias,
+          elevation: _focused ? 16 : 8,
+          shadowColor: Colors.black,
+          color: Theme.of(context).cardColor,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (artImage != null)
+                ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                  child: Image(image: artImage, fit: BoxFit.cover, gaplessPlayback: true),
+                ),
+              Container(color: Colors.black.withOpacity(artImage != null ? 0.45 : 0.2)),
+              InkWell(
+                focusColor: Colors.transparent,
+                onFocusChange: (focused) => setState(() => _focused = focused),
+                onTap: context.read<MediaService>().openPlayer,
+                child: Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      _Art(image: artImage, application: application),
+                      SizedBox(width: 20),
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _AppLabel(application: application),
+                            SizedBox(height: 4),
+                            Text(
+                              title,
+                              style:
+                                  textTheme.headlineSmall!.copyWith(fontWeight: FontWeight.bold, shadows: _textShadows),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (subtitle.isNotEmpty)
+                              Text(
+                                subtitle,
+                                style: textTheme.titleMedium!.copyWith(color: Colors.white70, shadows: _textShadows),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            if (nowPlaying.duration != null) ...[
+                              SizedBox(height: 12),
+                              _ProgressBar(nowPlaying: nowPlaying),
+                            ],
+                          ],
                         ),
-                        if (subtitle.isNotEmpty)
-                          Text(
-                            subtitle,
-                            style: textTheme.titleMedium!.copyWith(color: Colors.white70, shadows: _textShadows),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        if (nowPlaying.duration != null) ...[
-                          SizedBox(height: 12),
-                          _ProgressBar(nowPlaying: nowPlaying),
-                        ],
-                      ],
-                    ),
+                      ),
+                      SizedBox(width: 24),
+                    ],
                   ),
-                  SizedBox(width: 24),
-                  _ControlButton(
-                    icon: Icons.skip_previous,
-                    onPressed: nowPlaying.canSkipPrevious ? mediaService.skipToPrevious : null,
-                  ),
-                  SizedBox(width: 12),
-                  _ControlButton(
-                    icon: nowPlaying.playing ? Icons.pause : Icons.play_arrow,
-                    size: 40,
-                    onPressed: mediaService.playPause,
-                  ),
-                  SizedBox(width: 12),
-                  _ControlButton(
-                    icon: Icons.skip_next,
-                    onPressed: nowPlaying.canSkipNext ? mediaService.skipToNext : null,
-                  ),
-                  SizedBox(width: 12),
-                ],
+                ),
               ),
-            ),
-          ],
+              IgnorePointer(
+                child: AnimatedContainer(
+                  duration: Duration(milliseconds: 200),
+                  decoration: BoxDecoration(
+                    border: _focused ? Border.all(color: Colors.white, width: 3) : null,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -190,110 +201,38 @@ class _AppLabel extends StatelessWidget {
       );
 }
 
-class _ArtCard extends StatefulWidget {
+/// The artwork keeps its own aspect ratio (e.g. square album covers, 16:9 video thumbnails) so that it isn't cropped.
+class _Art extends StatelessWidget {
   final ImageProvider? image;
   final App? application;
-  final VoidCallback onPressed;
 
-  _ArtCard({required this.image, required this.application, required this.onPressed});
-
-  @override
-  State<_ArtCard> createState() => _ArtCardState();
-}
-
-class _ArtCardState extends State<_ArtCard> {
-  bool _focused = false;
+  _Art({required this.image, required this.application});
 
   @override
-  Widget build(BuildContext context) => AnimatedScale(
-        scale: _focused ? 1.08 : 1.0,
-        duration: Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        child: SizedBox.square(
-          dimension: _artSize,
-          child: Material(
+  Widget build(BuildContext context) => ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: _artSize * 16 / 9, maxHeight: _artSize),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
-            clipBehavior: Clip.antiAlias,
-            elevation: _focused ? 16 : 4,
-            shadowColor: Colors.black,
-            color: Colors.black26,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                InkWell(
-                  focusColor: Colors.transparent,
-                  onFocusChange: (focused) => setState(() => _focused = focused),
-                  onTap: widget.onPressed,
-                  child: widget.image != null ? Ink.image(image: widget.image!, fit: BoxFit.cover) : _placeholder(),
-                ),
-                IgnorePointer(
-                  child: AnimatedContainer(
-                    duration: Duration(milliseconds: 200),
-                    decoration: BoxDecoration(
-                      border: _focused ? Border.all(color: Colors.white, width: 3) : null,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            boxShadow: [BoxShadow(color: Colors.black45, blurRadius: 8, offset: Offset(0, 2))],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: image != null
+                ? Image(image: image!, height: _artSize, fit: BoxFit.contain, gaplessPlayback: true)
+                : _placeholder(),
           ),
         ),
       );
 
-  Widget _placeholder() => widget.application?.icon != null
-      ? Padding(padding: EdgeInsets.all(24), child: Image.memory(widget.application!.icon!))
-      : Icon(Icons.music_note, size: 64, color: Colors.white54);
-}
-
-class _ControlButton extends StatefulWidget {
-  final IconData icon;
-  final double size;
-  final VoidCallback? onPressed;
-
-  _ControlButton({required this.icon, this.size = 28, required this.onPressed});
-
-  @override
-  State<_ControlButton> createState() => _ControlButtonState();
-}
-
-class _ControlButtonState extends State<_ControlButton> {
-  bool _focused = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final enabled = widget.onPressed != null;
-    return AnimatedScale(
-      scale: _focused ? 1.15 : 1.0,
-      duration: Duration(milliseconds: 150),
-      curve: Curves.easeInOut,
-      child: Material(
-        shape: CircleBorder(),
-        clipBehavior: Clip.antiAlias,
-        color: _focused ? Colors.white : Colors.white.withOpacity(0.12),
-        elevation: _focused ? 8 : 0,
-        shadowColor: Colors.black,
-        child: InkWell(
-          customBorder: CircleBorder(),
-          focusColor: Colors.transparent,
-          onFocusChange: (focused) => setState(() => _focused = focused),
-          onTap: widget.onPressed,
-          child: Padding(
-            padding: EdgeInsets.all(12),
-            child: Icon(
-              widget.icon,
-              size: widget.size,
-              color: _focused
-                  ? Colors.black87
-                  : enabled
-                      ? Colors.white
-                      : Colors.white30,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget _placeholder() => Container(
+        width: _artSize,
+        height: _artSize,
+        color: Colors.black26,
+        child: application?.icon != null
+            ? Padding(padding: EdgeInsets.all(24), child: Image.memory(application!.icon!))
+            : Icon(Icons.music_note, size: 64, color: Colors.white54),
+      );
 }
 
 class _ProgressBar extends StatefulWidget {

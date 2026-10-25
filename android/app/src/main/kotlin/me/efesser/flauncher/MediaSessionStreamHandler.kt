@@ -21,16 +21,21 @@ package me.efesser.flauncher
 import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.media.AudioAttributes
 import android.media.MediaMetadata
 import android.media.session.MediaController
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import android.net.Uri
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.view.KeyEvent
 import io.flutter.plugin.common.EventChannel.EventSink
 import io.flutter.plugin.common.EventChannel.StreamHandler
 import java.io.ByteArrayOutputStream
@@ -48,13 +53,28 @@ private val ACTIVE_STATES = setOf(
     PlaybackState.STATE_SKIPPING_TO_QUEUE_ITEM,
 )
 
+private val MEDIA_KEYS = setOf(
+    KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
+    KeyEvent.KEYCODE_MEDIA_PLAY,
+    KeyEvent.KEYCODE_MEDIA_PAUSE,
+    KeyEvent.KEYCODE_MEDIA_NEXT,
+    KeyEvent.KEYCODE_MEDIA_PREVIOUS,
+)
+
+private val PLAY_KEYS = setOf(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_MEDIA_PLAY)
+
+private val AUDIO_CONTENT_TYPES = setOf(AudioAttributes.CONTENT_TYPE_MUSIC, AudioAttributes.CONTENT_TYPE_SPEECH)
+
 /**
- * Streams the "now playing" media session to Flutter and forwards transport controls to it.
+ * Streams the "now playing" media session to Flutter and forwards media keys to it.
  *
  * Reading other apps' media sessions requires notification access to be granted to [MediaNotificationListener]:
  * `adb shell cmd notification allow_listener me.efesser.flauncher/me.efesser.flauncher.MediaNotificationListener`
  */
-class MediaSessionStreamHandler(private val context: Context) : StreamHandler {
+class MediaSessionStreamHandler(
+    private val context: Context,
+    private val launchApp: (String) -> Boolean,
+) : StreamHandler {
     private val mediaSessionManager = context.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
     private val listenerComponent = ComponentName(context, MediaNotificationListener::class.java)
     private val handler = Handler(Looper.getMainLooper())
@@ -94,18 +114,48 @@ class MediaSessionStreamHandler(private val context: Context) : StreamHandler {
 
     fun dispose() = stop()
 
-    fun playPause() = currentController?.let {
-        if (it.playbackState?.state in ACTIVE_STATES) it.transportControls.pause() else it.transportControls.play()
-    } != null
+    /**
+     * Forwards media keys to the session shown on the home screen, as the system would otherwise send them to its
+     * own pick (the last session which received one).
+     *
+     * Videos must not play behind the launcher though: for anything that isn't known to be audio, play keys open the
+     * app instead and other keys are ignored.
+     */
+    fun dispatchMediaKey(event: KeyEvent): Boolean {
+        val controller = currentController
+        if (event.keyCode !in MEDIA_KEYS || controller == null) {
+            return false
+        }
+        if (isAudio(controller)) {
+            return controller.dispatchMediaButtonEvent(event)
+        }
+        if (event.keyCode in PLAY_KEYS && event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+            openPlayer()
+        }
+        return true
+    }
 
-    fun skipToNext() = currentController?.transportControls?.skipToNext() != null
+    /** Opens the player of the current session, or its app if it doesn't provide one. */
+    fun openPlayer(): Boolean {
+        val controller = currentController ?: return false
+        return try {
+            controller.sessionActivity?.send() != null
+        } catch (e: PendingIntent.CanceledException) {
+            false
+        } || launchApp(controller.packageName)
+    }
 
-    fun skipToPrevious() = currentController?.transportControls?.skipToPrevious() != null
-
-    fun openSessionActivity() = try {
-        currentController?.sessionActivity?.send() != null
-    } catch (e: PendingIntent.CanceledException) {
-        false
+    /** Audio attributes are often left unknown by video apps, so only an explicit audio declaration is trusted. */
+    private fun isAudio(controller: MediaController): Boolean {
+        if (controller.playbackInfo?.audioAttributes?.contentType in AUDIO_CONTENT_TYPES) {
+            return true
+        }
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && try {
+            context.packageManager.getApplicationInfo(controller.packageName, 0).category ==
+                ApplicationInfo.CATEGORY_AUDIO
+        } catch (e: PackageManager.NameNotFoundException) {
+            false
+        }
     }
 
     private fun start() {
@@ -155,7 +205,6 @@ class MediaSessionStreamHandler(private val context: Context) : StreamHandler {
                 ?: it.getString(MediaMetadata.METADATA_KEY_ART_URI)
                 ?: it.getString(MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI)
         }
-        val actions = state?.actions ?: 0
         return mapOf(
             "packageName" to controller.packageName,
             "title" to (metadata?.getText(MediaMetadata.METADATA_KEY_TITLE)
@@ -173,8 +222,6 @@ class MediaSessionStreamHandler(private val context: Context) : StreamHandler {
                 System.currentTimeMillis() - (SystemClock.elapsedRealtime() - it.lastPositionUpdateTime)
             },
             "speed" to state?.playbackSpeed?.toDouble(),
-            "canSkipNext" to (actions and PlaybackState.ACTION_SKIP_TO_NEXT != 0L),
-            "canSkipPrevious" to (actions and PlaybackState.ACTION_SKIP_TO_PREVIOUS != 0L),
         )
     }
 

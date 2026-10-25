@@ -339,33 +339,6 @@ class MockFLauncherChannel extends _i1.Mock implements _i7.FLauncherChannel {
         returnValueForMissingStub: _i8.Future<void>.value(),
       ) as _i8.Future<void>);
   @override
-  _i8.Future<void> mediaPlayPause() => (super.noSuchMethod(
-        Invocation.method(
-          #mediaPlayPause,
-          [],
-        ),
-        returnValue: _i8.Future<void>.value(),
-        returnValueForMissingStub: _i8.Future<void>.value(),
-      ) as _i8.Future<void>);
-  @override
-  _i8.Future<void> mediaSkipToNext() => (super.noSuchMethod(
-        Invocation.method(
-          #mediaSkipToNext,
-          [],
-        ),
-        returnValue: _i8.Future<void>.value(),
-        returnValueForMissingStub: _i8.Future<void>.value(),
-      ) as _i8.Future<void>);
-  @override
-  _i8.Future<void> mediaSkipToPrevious() => (super.noSuchMethod(
-        Invocation.method(
-          #mediaSkipToPrevious,
-          [],
-        ),
-        returnValue: _i8.Future<void>.value(),
-        returnValueForMissingStub: _i8.Future<void>.value(),
-      ) as _i8.Future<void>);
-  @override
   _i8.Future<void> openMediaSession(String? packageName) => (super.noSuchMethod(
         Invocation.method(
           #openMediaSession,
@@ -864,33 +837,6 @@ class MockMediaService extends _i1.Mock implements _i13.MediaService {
         Invocation.getter(#hasListeners),
         returnValue: false,
       ) as bool);
-  @override
-  _i8.Future<void> playPause() => (super.noSuchMethod(
-        Invocation.method(
-          #playPause,
-          [],
-        ),
-        returnValue: _i8.Future<void>.value(),
-        returnValueForMissingStub: _i8.Future<void>.value(),
-      ) as _i8.Future<void>);
-  @override
-  _i8.Future<void> skipToNext() => (super.noSuchMethod(
-        Invocation.method(
-          #skipToNext,
-          [],
-        ),
-        returnValue: _i8.Future<void>.value(),
-        returnValueForMissingStub: _i8.Future<void>.value(),
-      ) as _i8.Future<void>);
-  @override
-  _i8.Future<void> skipToPrevious() => (super.noSuchMethod(
-        Invocation.method(
-          #skipToPrevious,
-          [],
-        ),
-        returnValue: _i8.Future<void>.value(),
-        returnValueForMissingStub: _i8.Future<void>.value(),
-      ) as _i8.Future<void>);
   @override
   _i8.Future<void> openPlayer() => (super.noSuchMethod(
         Invocation.method(

@@ -44,8 +44,6 @@ void main() {
           "position": 1000,
           "positionUpdatedAt": 1700000000000,
           "speed": 1.0,
-          "canSkipNext": true,
-          "canSkipPrevious": false,
         },
       });
 
@@ -60,8 +58,6 @@ void main() {
       expect(nowPlaying.playing, isTrue);
       expect(nowPlaying.position, Duration(seconds: 1));
       expect(nowPlaying.positionUpdatedAt, DateTime.fromMillisecondsSinceEpoch(1700000000000));
-      expect(nowPlaying.canSkipNext, isTrue);
-      expect(nowPlaying.canSkipPrevious, isFalse);
     });
 
     test("reuses unchanged artwork", () {
@@ -111,7 +107,7 @@ void main() {
       expect(mediaService.nowPlaying, isNull);
     });
 
-    test("forwards transport controls", () async {
+    test("openPlayer calls channel", () async {
       final channel = MockFLauncherChannel();
       final mediaService = MediaService(channel);
       final listener = verify(channel.addMediaSessionListener(captureAny)).captured.single;
@@ -120,14 +116,8 @@ void main() {
         "session": {"packageName": "com.spotify.tv.android"}
       });
 
-      await mediaService.playPause();
-      await mediaService.skipToNext();
-      await mediaService.skipToPrevious();
       await mediaService.openPlayer();
 
-      verify(channel.mediaPlayPause());
-      verify(channel.mediaSkipToNext());
-      verify(channel.mediaSkipToPrevious());
       verify(channel.openMediaSession("com.spotify.tv.android"));
     });
   });

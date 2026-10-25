@@ -28,6 +28,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.UserHandle
 import android.provider.Settings
+import android.view.KeyEvent
 import androidx.annotation.NonNull
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -62,11 +63,8 @@ class MainActivity : FlutterActivity() {
                 "isDefaultLauncher" -> result.success(isDefaultLauncher())
                 "checkForGetContentAvailability" -> result.success(checkForGetContentAvailability())
                 "startAmbientMode" -> result.success(startAmbientMode())
-                "mediaPlayPause" -> result.success(mediaSessionStreamHandler.playPause())
-                "mediaSkipToNext" -> result.success(mediaSessionStreamHandler.skipToNext())
-                "mediaSkipToPrevious" -> result.success(mediaSessionStreamHandler.skipToPrevious())
                 "openMediaSession" -> result.success(
-                    mediaSessionStreamHandler.openSessionActivity() || launchApp(call.arguments as String))
+                    mediaSessionStreamHandler.openPlayer() || launchApp(call.arguments as String))
                 "requestWatchNextPermission" -> result.success(requestWatchNextPermission())
                 "openWatchNextProgram" -> {
                     val packageName = call.argument<String>("packageName")!!
@@ -116,13 +114,20 @@ class MainActivity : FlutterActivity() {
             }
         })
 
-        mediaSessionStreamHandler = MediaSessionStreamHandler(this)
+        mediaSessionStreamHandler = MediaSessionStreamHandler(this, ::launchApp)
         EventChannel(flutterEngine.dartExecutor.binaryMessenger, MEDIA_EVENT_CHANNEL)
             .setStreamHandler(mediaSessionStreamHandler)
 
         watchNextStreamHandler = WatchNextStreamHandler(this)
         EventChannel(flutterEngine.dartExecutor.binaryMessenger, WATCH_NEXT_EVENT_CHANNEL)
             .setStreamHandler(watchNextStreamHandler)
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (::mediaSessionStreamHandler.isInitialized && mediaSessionStreamHandler.dispatchMediaKey(event)) {
+            return true
+        }
+        return super.dispatchKeyEvent(event)
     }
 
     override fun onResume() {

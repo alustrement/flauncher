@@ -16,6 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'dart:convert';
+
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/media_service.dart';
 import 'package:flauncher/widgets/now_playing_panel.dart';
@@ -71,7 +73,6 @@ void main() {
     expect(find.text("Lianne La Havas · Bittersweet (Radio Edit)"), findsOneWidget);
     expect(find.text("1:05"), findsOneWidget);
     expect(find.text("3:56"), findsOneWidget);
-    expect(find.byIcon(Icons.play_arrow), findsOneWidget);
   });
 
   testWidgets("does not repeat the title as subtitle", (tester) async {
@@ -90,47 +91,7 @@ void main() {
     expect(find.text("C dans l'air"), findsOneWidget);
   });
 
-  testWidgets("controls call MediaService", (tester) async {
-    final mediaService = MockMediaService();
-    final appsService = MockAppsService();
-    when(mediaService.permissionGranted).thenReturn(true);
-    when(mediaService.nowPlaying).thenReturn(NowPlaying(
-      packageName: "com.spotify.tv.android",
-      title: "Bittersweet",
-      playing: true,
-      canSkipNext: true,
-      canSkipPrevious: true,
-    ));
-    when(appsService.applications).thenReturn([]);
-
-    await _pumpWidgetWithProviders(tester, mediaService, appsService);
-
-    await tester.tap(find.byIcon(Icons.pause));
-    await tester.tap(find.byIcon(Icons.skip_next));
-    await tester.tap(find.byIcon(Icons.skip_previous));
-    await tester.tap(find.byIcon(Icons.music_note));
-    verify(mediaService.playPause());
-    verify(mediaService.skipToNext());
-    verify(mediaService.skipToPrevious());
-    verify(mediaService.openPlayer());
-  });
-
-  testWidgets("skip buttons are disabled when unsupported", (tester) async {
-    final mediaService = MockMediaService();
-    final appsService = MockAppsService();
-    when(mediaService.permissionGranted).thenReturn(true);
-    when(mediaService.nowPlaying).thenReturn(NowPlaying(packageName: "com.netflix.ninja"));
-    when(appsService.applications).thenReturn([]);
-
-    await _pumpWidgetWithProviders(tester, mediaService, appsService);
-
-    await tester.tap(find.byIcon(Icons.skip_next));
-    await tester.tap(find.byIcon(Icons.skip_previous));
-    verifyNever(mediaService.skipToNext());
-    verifyNever(mediaService.skipToPrevious());
-  });
-
-  testWidgets("controls are reachable with D-pad", (tester) async {
+  testWidgets("selecting the panel opens the player", (tester) async {
     final mediaService = MockMediaService();
     final appsService = MockAppsService();
     when(mediaService.permissionGranted).thenReturn(true);
@@ -138,14 +99,34 @@ void main() {
     when(appsService.applications).thenReturn([]);
 
     await _pumpWidgetWithProviders(tester, mediaService, appsService);
-
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
-    verify(mediaService.playPause());
+
+    verify(mediaService.openPlayer());
+  });
+
+  testWidgets("artwork keeps its aspect ratio", (tester) async {
+    final mediaService = MockMediaService();
+    final appsService = MockAppsService();
+    final art = base64Decode(_png16x9);
+    when(mediaService.permissionGranted).thenReturn(true);
+    when(mediaService.nowPlaying)
+        .thenReturn(NowPlaying(packageName: "fr.francetv.pluzz", title: "C dans l'air", art: art));
+    when(appsService.applications).thenReturn([]);
+
+    await _pumpWidgetWithProviders(tester, mediaService, appsService);
+    // images are decoded asynchronously, outside of the fake test zone
+    await tester.runAsync(() => precacheImage(MemoryImage(art), tester.element(find.byType(NowPlayingPanel))));
+    await tester.pumpAndSettle();
+
+    final artSize = tester.getSize(find.byType(ClipRRect).first);
+    expect(artSize.width / artSize.height, closeTo(16 / 9, 0.05));
   });
 }
+
+/// 16x9 transparent PNG
+const _png16x9 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAJCAYAAAA7KqwyAAAAD0lEQVR4nGNgGAWjgAoAAAJJAAHZX3+dAAAAAElFTkSuQmCC";
 
 Future<void> _pumpWidgetWithProviders(
   WidgetTester tester,

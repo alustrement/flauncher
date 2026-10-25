@@ -46,12 +46,6 @@ class FLauncherChannel {
 
   Future<void> startAmbientMode() async => await _methodChannel.invokeMethod("startAmbientMode");
 
-  Future<void> mediaPlayPause() async => await _methodChannel.invokeMethod("mediaPlayPause");
-
-  Future<void> mediaSkipToNext() async => await _methodChannel.invokeMethod("mediaSkipToNext");
-
-  Future<void> mediaSkipToPrevious() async => await _methodChannel.invokeMethod("mediaSkipToPrevious");
-
   Future<void> openMediaSession(String packageName) async =>
       await _methodChannel.invokeMethod("openMediaSession", packageName);
 
