@@ -40,24 +40,29 @@ class NowPlayingPanel extends StatelessWidget {
   Widget build(BuildContext context) => Consumer<MediaService>(
         builder: (context, mediaService, _) {
           if (!mediaService.permissionGranted) {
-            return _section(context, SkipInitialFocus(child: _PermissionHint()));
+            return _section(context, "Now playing", SkipInitialFocus(child: _PermissionHint()));
           }
           final nowPlaying = mediaService.nowPlaying;
-          if (nowPlaying == null) {
-            return SizedBox.shrink();
+          if (nowPlaying != null) {
+            return _section(context, "Now playing", _Panel(nowPlaying: nowPlaying, onPressed: mediaService.openPlayer));
           }
-          return _section(context, _Panel(nowPlaying: nowPlaying));
+          final lastSpotify = mediaService.lastSpotify;
+          if (lastSpotify != null) {
+            return _section(context, "Reprendre la lecture sur Spotify",
+                _Panel(nowPlaying: lastSpotify, onPressed: mediaService.resumeSpotify));
+          }
+          return SizedBox.shrink();
         },
       );
 
-  Widget _section(BuildContext context, Widget child) => Padding(
+  Widget _section(BuildContext context, String title, Widget child) => Padding(
         padding: EdgeInsets.symmetric(vertical: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
               padding: EdgeInsets.only(left: 32, bottom: 8),
-              child: Text("Now playing",
+              child: Text(title,
                   style: Theme.of(context)
                       .textTheme
                       .titleLarge!
@@ -74,8 +79,9 @@ class NowPlayingPanel extends StatelessWidget {
 
 class _Panel extends StatefulWidget {
   final NowPlaying nowPlaying;
+  final VoidCallback onPressed;
 
-  _Panel({required this.nowPlaying});
+  _Panel({required this.nowPlaying, required this.onPressed});
 
   @override
   State<_Panel> createState() => _PanelState();
@@ -125,7 +131,7 @@ class _PanelState extends State<_Panel> {
               InkWell(
                 focusColor: Colors.transparent,
                 onFocusChange: (focused) => setState(() => _focused = focused),
-                onTap: context.read<MediaService>().openPlayer,
+                onTap: widget.onPressed,
                 child: Padding(
                   padding: EdgeInsets.all(12),
                   child: Row(

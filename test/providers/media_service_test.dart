@@ -96,6 +96,79 @@ void main() {
       expect(mediaService.nowPlaying, isNull);
     });
 
+    test("exposes the last Spotify media while nothing plays", () {
+      final channel = MockFLauncherChannel();
+      final mediaService = MediaService(channel);
+      final listener = verify(channel.addMediaSessionListener(captureAny)).captured.single;
+
+      listener({
+        "permissionGranted": true,
+        "session": null,
+        "lastSpotify": {
+          "packageName": "com.spotify.tv.android",
+          "title": "Bittersweet",
+          "artist": "Lianne La Havas",
+          "duration": 236640,
+          "playing": false,
+          "position": 120000,
+        },
+      });
+
+      final lastSpotify = mediaService.lastSpotify!;
+      expect(mediaService.nowPlaying, isNull);
+      expect(lastSpotify.title, "Bittersweet");
+      expect(lastSpotify.artist, "Lianne La Havas");
+      expect(lastSpotify.playing, isFalse);
+      expect(lastSpotify.currentPosition(DateTime.now()), Duration(minutes: 2));
+
+      listener({
+        "permissionGranted": true,
+        "session": {"packageName": "fr.francetv.pluzz"}
+      });
+
+      expect(mediaService.lastSpotify, isNull);
+    });
+
+    test("keeps the artwork of the last Spotify media when it is resumed", () {
+      final channel = MockFLauncherChannel();
+      final mediaService = MediaService(channel);
+      final listener = verify(channel.addMediaSessionListener(captureAny)).captured.single;
+      final media = {
+        "packageName": "com.spotify.tv.android",
+        "title": "Bittersweet",
+      };
+
+      listener({
+        "permissionGranted": true,
+        "session": null,
+        "lastSpotify": {
+          ...media,
+          "art": Uint8List.fromList([1, 2, 3])
+        },
+      });
+      final art = mediaService.lastSpotify!.art;
+      listener({
+        "permissionGranted": true,
+        "session": {
+          ...media,
+          "art": Uint8List.fromList([1, 2, 3]),
+          "playing": true
+        },
+      });
+
+      expect(mediaService.lastSpotify, isNull);
+      expect(identical(mediaService.nowPlaying!.art, art), isTrue);
+    });
+
+    test("resumeSpotify calls channel", () async {
+      final channel = MockFLauncherChannel();
+      final mediaService = MediaService(channel);
+
+      await mediaService.resumeSpotify();
+
+      verify(channel.resumeSpotify());
+    });
+
     test("reports missing permission", () {
       final channel = MockFLauncherChannel();
       final mediaService = MediaService(channel);

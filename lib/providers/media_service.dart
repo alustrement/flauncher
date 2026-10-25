@@ -85,10 +85,14 @@ class MediaService extends ChangeNotifier {
   final FLauncherChannel _fLauncherChannel;
   bool _permissionGranted = true;
   NowPlaying? _nowPlaying;
+  NowPlaying? _lastSpotify;
 
   bool get permissionGranted => _permissionGranted;
 
   NowPlaying? get nowPlaying => _nowPlaying;
+
+  /// The last media played on Spotify, paused where it was left, while nothing plays.
+  NowPlaying? get lastSpotify => _lastSpotify;
 
   MediaService(this._fLauncherChannel) {
     _fLauncherChannel.addMediaSessionListener(_onMediaSessionEvent);
@@ -97,7 +101,11 @@ class MediaService extends ChangeNotifier {
   void _onMediaSessionEvent(Map<dynamic, dynamic> event) {
     _permissionGranted = event["permissionGranted"];
     final session = event["session"] as Map<dynamic, dynamic>?;
-    _nowPlaying = session != null ? NowPlaying.fromMap(session, previousArt: _nowPlaying?.art) : null;
+    // the last Spotify media and the media playing are never sent together, and resuming the former keeps its artwork
+    final previousArt = _nowPlaying?.art ?? _lastSpotify?.art;
+    _nowPlaying = session != null ? NowPlaying.fromMap(session, previousArt: previousArt) : null;
+    final lastSpotify = event["lastSpotify"] as Map<dynamic, dynamic>?;
+    _lastSpotify = lastSpotify != null ? NowPlaying.fromMap(lastSpotify, previousArt: previousArt) : null;
     notifyListeners();
   }
 
@@ -106,4 +114,6 @@ class MediaService extends ChangeNotifier {
       await _fLauncherChannel.openMediaSession(_nowPlaying!.packageName);
     }
   }
+
+  Future<void> resumeSpotify() => _fLauncherChannel.resumeSpotify();
 }

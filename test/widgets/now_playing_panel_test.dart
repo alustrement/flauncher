@@ -35,6 +35,7 @@ void main() {
     final mediaService = MockMediaService();
     when(mediaService.permissionGranted).thenReturn(true);
     when(mediaService.nowPlaying).thenReturn(null);
+    when(mediaService.lastSpotify).thenReturn(null);
 
     await _pumpWidgetWithProviders(tester, mediaService, MockAppsService());
 
@@ -127,6 +128,51 @@ void main() {
     await tester.pumpAndSettle();
 
     verify(mediaService.openPlayer());
+  });
+
+  testWidgets("offers to resume the last Spotify media while nothing plays", (tester) async {
+    final mediaService = MockMediaService();
+    final appsService = MockAppsService();
+    when(mediaService.permissionGranted).thenReturn(true);
+    when(mediaService.nowPlaying).thenReturn(null);
+    when(mediaService.lastSpotify).thenReturn(NowPlaying(
+      packageName: "com.spotify.tv.android",
+      title: "Bittersweet",
+      artist: "Lianne La Havas",
+      duration: Duration(minutes: 4),
+      position: Duration(minutes: 1),
+    ));
+    when(appsService.applications).thenReturn([]);
+
+    await _pumpWidgetWithProviders(tester, mediaService, appsService);
+
+    expect(find.text("Reprendre la lecture sur Spotify"), findsOneWidget);
+    expect(find.text("Now playing"), findsNothing);
+    expect(find.text("Bittersweet"), findsOneWidget);
+    expect(tester.widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator)).value, 0.25);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    verify(mediaService.resumeSpotify());
+    verifyNever(mediaService.openPlayer());
+  });
+
+  testWidgets("the media playing comes before the last Spotify media", (tester) async {
+    final mediaService = MockMediaService();
+    final appsService = MockAppsService();
+    when(mediaService.permissionGranted).thenReturn(true);
+    when(mediaService.nowPlaying).thenReturn(NowPlaying(packageName: "fr.francetv.pluzz", title: "Dans l'air"));
+    when(mediaService.lastSpotify).thenReturn(NowPlaying(packageName: "com.spotify.tv.android", title: "Bittersweet"));
+    when(appsService.applications).thenReturn([]);
+
+    await _pumpWidgetWithProviders(tester, mediaService, appsService);
+
+    expect(find.text("Now playing"), findsOneWidget);
+    expect(find.text("Dans l'air"), findsOneWidget);
+    expect(find.text("Reprendre la lecture sur Spotify"), findsNothing);
+    expect(find.text("Bittersweet"), findsNothing);
   });
 
   testWidgets("artwork keeps its aspect ratio", (tester) async {

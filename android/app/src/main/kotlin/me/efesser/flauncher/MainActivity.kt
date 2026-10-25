@@ -74,6 +74,7 @@ class MainActivity : FlutterActivity() {
                 "startAmbientMode" -> result.success(startAmbientMode())
                 "openMediaSession" -> result.success(
                     mediaSessionStreamHandler.openPlayer() || launchApp(call.arguments as String))
+                "resumeSpotify" -> result.success(mediaSessionStreamHandler.resumeSpotify())
                 "requestWatchNextPermission" -> result.success(requestWatchNextPermission())
                 "openWatchNextProgram" -> {
                     val packageName = call.argument<String>("packageName")!!

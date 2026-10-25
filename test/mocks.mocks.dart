@@ -348,6 +348,15 @@ class MockFLauncherChannel extends _i1.Mock implements _i7.FLauncherChannel {
         returnValueForMissingStub: _i8.Future<void>.value(),
       ) as _i8.Future<void>);
   @override
+  _i8.Future<void> resumeSpotify() => (super.noSuchMethod(
+        Invocation.method(
+          #resumeSpotify,
+          [],
+        ),
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
+  @override
   _i8.Future<void> requestWatchNextPermission() => (super.noSuchMethod(
         Invocation.method(
           #requestWatchNextPermission,
@@ -849,6 +858,15 @@ class MockMediaService extends _i1.Mock implements _i13.MediaService {
   _i8.Future<void> openPlayer() => (super.noSuchMethod(
         Invocation.method(
           #openPlayer,
+          [],
+        ),
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
+  @override
+  _i8.Future<void> resumeSpotify() => (super.noSuchMethod(
+        Invocation.method(
+          #resumeSpotify,
           [],
         ),
         returnValue: _i8.Future<void>.value(),

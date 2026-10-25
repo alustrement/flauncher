@@ -21,6 +21,7 @@ package me.efesser.flauncher
 import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -41,6 +42,7 @@ import io.flutter.plugin.common.EventChannel.StreamHandler
 import java.io.ByteArrayOutputStream
 
 private const val ART_MAX_SIZE = 512
+private const val SPOTIFY_RESUME_TIMEOUT_MS = 15_000L
 
 private val ACTIVE_STATES = setOf(
     PlaybackState.STATE_PLAYING,
@@ -85,6 +87,8 @@ class MediaSessionStreamHandler(
     private var lastArtBitmap: Bitmap? = null
     private var lastArtBytes: ByteArray? = null
     private var lastEngagements: Map<String, Long> = emptyMap()
+    private val lastSpotifyMedia = LastSpotifyMedia(context)
+    private var spotifyWokenUpAt = 0L
 
     private val sessionsChangedListener = MediaSessionManager.OnActiveSessionsChangedListener {
         updateControllers(it ?: emptyList())
@@ -132,11 +136,22 @@ class MediaSessionStreamHandler(
      *
      * Videos must not play behind the launcher though: for anything that isn't known to be audio, play keys open the
      * app instead and other keys are ignored.
+     *
+     * When the last Spotify media is shown instead, play keys resume it behind the launcher.
      */
     fun dispatchMediaKey(event: KeyEvent): Boolean {
-        val controller = currentController
-        if (event.keyCode !in MEDIA_KEYS || controller == null) {
+        if (event.keyCode !in MEDIA_KEYS) {
             return false
+        }
+        val controller = currentController
+        if (controller == null) {
+            if (event.keyCode !in PLAY_KEYS || lastSpotifyMedia.media == null) {
+                return false
+            }
+            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+                playSpotify()
+            }
+            return true
         }
         if (isAudio(controller)) {
             return controller.dispatchMediaButtonEvent(event)
@@ -155,6 +170,64 @@ class MediaSessionStreamHandler(
         } catch (e: PendingIntent.CanceledException) {
             false
         } || launchApp(controller.packageName)
+    }
+
+    /**
+     * Resumes the last media played on Spotify, in Spotify: its session is told to play when it is still there,
+     * otherwise the media is opened from its URI.
+     */
+    fun resumeSpotify(): Boolean {
+        val controller = spotifyController()
+        if (controller != null) {
+            controller.transportControls.play()
+            return try {
+                controller.sessionActivity?.send() != null
+            } catch (e: PendingIntent.CanceledException) {
+                false
+            } || launchApp(SPOTIFY_PACKAGE)
+        }
+        return openSpotifyUri(lastSpotifyMedia.mediaId) || launchApp(SPOTIFY_PACKAGE)
+    }
+
+    /**
+     * Resumes Spotify's playback behind the launcher. Once Spotify's session is gone, its media button receiver
+     * starts its service again, which brings its last media back paused: it is played once its session is there.
+     */
+    private fun playSpotify() {
+        val controller = spotifyController()
+        if (controller != null) {
+            controller.transportControls.play()
+            return
+        }
+        spotifyWokenUpAt = SystemClock.elapsedRealtime()
+        for (action in listOf(KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP)) {
+            context.sendBroadcast(
+                Intent(Intent.ACTION_MEDIA_BUTTON)
+                    .setPackage(SPOTIFY_PACKAGE)
+                    // e.g. after Spotify has been force stopped
+                    .addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
+                    .putExtra(Intent.EXTRA_KEY_EVENT, KeyEvent(action, KeyEvent.KEYCODE_MEDIA_PLAY))
+            )
+        }
+    }
+
+    private fun spotifyController() =
+        controllers.firstOrNull { it.packageName == SPOTIFY_PACKAGE && it.metadata != null }
+
+    private fun openSpotifyUri(uri: String?): Boolean {
+        if (uri == null || !uri.startsWith("spotify:")) {
+            return false
+        }
+        return try {
+            context.startActivity(
+                Intent(Intent.ACTION_VIEW, Uri.parse(uri))
+                    .setPackage(SPOTIFY_PACKAGE)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 
     /** Audio attributes are often left unknown by video apps, so only an explicit audio declaration is trusted. */
@@ -200,13 +273,33 @@ class MediaSessionStreamHandler(
     /**
      * Picks the playing session first, otherwise a paused one which still has something to show, unless another app
      * has been watched since it was paused.
+     *
+     * Spotify's media is remembered while it is shown, and sent when nothing else is, to be resumed.
      */
     private fun selectController() {
-        currentController = controllers.firstOrNull { it.playbackState?.state in ACTIVE_STATES }
+        if (spotifyWokenUpAt > 0) {
+            val spotify = spotifyController()
+            if (SystemClock.elapsedRealtime() - spotifyWokenUpAt > SPOTIFY_RESUME_TIMEOUT_MS) {
+                spotifyWokenUpAt = 0
+            } else if (spotify != null) {
+                spotifyWokenUpAt = 0
+                spotify.transportControls.play()
+            }
+        }
+        val controller = controllers.firstOrNull { it.playbackState?.state in ACTIVE_STATES }
             ?: controllers.firstOrNull {
                 it.metadata != null && it.playbackState?.state == PlaybackState.STATE_PAUSED && !isOutdated(it)
             }
-        events?.success(mapOf("permissionGranted" to true, "session" to currentController?.let(::buildSessionMap)))
+        currentController = controller
+        val session = controller?.let(::buildSessionMap)
+        if (controller?.packageName == SPOTIFY_PACKAGE && controller.metadata != null) {
+            lastSpotifyMedia.remember(session!!, controller.metadata?.getString(MediaMetadata.METADATA_KEY_MEDIA_ID))
+        }
+        events?.success(mapOf(
+            "permissionGranted" to true,
+            "session" to session,
+            "lastSpotify" to if (session == null) lastSpotifyMedia.media else null,
+        ))
     }
 
     private fun isOutdated(controller: MediaController): Boolean {
