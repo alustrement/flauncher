@@ -26,6 +26,7 @@ import android.graphics.Canvas
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
+import android.os.SystemClock
 import android.os.UserHandle
 import android.provider.Settings
 import android.view.KeyEvent
@@ -44,11 +45,13 @@ private const val EVENT_CHANNEL = "me.efesser.flauncher/event"
 private const val MEDIA_EVENT_CHANNEL = "me.efesser.flauncher/media"
 private const val WATCH_NEXT_EVENT_CHANNEL = "me.efesser.flauncher/watch_next"
 private const val WATCH_NEXT_PERMISSION_REQUEST_CODE = 1
+private const val DOUBLE_HOME_PRESS_TIMEOUT_MS = 400L
 
 class MainActivity : FlutterActivity() {
     val launcherAppsCallbacks = ArrayList<LauncherApps.Callback>()
     private lateinit var mediaSessionStreamHandler: MediaSessionStreamHandler
     private lateinit var watchNextStreamHandler: WatchNextStreamHandler
+    private var lastHomePressTime = 0L
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -128,6 +131,22 @@ class MainActivity : FlutterActivity() {
             return true
         }
         return super.dispatchKeyEvent(event)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // every press on Home brings the launcher back with a new intent, wherever it is pressed
+        if (intent.action == ACTION_MAIN && intent.hasCategory(CATEGORY_HOME)) {
+            onHomePressed()
+        }
+    }
+
+    /** Pressing Home twice shows the recent apps, like the default launcher does, when the service is enabled. */
+    private fun onHomePressed() {
+        val now = SystemClock.uptimeMillis()
+        lastHomePressTime =
+            if (now - lastHomePressTime <= DOUBLE_HOME_PRESS_TIMEOUT_MS && RecentsAccessibilityService.showRecents()) 0
+            else now
     }
 
     override fun onResume() {
