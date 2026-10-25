@@ -72,7 +72,7 @@ void main() {
 
     await _pumpWidgetWithProviders(tester, mediaService, appsService);
 
-    expect(find.text("En cours de lecture"), findsOneWidget);
+    expect(find.text("Reprendre la lecture"), findsOneWidget);
     expect(find.text("Spotify"), findsOneWidget);
     expect(find.text("Bittersweet"), findsOneWidget);
     expect(find.text("Lianne La Havas · Bittersweet (Radio Edit)"), findsOneWidget);
@@ -188,7 +188,8 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.pumpAndSettle();
 
-    when(mediaService.nowPlaying).thenReturn(spotify);
+    when(mediaService.nowPlaying)
+        .thenReturn(NowPlaying(packageName: "com.spotify.tv.android", title: "Bittersweet", playing: true));
     when(mediaService.spotify).thenReturn(null);
     await _pumpWidgetWithProviders(tester, mediaService, appsService);
     expect(find.text("En cours de lecture"), findsOneWidget);
@@ -223,7 +224,7 @@ void main() {
     verifyNever(mediaService.openPlayer());
   });
 
-  testWidgets("Spotify's media is shown alone, full width, while it plays or is paused", (tester) async {
+  testWidgets("Spotify's media is shown alone, full width, playing or offered to be resumed", (tester) async {
     final mediaService = MockMediaService();
     final appsService = MockAppsService();
     when(mediaService.permissionGranted).thenReturn(true);
@@ -233,10 +234,44 @@ void main() {
 
     await _pumpWidgetWithProviders(tester, mediaService, appsService);
 
-    expect(find.text("En cours de lecture"), findsOneWidget);
-    expect(find.text("Reprendre la lecture"), findsNothing);
+    expect(find.text("Reprendre la lecture"), findsOneWidget);
+    expect(find.text("En cours de lecture"), findsNothing);
     expect(find.text("Bittersweet"), findsOneWidget);
     expect(find.byType(InkWell), findsOneWidget);
+
+    when(mediaService.nowPlaying)
+        .thenReturn(NowPlaying(packageName: "com.spotify.tv.android", title: "Bittersweet", playing: true));
+    await _pumpWidgetWithProviders(tester, mediaService, appsService);
+
+    expect(find.text("En cours de lecture"), findsOneWidget);
+    expect(find.text("Reprendre la lecture"), findsNothing);
+    expect(find.byType(InkWell), findsOneWidget);
+  });
+
+  testWidgets("Spotify's panel grows to the whole width while the video goes", (tester) async {
+    final mediaService = MockMediaService();
+    final appsService = MockAppsService();
+    final spotify = NowPlaying(packageName: "com.spotify.tv.android", title: "Bittersweet");
+    when(mediaService.permissionGranted).thenReturn(true);
+    when(mediaService.nowPlaying).thenReturn(NowPlaying(packageName: "app.smarttube.fdroid", title: "Une vidéo"));
+    when(mediaService.spotify).thenReturn(spotify);
+    when(appsService.applications).thenReturn([]);
+    await _pumpWidgetWithProviders(tester, mediaService, appsService);
+    final halfWidth = tester.getSize(find.byKey(ValueKey("com.spotify.tv.android"))).width;
+
+    when(mediaService.nowPlaying).thenReturn(spotify);
+    when(mediaService.spotify).thenReturn(null);
+    await _pumpWidgetWithProviders(tester, mediaService, appsService, settle: false);
+    await tester.pump(Duration(milliseconds: 200));
+
+    final width = tester.getSize(find.byKey(ValueKey("com.spotify.tv.android"))).width;
+    expect(width, greaterThan(halfWidth));
+    expect(find.text("Une vidéo"), findsOneWidget);
+    expect(tester.getSize(find.byKey(ValueKey("app.smarttube.fdroid"))).width, lessThan(halfWidth));
+
+    await tester.pumpAndSettle();
+    expect(find.text("Une vidéo"), findsNothing);
+    expect(tester.getSize(find.byKey(ValueKey("com.spotify.tv.android"))).width, greaterThan(halfWidth * 2));
   });
 
   testWidgets("artwork keeps its aspect ratio", (tester) async {
@@ -273,6 +308,8 @@ void main() {
 
     when(mediaService.nowPlaying).thenReturn(NowPlaying(packageName: "com.spotify.tv.android", art: art));
     await _pumpWidgetWithProviders(tester, mediaService, appsService, settle: false);
+    // the title fades to "Reprendre la lecture" meanwhile
+    await tester.pump(Duration(seconds: 1));
     expect(tester.hasRunningAnimations, isFalse);
 
     tester.binding.platformDispatcher.accessibilityFeaturesTestValue = FakeAccessibilityFeatures(
@@ -282,6 +319,8 @@ void main() {
     when(mediaService.nowPlaying)
         .thenReturn(NowPlaying(packageName: "com.spotify.tv.android", art: art, playing: true));
     await _pumpWidgetWithProviders(tester, mediaService, appsService, settle: false);
+    // the title fading out began before animations were disabled
+    await tester.pump(Duration(seconds: 1));
     expect(tester.hasRunningAnimations, isFalse);
   });
 }

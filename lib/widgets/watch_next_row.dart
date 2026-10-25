@@ -34,8 +34,19 @@ const _progressInset = 10.0;
 const _progressHeight = 4.0;
 const _textShadows = [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 8)];
 
-/// The media offered in "Reprendre la lecture" are left out.
-class WatchNextRow extends StatelessWidget {
+/// The same as the moves of the "now playing" panels, that the program left out comes back at the same time.
+const _appearDuration = Duration(milliseconds: 400);
+
+/// The media offered in "Reprendre la lecture" are left out. When one isn't offered anymore, e.g. because Spotify's
+/// media is resumed instead, its program comes back growing from nothing.
+class WatchNextRow extends StatefulWidget {
+  @override
+  State<WatchNextRow> createState() => _WatchNextRowState();
+}
+
+class _WatchNextRowState extends State<WatchNextRow> {
+  Set<int> _leftOut = {};
+
   @override
   Widget build(BuildContext context) => Consumer2<WatchNextService, MediaService>(
     builder: (context, watchNextService, mediaService, _) {
@@ -50,8 +61,14 @@ class WatchNextRow extends StatelessWidget {
         if (nowPlaying != null && nowPlaying.resumable) nowPlaying,
         if (mediaService.spotify != null) mediaService.spotify!,
       ];
+      final leftOut = {
+        for (final program in watchNextService.programs)
+          if (resumable.any(program.isSameMediaAs)) program.id,
+      };
+      final comingBack = _leftOut.difference(leftOut);
+      _leftOut = leftOut;
       final programs = watchNextService.programs
-          .where((program) => !resumable.any(program.isSameMediaAs))
+          .where((program) => !leftOut.contains(program.id))
           .toList(growable: false);
       if (programs.isEmpty) {
         return SizedBox.shrink();
@@ -66,9 +83,15 @@ class WatchNextRow extends StatelessWidget {
             itemCount: programs.length,
             itemBuilder: (context, index) => RevealOnFocus(
               key: Key("watch-next-${programs[index].id}"),
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8),
-                child: _ProgramCard(program: programs[index], onPressed: () => watchNextService.open(programs[index])),
+              child: _Appear(
+                appearing: comingBack.contains(programs[index].id),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                  child: _ProgramCard(
+                    program: programs[index],
+                    onPressed: () => watchNextService.open(programs[index]),
+                  ),
+                ),
               ),
             ),
           ),
@@ -92,6 +115,32 @@ class WatchNextRow extends StatelessWidget {
         child,
       ],
     ),
+  );
+}
+
+/// Grows from nothing and fades in when [appearing] as it is first built, otherwise is there right away.
+class _Appear extends StatelessWidget {
+  final bool appearing;
+  final Widget child;
+
+  _Appear({required this.appearing, required this.child});
+
+  @override
+  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
+    // only the end is animated once built: the start doesn't matter afterwards
+    tween: Tween(begin: appearing ? 0 : 1, end: 1),
+    duration: MediaQuery.of(context).disableAnimations ? Duration.zero : _appearDuration,
+    curve: Curves.easeInOutCubic,
+    builder: (context, presence, child) => ClipRect(
+      // the focused card's glow goes beyond it
+      clipBehavior: presence < 1 ? Clip.hardEdge : Clip.none,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        widthFactor: presence,
+        child: Opacity(opacity: presence, child: child),
+      ),
+    ),
+    child: child,
   );
 }
 

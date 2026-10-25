@@ -127,6 +127,31 @@ void main() {
     expect(find.text("L'amanite tue-mouche"), findsOneWidget);
   });
 
+  testWidgets("a program left out comes back growing, the others are there right away", (tester) async {
+    final watchNextService = MockWatchNextService();
+    final appsService = MockAppsService();
+    when(watchNextService.permissionGranted).thenReturn(true);
+    when(watchNextService.programs).thenReturn([
+      WatchNextProgram(id: 1, packageName: "tv.arte.plus7", title: "L'amanite tue-mouche"),
+      WatchNextProgram(id: 2, packageName: "fr.francetv.pluzz", title: "C dans l'air"),
+    ]);
+    when(appsService.applications).thenReturn([]);
+    final video = NowPlaying(packageName: "tv.arte.plus7", title: "L'amanite tue-mouche");
+
+    await _pumpWidgetWithProviders(tester, watchNextService, appsService, nowPlaying: video, settle: false);
+    expect(tester.hasRunningAnimations, isFalse);
+    final cardWidth = tester.getSize(find.byKey(Key("watch-next-2"))).width;
+
+    await _pumpWidgetWithProviders(tester, watchNextService, appsService, settle: false);
+    await tester.pump(Duration(milliseconds: 200));
+    final width = tester.getSize(find.byKey(Key("watch-next-1"))).width;
+    expect(width, greaterThan(0));
+    expect(width, lessThan(cardWidth));
+
+    await tester.pumpAndSettle();
+    expect(tester.getSize(find.byKey(Key("watch-next-1"))).width, cardWidth);
+  });
+
   testWidgets("shows nothing when every program is offered to be resumed", (tester) async {
     final watchNextService = MockWatchNextService();
     when(watchNextService.permissionGranted).thenReturn(true);
@@ -157,6 +182,7 @@ Future<void> _pumpWidgetWithProviders(
   AppsService appsService, {
   NowPlaying? nowPlaying,
   NowPlaying? spotify,
+  bool settle = true,
 }) async {
   await tester.pumpWidget(
     MultiProvider(
@@ -171,5 +197,9 @@ Future<void> _pumpWidgetWithProviders(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+  }
 }

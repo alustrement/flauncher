@@ -34,10 +34,16 @@ const _panelHeight = 150.0;
 const _artSize = 126.0;
 const _radius = 16.0;
 const _columnSpacing = 24.0;
+const _spotifyCardWidth = _panelHeight * 16 / 9;
+
+/// Duration of the panels' moves, e.g. when Spotify's panel takes the whole width once resumed.
+const _transitionDuration = Duration(milliseconds: 400);
+const _transitionCurve = Curves.easeInOutCubic;
 const _textShadows = [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 8)];
 
-/// The media playing, or Spotify's paused one, full width. A video doesn't play in the background though: once it has
-/// been watched, it is offered to be resumed next to Spotify's paused media, or next to Spotify itself when it has none.
+/// The media playing, or Spotify's paused one offered to be resumed, full width. A video doesn't play in the background
+/// though: once it has been watched, it is offered to be resumed next to Spotify's paused media, or next to Spotify
+/// itself when it has none.
 class NowPlayingPanel extends StatefulWidget {
   @override
   State<NowPlayingPanel> createState() => _NowPlayingPanelState();
@@ -59,31 +65,45 @@ class _NowPlayingPanelState extends State<NowPlayingPanel> {
       }
       final panel = _panel(mediaService, nowPlaying, mediaService.openPlayer);
       if (!nowPlaying.resumable) {
-        return _section(context, "En cours de lecture", panel);
+        return _section(
+          context,
+          nowPlaying.playing ? "En cours de lecture" : "Reprendre la lecture",
+          _AnimatedPanels(slots: [panel]),
+        );
       }
       final spotify = mediaService.spotify;
+      final spotifyApplication = context.select<AppsService, App?>((appsService) {
+        final matches = appsService.applications.where((app) => app.packageName == spotifyPackage);
+        return matches.isNotEmpty ? matches.first : null;
+      });
       return _section(
         context,
         "Reprendre la lecture",
-        Row(
-          children: [
-            Expanded(child: panel),
-            if (spotify != null) ...[
-              SizedBox(width: _columnSpacing),
-              Expanded(child: _panel(mediaService, spotify, mediaService.resumeSpotify)),
-            ] else
-              _SpotifyCard(),
+        _AnimatedPanels(
+          slots: [
+            panel,
+            if (spotify != null)
+              _panel(mediaService, spotify, mediaService.resumeSpotify)
+            else if (spotifyApplication != null)
+              _Slot(
+                key: ValueKey("spotify-card"),
+                width: _spotifyCardWidth,
+                child: _SpotifyCard(application: spotifyApplication),
+              ),
           ],
         ),
       );
     },
   );
 
-  Widget _panel(MediaService mediaService, NowPlaying nowPlaying, VoidCallback onPressed) => _Panel(
-    key: _panelKeys.putIfAbsent(nowPlaying.packageName, () => GlobalKey()),
-    nowPlaying: nowPlaying,
-    onPressed: onPressed,
-    onFocusChange: (focused) => mediaService.setMediaFocused(nowPlaying.packageName, focused),
+  _Slot _panel(MediaService mediaService, NowPlaying nowPlaying, VoidCallback onPressed) => _Slot(
+    key: ValueKey(nowPlaying.packageName),
+    child: _Panel(
+      key: _panelKeys.putIfAbsent(nowPlaying.packageName, () => GlobalKey()),
+      nowPlaying: nowPlaying,
+      onPressed: onPressed,
+      onFocusChange: (focused) => mediaService.setMediaFocused(nowPlaying.packageName, focused),
+    ),
   );
 
   Widget _section(BuildContext context, String title, Widget child) => Padding(
@@ -93,9 +113,16 @@ class _NowPlayingPanelState extends State<NowPlayingPanel> {
       children: [
         Padding(
           padding: EdgeInsets.only(left: 32, bottom: 8),
-          child: Text(
-            title,
-            style: Theme.of(context).textTheme.titleLarge!.copyWith(color: ZenPalette.lavender, shadows: _textShadows),
+          child: AnimatedSwitcher(
+            duration: MediaQuery.of(context).disableAnimations ? Duration.zero : _transitionDuration,
+            layoutBuilder: (current, previous) =>
+                Stack(alignment: Alignment.centerLeft, children: [...previous, ?current]),
+            child: Text(
+              title,
+              key: ValueKey(title),
+              style: Theme.of(context).textTheme.titleLarge!
+                  .copyWith(color: ZenPalette.lavender, shadows: _textShadows),
+            ),
           ),
         ),
         Padding(
@@ -105,6 +132,141 @@ class _NowPlayingPanelState extends State<NowPlayingPanel> {
       ],
     ),
   );
+}
+
+/// A panel of [_AnimatedPanels], which shares the width with the other panels unless it has its own [width].
+class _Slot {
+  final Key key;
+  final double? width;
+  final Widget child;
+
+  _Slot({required this.key, this.width, required this.child});
+}
+
+/// Panels side by side, which grow from nothing when they come and shrink to nothing when they go, while the other
+/// panels take the room left: Spotify's panel grows to the whole width once resumed, while the video goes.
+class _AnimatedPanels extends StatefulWidget {
+  final List<_Slot> slots;
+
+  _AnimatedPanels({required this.slots});
+
+  @override
+  State<_AnimatedPanels> createState() => _AnimatedPanelsState();
+}
+
+class _AnimatedPanelsState extends State<_AnimatedPanels> with TickerProviderStateMixin {
+  late List<_SlotEntry> _entries = [
+    for (final slot in widget.slots) _SlotEntry(slot, AnimationController(vsync: this, value: 1)),
+  ];
+
+  @override
+  void didUpdateWidget(covariant _AnimatedPanels oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final duration = MediaQuery.of(context).disableAnimations ? Duration.zero : _transitionDuration;
+    final previous = {for (final entry in _entries) entry.slot.key: entry};
+    final entries = <_SlotEntry>[];
+    for (final slot in widget.slots) {
+      final entry = previous.remove(slot.key) ?? _SlotEntry(slot, AnimationController(vsync: this));
+      entry.slot = slot;
+      entry.leaving = false;
+      entry.controller.animateTo(1, duration: duration, curve: _transitionCurve);
+      entries.add(entry);
+    }
+    // the panels which go stay where they were while they shrink
+    for (final entry in previous.values) {
+      entry.leaving = true;
+      entry.controller.animateBack(0, duration: duration, curve: _transitionCurve).whenCompleteOrCancel(() {
+        if (mounted && entry.leaving) {
+          setState(() => _entries.remove(entry));
+          entry.controller.dispose();
+        }
+      });
+      entries.insert(min(_entries.indexOf(entry), entries.length), entry);
+    }
+    _entries = entries;
+  }
+
+  @override
+  void dispose() {
+    for (final entry in _entries) {
+      entry.controller.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: _panelHeight,
+    child: AnimatedBuilder(
+      animation: Listenable.merge([for (final entry in _entries) entry.controller]),
+      builder: (context, _) => LayoutBuilder(builder: (context, constraints) => _layout(constraints.maxWidth)),
+    ),
+  );
+
+  Widget _layout(double width) {
+    final presences = [for (final entry in _entries) entry.controller.value];
+    final gaps = [
+      for (var i = 0; i < _entries.length; ++i) i == 0 ? 0.0 : _columnSpacing * min(presences[i - 1], presences[i]),
+    ];
+    var shared = width - gaps.fold(0.0, (sum, gap) => sum + gap);
+    var sharedPresence = 0.0;
+    for (var i = 0; i < _entries.length; ++i) {
+      final fixedWidth = _entries[i].slot.width;
+      if (fixedWidth != null) {
+        shared -= fixedWidth * presences[i];
+      } else {
+        sharedPresence += presences[i];
+      }
+    }
+    return Row(
+      children: [
+        for (var i = 0; i < _entries.length; ++i) ...[
+          SizedBox(width: gaps[i]),
+          _slot(
+            _entries[i],
+            presences[i],
+            _entries[i].slot.width ?? (sharedPresence > 0 ? max(shared, 0.0) / sharedPresence : 0.0),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// The panel keeps its full width while it shrinks or grows, cut on its right, and fades meanwhile.
+  Widget _slot(_SlotEntry entry, double presence, double fullWidth) {
+    if (presence == 1 && !entry.leaving) {
+      entry.fullWidth = fullWidth;
+    }
+    final contentWidth = entry.leaving ? entry.fullWidth ?? fullWidth : fullWidth;
+    return SizedBox(
+      key: entry.slot.key,
+      width: fullWidth * presence,
+      child: ClipRect(
+        // the focused panel's glow goes beyond its slot
+        clipBehavior: presence < 1 ? Clip.hardEdge : Clip.none,
+        child: OverflowBox(
+          alignment: Alignment.centerLeft,
+          minWidth: contentWidth,
+          maxWidth: contentWidth,
+          child: ExcludeFocus(
+            excluding: entry.leaving,
+            child: Opacity(opacity: presence, child: entry.slot.child),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SlotEntry {
+  _Slot slot;
+  final AnimationController controller;
+  bool leaving = false;
+
+  /// The width of the panel when it is fully there, which it keeps while it goes.
+  double? fullWidth;
+
+  _SlotEntry(this.slot, this.controller);
 }
 
 class _Panel extends StatefulWidget {
@@ -251,8 +413,12 @@ class _PanelState extends State<_Panel> {
   }
 }
 
-/// Opens Spotify when it has no media to resume. Nothing is shown without Spotify.
+/// Opens Spotify when it has no media to resume.
 class _SpotifyCard extends StatefulWidget {
+  final App application;
+
+  _SpotifyCard({required this.application});
+
   @override
   State<_SpotifyCard> createState() => _SpotifyCardState();
 }
@@ -262,65 +428,56 @@ class _SpotifyCardState extends State<_SpotifyCard> {
 
   @override
   Widget build(BuildContext context) {
-    final application = context.select<AppsService, App?>((appsService) {
-      final matches = appsService.applications.where((app) => app.packageName == spotifyPackage);
-      return matches.isNotEmpty ? matches.first : null;
-    });
-    if (application == null) {
-      return SizedBox.shrink();
-    }
-    return Padding(
-      padding: EdgeInsets.only(left: _columnSpacing),
-      child: AnimatedScale(
-        scale: _focused ? 1.04 : 1.0,
+    final application = widget.application;
+    return AnimatedScale(
+      scale: _focused ? 1.04 : 1.0,
+      duration: Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      child: AnimatedContainer(
         duration: Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        child: AnimatedContainer(
-          duration: Duration(milliseconds: 200),
-          height: _panelHeight,
-          width: _panelHeight * 16 / 9,
-          decoration: BoxDecoration(
+        height: _panelHeight,
+        width: _spotifyCardWidth,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(_radius),
+          boxShadow: _focused ? ZenPalette.focusGlow : [],
+        ),
+        child: Material(
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(_radius),
-            boxShadow: _focused ? ZenPalette.focusGlow : [],
+            side: application.banner == null
+                ? BorderSide(color: ZenPalette.lavender.withValues(alpha: 0.18))
+                : BorderSide.none,
           ),
-          child: Material(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(_radius),
-              side: application.banner == null
-                  ? BorderSide(color: ZenPalette.lavender.withValues(alpha: 0.18))
-                  : BorderSide.none,
-            ),
-            clipBehavior: Clip.antiAlias,
-            elevation: _focused ? 16 : 8,
-            shadowColor: Colors.black,
-            color: ZenPalette.surface,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                InkWell(
-                  focusColor: Colors.transparent,
-                  onFocusChange: (focused) => setState(() => _focused = focused),
-                  onTap: () => context.read<AppsService>().launchApp(application),
-                  child: application.banner != null
-                      ? Ink.image(image: MemoryImage(application.banner!), fit: BoxFit.cover)
-                      : Padding(
-                          padding: EdgeInsets.all(32),
-                          child: application.icon != null
-                              ? Image.memory(application.icon!, gaplessPlayback: true)
-                              : Center(child: Text(application.name)),
-                        ),
-                ),
-                IgnorePointer(
-                  child: AnimatedContainer(
-                    duration: Duration(milliseconds: 200),
-                    decoration: BoxDecoration(
-                      border: _focused ? Border.all(color: ZenPalette.accent, width: 2) : null,
-                      borderRadius: BorderRadius.circular(_radius),
-                    ),
+          clipBehavior: Clip.antiAlias,
+          elevation: _focused ? 16 : 8,
+          shadowColor: Colors.black,
+          color: ZenPalette.surface,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              InkWell(
+                focusColor: Colors.transparent,
+                onFocusChange: (focused) => setState(() => _focused = focused),
+                onTap: () => context.read<AppsService>().launchApp(application),
+                child: application.banner != null
+                    ? Ink.image(image: MemoryImage(application.banner!), fit: BoxFit.cover)
+                    : Padding(
+                        padding: EdgeInsets.all(32),
+                        child: application.icon != null
+                            ? Image.memory(application.icon!, gaplessPlayback: true)
+                            : Center(child: Text(application.name)),
+                      ),
+              ),
+              IgnorePointer(
+                child: AnimatedContainer(
+                  duration: Duration(milliseconds: 200),
+                  decoration: BoxDecoration(
+                    border: _focused ? Border.all(color: ZenPalette.accent, width: 2) : null,
+                    borderRadius: BorderRadius.circular(_radius),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
