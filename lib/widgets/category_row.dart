@@ -20,6 +20,7 @@ import 'package:flauncher/database.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/widgets/app_card.dart';
+import 'package:flauncher/widgets/initial_focus.dart';
 import 'package:flauncher/widgets/reveal_on_focus.dart';
 import 'package:flauncher/widgets/settings/categories_panel_page.dart';
 import 'package:flauncher/widgets/settings/settings_panel.dart';
@@ -61,7 +62,6 @@ class CategoryRow extends StatelessWidget {
                           child: AppCard(
                             category: category,
                             application: applications[index],
-                            autofocus: index == 0,
                             onMove: (direction) => _onMove(context, direction, index),
                             onMoveEnd: () => _onMoveEnd(context),
                           ),
@@ -79,7 +79,8 @@ class CategoryRow extends StatelessWidget {
   int _findChildIndex(Key key) =>
       applications.indexWhere((app) => "${category.id}-${app.packageName}" == (key as ValueKey<String>).value);
 
-  Widget _emptyState(BuildContext context) => SizedBox(
+  Widget _emptyState(BuildContext context) => SkipInitialFocus(
+          child: SizedBox(
         height: 110,
         child: RevealOnFocus(
           child: Padding(
@@ -111,7 +112,7 @@ class CategoryRow extends StatelessWidget {
             ),
           ),
         ),
-      );
+      ));
 
   void _onMove(BuildContext context, AxisDirection direction, int index) {
     int? newIndex;

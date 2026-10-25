@@ -27,6 +27,7 @@ import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/wallpaper_service.dart';
 import 'package:flauncher/widgets/apps_grid.dart';
 import 'package:flauncher/widgets/category_row.dart';
+import 'package:flauncher/widgets/initial_focus.dart';
 import 'package:flauncher/widgets/now_playing_panel.dart';
 import 'package:flauncher/widgets/reveal_on_focus.dart';
 import 'package:flauncher/widgets/settings/settings_panel.dart';
@@ -55,7 +56,7 @@ class FLauncher extends StatelessWidget {
                         // no horizontal margin: the horizontal lists reach the edges of the screen, and the other
                         // sections have their own margins
                         padding: EdgeInsets.only(top: RevealOnFocus.pageTop(context)),
-                        child: _categories(appsService.categoriesWithApps),
+                        child: InitialFocus(child: _categories(appsService.categoriesWithApps)),
                       )
                     : _emptyState(context),
               ),

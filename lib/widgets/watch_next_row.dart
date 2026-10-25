@@ -20,6 +20,7 @@ import 'package:flauncher/database.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/watch_next_service.dart';
+import 'package:flauncher/widgets/initial_focus.dart';
 import 'package:flauncher/widgets/reveal_on_focus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -33,7 +34,8 @@ class WatchNextRow extends StatelessWidget {
   Widget build(BuildContext context) => Consumer<WatchNextService>(
         builder: (context, watchNextService, _) {
           if (!watchNextService.permissionGranted) {
-            return _section(context, _PermissionHint(onPressed: watchNextService.requestPermission));
+            return _section(
+                context, SkipInitialFocus(child: _PermissionHint(onPressed: watchNextService.requestPermission)));
           }
           if (watchNextService.programs.isEmpty) {
             return SizedBox.shrink();

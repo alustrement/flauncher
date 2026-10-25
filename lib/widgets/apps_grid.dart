@@ -22,6 +22,7 @@ import 'package:flauncher/database.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/widgets/app_card.dart';
+import 'package:flauncher/widgets/initial_focus.dart';
 import 'package:flauncher/widgets/reveal_on_focus.dart';
 import 'package:flauncher/widgets/settings/categories_panel_page.dart';
 import 'package:flauncher/widgets/settings/settings_panel.dart';
@@ -63,7 +64,6 @@ class AppsGrid extends StatelessWidget {
                       child: AppCard(
                         category: category,
                         application: applications[index],
-                        autofocus: index == 0,
                         onMove: (direction) => _onMove(context, direction, index),
                         onMoveEnd: () => _saveOrder(context),
                       ),
@@ -124,7 +124,8 @@ class AppsGrid extends StatelessWidget {
         crossAxisSpacing: 16,
       );
 
-  Widget _emptyState(BuildContext context) => Padding(
+  Widget _emptyState(BuildContext context) => SkipInitialFocus(
+          child: Padding(
         padding: EdgeInsets.only(top: 8),
         child: SizedBox(
           height: 110,
@@ -159,5 +160,5 @@ class AppsGrid extends StatelessWidget {
             ),
           ),
         ),
-      );
+      ));
 }

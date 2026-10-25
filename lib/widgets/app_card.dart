@@ -36,7 +36,6 @@ const _radius = 12.0;
 class AppCard extends StatefulWidget {
   final Category category;
   final App application;
-  final bool autofocus;
   final void Function(AxisDirection) onMove;
   final VoidCallback onMoveEnd;
 
@@ -44,7 +43,6 @@ class AppCard extends StatefulWidget {
     Key? key,
     required this.category,
     required this.application,
-    required this.autofocus,
     required this.onMove,
     required this.onMoveEnd,
   }) : super(key: key);
@@ -125,7 +123,6 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
                 fit: StackFit.expand,
                 children: [
                   InkWell(
-                    autofocus: widget.autofocus,
                     focusColor: Colors.transparent,
                     onTap: () => _onPressed(context, null),
                     onLongPress: () => _onLongPress(context, null),

@@ -577,6 +577,55 @@ void main() {
     expect(Focus.of(music1).hasFocus, isTrue);
   });
 
+  group("Initial focus", () {
+    late MockAppsService appsService;
+    late MockWallpaperService wallpaperService;
+    late MockSettingsService settingsService;
+    final nowPlaying = NowPlaying(packageName: "com.spotify.tv.android", title: "Lonely Soldier");
+
+    setUp(() {
+      appsService = MockAppsService();
+      wallpaperService = MockWallpaperService();
+      settingsService = MockSettingsService();
+      when(appsService.initialized).thenReturn(true);
+      when(appsService.applications).thenReturn([]);
+      when(wallpaperService.wallpaperBytes).thenReturn(null);
+      when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
+      when(settingsService.use24HourTimeFormat).thenReturn(false);
+      when(settingsService.appHighlightAnimationEnabled).thenReturn(false);
+      when(appsService.categoriesWithApps).thenReturn([
+        CategoryWithApps(fakeCategory(name: "tv", order: 0, type: CategoryType.row), [
+          for (var i = 1; i <= 2; ++i)
+            fakeApp(packageName: "me.efesser.tv$i", name: "tv $i", banner: kTransparentImage, icon: kTransparentImage),
+        ]),
+      ]);
+    });
+
+    bool panelHasFocus(WidgetTester tester) => Focus.of(tester.element(find.text("Lonely Soldier"))).hasFocus;
+
+    testWidgets("goes to the top of the page, even when it appears after the launch", (tester) async {
+      await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
+      expect(Focus.of(findAppCardByPackageName(tester, "me.efesser.tv1")!).hasFocus, isTrue);
+
+      await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService, nowPlaying: nowPlaying);
+      await tester.pump();
+      expect(panelHasFocus(tester), isTrue);
+    });
+
+    testWidgets("stays where the user moved when a section appears above", (tester) async {
+      await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump();
+      final tv2 = findAppCardByPackageName(tester, "me.efesser.tv2")!;
+      expect(Focus.of(tv2).hasFocus, isTrue);
+
+      await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService, nowPlaying: nowPlaying);
+      await tester.pump();
+      expect(Focus.of(tv2).hasFocus, isTrue);
+      expect(panelHasFocus(tester), isFalse);
+    });
+  });
+
   testWidgets("Moving down brings every row at the same height", (tester) async {
     final appsService = MockAppsService();
     final wallpaperService = MockWallpaperService();
@@ -711,11 +760,12 @@ Future<void> _pumpWidgetWithProviders(
   WidgetTester tester,
   WallpaperService wallpaperService,
   AppsService appsService,
-  SettingsService settingsService,
-) async {
+  SettingsService settingsService, {
+  NowPlaying? nowPlaying,
+}) async {
   final mediaService = MockMediaService();
   when(mediaService.permissionGranted).thenReturn(true);
-  when(mediaService.nowPlaying).thenReturn(null);
+  when(mediaService.nowPlaying).thenReturn(nowPlaying);
   final watchNextService = MockWatchNextService();
   when(watchNextService.permissionGranted).thenReturn(true);
   when(watchNextService.programs).thenReturn([]);

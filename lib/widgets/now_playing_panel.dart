@@ -24,6 +24,7 @@ import 'package:flauncher/database.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/media_service.dart';
+import 'package:flauncher/widgets/initial_focus.dart';
 import 'package:flauncher/widgets/reveal_on_focus.dart';
 import 'package:flauncher/widgets/zen_waves_painter.dart';
 import 'package:flutter/material.dart';
@@ -39,7 +40,7 @@ class NowPlayingPanel extends StatelessWidget {
   Widget build(BuildContext context) => Consumer<MediaService>(
         builder: (context, mediaService, _) {
           if (!mediaService.permissionGranted) {
-            return _section(context, _PermissionHint());
+            return _section(context, SkipInitialFocus(child: _PermissionHint()));
           }
           final nowPlaying = mediaService.nowPlaying;
           if (nowPlaying == null) {
