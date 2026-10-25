@@ -69,9 +69,13 @@ class ZenWavesPainter extends CustomPainter {
   const ZenWavesPainter();
 
   /// The [index]-th wave, from the back to the front, filled down to the bottom of the 1920x1080 canvas.
-  static Path wave(int index) {
-    final wave = Path()..moveTo(_waveStarts[index].dx, _waveStarts[index].dy);
-    _addCurves(wave, _waveStarts[index], _waves[index]);
+  ///
+  /// [move] displaces each point of its curve, control points included, e.g. to animate it.
+  static Path wave(int index, {Offset Function(Offset point)? move}) {
+    final at = move ?? ((point) => point);
+    final start = at(_waveStarts[index]);
+    final wave = Path()..moveTo(start.dx, start.dy);
+    _addCurves(wave, start, _waves[index].map((curve) => curve.map(at).toList()).toList());
     return wave
       ..lineTo(width, height)
       ..lineTo(0, height)

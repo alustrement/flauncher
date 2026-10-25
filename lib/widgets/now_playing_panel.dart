@@ -17,6 +17,7 @@
  */
 
 import 'dart:async';
+import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flauncher/database.dart';
@@ -119,7 +120,7 @@ class _PanelState extends State<_Panel> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              IgnorePointer(child: RepaintBoundary(child: _ArtworkWaves(image: artImage))),
+              IgnorePointer(child: RepaintBoundary(child: _ArtworkWaves(image: artImage, playing: nowPlaying.playing))),
               InkWell(
                 focusColor: Colors.transparent,
                 onFocusChange: (focused) => setState(() => _focused = focused),
@@ -191,32 +192,82 @@ class _PanelState extends State<_Panel> {
 }
 
 /// The blurred artwork seen through the waves of the background: the tint gets lighter below each wave, so that the
-/// artwork's colors show more and more towards the bottom.
-class _ArtworkWaves extends StatelessWidget {
+/// artwork's colors show more and more towards the bottom. The waves swell while the media plays.
+class _ArtworkWaves extends StatefulWidget {
   final ImageProvider? image;
+  final bool playing;
 
-  _ArtworkWaves({required this.image});
+  _ArtworkWaves({required this.image, required this.playing});
+
+  @override
+  State<_ArtworkWaves> createState() => _ArtworkWavesState();
+}
+
+class _ArtworkWavesState extends State<_ArtworkWaves> with SingleTickerProviderStateMixin {
+  late final AnimationController _swell = AnimationController(vsync: this, duration: _ArtworkWavesPainter.swellPeriod);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _updateSwell();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ArtworkWaves oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _updateSwell();
+  }
+
+  @override
+  void dispose() {
+    _swell.dispose();
+    super.dispose();
+  }
+
+  /// The waves stay still when paused, when there is no artwork to see them, and when animations are disabled.
+  void _updateSwell() {
+    final swelling = widget.playing && widget.image != null && !MediaQuery.of(context).disableAnimations;
+    if (swelling && !_swell.isAnimating) {
+      _swell.repeat();
+    } else if (!swelling && _swell.isAnimating) {
+      _swell.stop();
+    }
+  }
 
   @override
   Widget build(BuildContext context) => Stack(
         fit: StackFit.expand,
         children: [
-          if (image != null)
-            ImageFiltered(
-              imageFilter: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-              child: Image(image: image!, fit: BoxFit.cover, gaplessPlayback: true),
+          // its own layer, so that the blurred artwork is cached instead of being blurred again on every frame
+          if (widget.image != null)
+            RepaintBoundary(
+              child: ImageFiltered(
+                imageFilter: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                child: Image(image: widget.image!, fit: BoxFit.cover, gaplessPlayback: true),
+              ),
             ),
-          CustomPaint(painter: _ArtworkWavesPainter()),
+          RepaintBoundary(child: CustomPaint(painter: _ArtworkWavesPainter(_swell))),
         ],
       );
 }
 
 class _ArtworkWavesPainter extends CustomPainter {
+  static const swellPeriod = Duration(seconds: 9);
+
   /// Where the top of the panel is on the background's canvas, just above the crest of its first wave.
   static const _top = 490.0;
 
   /// Opacity of the tint above the first wave, then below each wave.
   static const _tints = [0.86, 0.68, 0.52, 0.38, 0.26, 0.16];
+
+  // the swell travels along the waves, slightly out of step from one wave to the next
+  static const _amplitude = 22.0;
+  static const _wavelength = 1300.0;
+  static const _phaseShift = 0.9;
+
+  final Animation<double> swell;
+
+  _ArtworkWavesPainter(this.swell) : super(repaint: swell);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -232,13 +283,18 @@ class _ArtworkWavesPainter extends CustomPainter {
       paint..color = ZenPalette.surface.withOpacity(_tints[0]),
     );
     for (var i = 0; i < ZenWavesPainter.waveCount; ++i) {
-      canvas.drawPath(ZenWavesPainter.wave(i), paint..color = ZenPalette.surface.withOpacity(_tints[i + 1]));
+      final phase = i * _phaseShift - 2 * pi * swell.value;
+      final wave = ZenWavesPainter.wave(
+        i,
+        move: (point) => point.translate(0, _amplitude * sin(2 * pi * point.dx / _wavelength + phase)),
+      );
+      canvas.drawPath(wave, paint..color = ZenPalette.surface.withOpacity(_tints[i + 1]));
     }
     canvas.restore();
   }
 
   @override
-  bool shouldRepaint(_ArtworkWavesPainter oldDelegate) => false;
+  bool shouldRepaint(_ArtworkWavesPainter oldDelegate) => swell != oldDelegate.swell;
 }
 
 class _AppLabel extends StatelessWidget {

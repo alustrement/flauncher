@@ -123,6 +123,31 @@ void main() {
     final artSize = tester.getSize(find.byType(ClipRRect).first);
     expect(artSize.width / artSize.height, closeTo(16 / 9, 0.05));
   });
+
+  testWidgets("waves swell only while playing, when animations are enabled", (tester) async {
+    final mediaService = MockMediaService();
+    final appsService = MockAppsService();
+    final art = base64Decode(_png16x9);
+    when(mediaService.permissionGranted).thenReturn(true);
+    when(appsService.applications).thenReturn([]);
+
+    when(mediaService.nowPlaying)
+        .thenReturn(NowPlaying(packageName: "com.spotify.tv.android", art: art, playing: true));
+    await _pumpWidgetWithProviders(tester, mediaService, appsService, settle: false);
+    expect(tester.hasRunningAnimations, isTrue);
+
+    when(mediaService.nowPlaying).thenReturn(NowPlaying(packageName: "com.spotify.tv.android", art: art));
+    await _pumpWidgetWithProviders(tester, mediaService, appsService, settle: false);
+    expect(tester.hasRunningAnimations, isFalse);
+
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    when(mediaService.nowPlaying)
+        .thenReturn(NowPlaying(packageName: "com.spotify.tv.android", art: art, playing: true));
+    await _pumpWidgetWithProviders(tester, mediaService, appsService, settle: false);
+    expect(tester.hasRunningAnimations, isFalse);
+  });
 }
 
 /// 16x9 transparent PNG
@@ -131,8 +156,9 @@ const _png16x9 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAJCAYAAAA7KqwyAAAAD0lEQVR4nGNgGA
 Future<void> _pumpWidgetWithProviders(
   WidgetTester tester,
   MediaService mediaService,
-  AppsService appsService,
-) async {
+  AppsService appsService, {
+  bool settle = true,
+}) async {
   await tester.pumpWidget(
     MultiProvider(
       providers: [
@@ -148,5 +174,10 @@ Future<void> _pumpWidgetWithProviders(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  // the waves never settle while the media plays
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+  }
 }
