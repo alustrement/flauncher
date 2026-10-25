@@ -84,6 +84,7 @@ class MediaSessionStreamHandler(
     private var currentController: MediaController? = null
     private var lastArtBitmap: Bitmap? = null
     private var lastArtBytes: ByteArray? = null
+    private var lastEngagements: Map<String, Long> = emptyMap()
 
     private val sessionsChangedListener = MediaSessionManager.OnActiveSessionsChangedListener {
         updateControllers(it ?: emptyList())
@@ -113,6 +114,17 @@ class MediaSessionStreamHandler(
     }
 
     fun dispose() = stop()
+
+    /**
+     * Some apps don't publish a media session while they play (e.g. arte), which would leave an older paused session
+     * shown while another app has been watched since: the "Continue watching" programs these apps publish tell it.
+     *
+     * [engagements] is the last time a program of each app was watched, in milliseconds since the epoch.
+     */
+    fun updateLastEngagements(engagements: Map<String, Long>) {
+        lastEngagements = engagements
+        selectController()
+    }
 
     /**
      * Forwards media keys to the session shown on the home screen, as the system would otherwise send them to its
@@ -185,11 +197,27 @@ class MediaSessionStreamHandler(
         selectController()
     }
 
-    /** Picks the playing session first, otherwise a paused one which still has something to show. */
+    /**
+     * Picks the playing session first, otherwise a paused one which still has something to show, unless another app
+     * has been watched since it was paused.
+     */
     private fun selectController() {
         currentController = controllers.firstOrNull { it.playbackState?.state in ACTIVE_STATES }
-            ?: controllers.firstOrNull { it.metadata != null && it.playbackState?.state == PlaybackState.STATE_PAUSED }
+            ?: controllers.firstOrNull {
+                it.metadata != null && it.playbackState?.state == PlaybackState.STATE_PAUSED && !isOutdated(it)
+            }
         events?.success(mapOf("permissionGranted" to true, "session" to currentController?.let(::buildSessionMap)))
+    }
+
+    private fun isOutdated(controller: MediaController): Boolean {
+        val state = controller.playbackState ?: return false
+        if (state.lastPositionUpdateTime <= 0) {
+            return false
+        }
+        val pausedAt = System.currentTimeMillis() - (SystemClock.elapsedRealtime() - state.lastPositionUpdateTime)
+        return lastEngagements.any { (packageName, lastEngagement) ->
+            packageName != controller.packageName && lastEngagement > pausedAt
+        }
     }
 
     private fun buildSessionMap(controller: MediaController): Map<String, Any?> {

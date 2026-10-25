@@ -61,7 +61,11 @@ private val PROJECTION = arrayOf(
  *
  * Other apps' programs are only readable with the [READ_TV_LISTINGS] runtime permission.
  */
-class WatchNextStreamHandler(private val context: Context) : StreamHandler {
+class WatchNextStreamHandler(
+    private val context: Context,
+    /** Called with the last time a program of each app was watched, in milliseconds since the epoch. */
+    private val onLastEngagements: (Map<String, Long>) -> Unit,
+) : StreamHandler {
     private val handler = Handler(Looper.getMainLooper())
     private val executor = Executors.newSingleThreadExecutor()
     private var events: EventSink? = null
@@ -117,7 +121,10 @@ class WatchNextStreamHandler(private val context: Context) : StreamHandler {
             } catch (e: Exception) {
                 emptyList()
             }
-            handler.post { events?.success(mapOf("permissionGranted" to true, "programs" to programs)) }
+            handler.post {
+                onLastEngagements(lastEngagements(programs))
+                events?.success(mapOf("permissionGranted" to true, "programs" to programs))
+            }
         }
     }
 
@@ -143,6 +150,14 @@ class WatchNextStreamHandler(private val context: Context) : StreamHandler {
             false
         }
     }
+
+    private fun lastEngagements(programs: List<Map<String, Any?>>): Map<String, Long> = programs
+        .groupBy { it["packageName"] as String? }
+        .mapNotNull { (packageName, programs) ->
+            val lastEngagement = programs.mapNotNull { it["lastEngagementTime"] as Long? }.maxOrNull()
+            if (packageName != null && lastEngagement != null) packageName to lastEngagement else null
+        }
+        .toMap()
 
     private fun queryPrograms(): List<Map<String, Any?>> {
         // the TV provider rejects selections from apps which don't have full access, hence filtering here

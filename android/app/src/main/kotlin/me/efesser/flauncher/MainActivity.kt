@@ -127,7 +127,7 @@ class MainActivity : FlutterActivity() {
         EventChannel(flutterEngine.dartExecutor.binaryMessenger, MEDIA_EVENT_CHANNEL)
             .setStreamHandler(mediaSessionStreamHandler)
 
-        watchNextStreamHandler = WatchNextStreamHandler(this)
+        watchNextStreamHandler = WatchNextStreamHandler(this, mediaSessionStreamHandler::updateLastEngagements)
         EventChannel(flutterEngine.dartExecutor.binaryMessenger, WATCH_NEXT_EVENT_CHANNEL)
             .setStreamHandler(watchNextStreamHandler)
     }
