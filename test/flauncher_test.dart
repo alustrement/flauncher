@@ -613,50 +613,56 @@ void main() {
       expect(panelHasFocus(tester), isTrue);
     });
 
-    testWidgets("goes back to the top of the page when Home is pressed in the launcher", (tester) async {
-      final channel = MockFLauncherChannel();
-      final homeService = HomeService(channel);
-      final homePressed = verify(channel.addHomePressedListener(captureAny)).captured.single as void Function();
-      when(appsService.categoriesWithApps).thenReturn([
-        CategoryWithApps(fakeCategory(name: "tv", order: 0, type: CategoryType.row), [
-          for (var i = 1; i <= 10; ++i)
-            fakeApp(packageName: "me.efesser.tv$i", name: "tv $i", banner: kTransparentImage, icon: kTransparentImage),
-        ]),
-        CategoryWithApps(fakeCategory(name: "music", order: 1, type: CategoryType.row), [
-          for (var i = 1; i <= 3; ++i)
-            fakeApp(
-                packageName: "me.efesser.music$i",
-                name: "music $i",
-                banner: kTransparentImage,
-                icon: kTransparentImage),
-        ]),
-      ]);
-      await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService, homeService: homeService);
-      final start = tester.getTopLeft(find.byWidget(findAppCardByPackageName(tester, "me.efesser.tv1")!.widget));
+    for (final inLauncher in [true, false]) {
+      testWidgets(
+          "goes back to the top of the page when Home is pressed "
+          "${inLauncher ? "in the launcher" : "in another app"}", (tester) async {
+        final channel = MockFLauncherChannel();
+        final homeService = HomeService(channel);
+        final homePressed = verify(channel.addHomePressedListener(captureAny)).captured.single as void Function(bool);
+        when(appsService.categoriesWithApps).thenReturn([
+          CategoryWithApps(fakeCategory(name: "tv", order: 0, type: CategoryType.row), [
+            for (var i = 1; i <= 10; ++i)
+              fakeApp(
+                  packageName: "me.efesser.tv$i", name: "tv $i", banner: kTransparentImage, icon: kTransparentImage),
+          ]),
+          CategoryWithApps(fakeCategory(name: "music", order: 1, type: CategoryType.row), [
+            for (var i = 1; i <= 3; ++i)
+              fakeApp(
+                  packageName: "me.efesser.music$i",
+                  name: "music $i",
+                  banner: kTransparentImage,
+                  icon: kTransparentImage),
+          ]),
+        ]);
+        await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService,
+            homeService: homeService);
+        final start = tester.getTopLeft(find.byWidget(findAppCardByPackageName(tester, "me.efesser.tv1")!.widget));
 
-      // the first row scrolled, and the focus in the second one
-      for (var i = 0; i < 7; ++i) {
+        // the first row scrolled, and the focus in the second one
+        for (var i = 0; i < 7; ++i) {
+          await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        }
+        // a first frame starts the scrolling, the next ones move it
+        await tester.pump();
+        await tester.pump(RevealOnFocus.duration);
+        expect(findAppCardByPackageName(tester, "me.efesser.tv1"), isNull);
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
-      }
-      // a first frame starts the scrolling, the next ones move it
-      await tester.pump();
-      await tester.pump(RevealOnFocus.duration);
-      expect(findAppCardByPackageName(tester, "me.efesser.tv1"), isNull);
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
-      await tester.pump();
-      await tester.pump(RevealOnFocus.duration);
-      expect(Focus.of(findAppCardByPackageName(tester, "me.efesser.music2")!).hasFocus, isTrue);
+        await tester.pump();
+        await tester.pump(RevealOnFocus.duration);
+        expect(Focus.of(findAppCardByPackageName(tester, "me.efesser.music2")!).hasFocus, isTrue);
 
-      homePressed();
-      // the rows scroll back, then the focus goes to the top
-      await tester.pump();
-      await tester.pump(RevealOnFocus.duration);
-      await tester.pump(RevealOnFocus.duration);
-      final tv1 = findAppCardByPackageName(tester, "me.efesser.tv1")!;
-      expect(Focus.of(tv1).hasFocus, isTrue);
-      expect(tester.getTopLeft(find.byWidget(tv1.widget)), start);
-    });
+        homePressed(inLauncher);
+        // the rows scroll back, then the focus goes to the top
+        await tester.pump();
+        await tester.pump(RevealOnFocus.duration);
+        await tester.pump(RevealOnFocus.duration);
+        final tv1 = findAppCardByPackageName(tester, "me.efesser.tv1")!;
+        expect(Focus.of(tv1).hasFocus, isTrue);
+        expect(tester.getTopLeft(find.byWidget(tv1.widget)), start);
+      });
+    }
 
     testWidgets("stays where the user moved when a section appears above", (tester) async {
       await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);

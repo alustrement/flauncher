@@ -19,10 +19,17 @@
 import 'package:flauncher/flauncher_channel.dart';
 import 'package:flutter/foundation.dart';
 
-/// Notifies its listeners when Home is pressed once while the launcher is displayed, to bring it back to the top of
-/// the page.
+/// Notifies its listeners when Home is pressed once, to bring the launcher back to the top of its page.
 class HomeService extends ChangeNotifier {
+  bool _inLauncher = true;
+
+  /// Whether the launcher was already displayed when Home was last pressed, rather than another app.
+  bool get inLauncher => _inLauncher;
+
   HomeService(FLauncherChannel fLauncherChannel) {
-    fLauncherChannel.addHomePressedListener(notifyListeners);
+    fLauncherChannel.addHomePressedListener((inLauncher) {
+      _inLauncher = inLauncher;
+      notifyListeners();
+    });
   }
 }

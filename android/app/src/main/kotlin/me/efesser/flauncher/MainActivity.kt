@@ -56,7 +56,7 @@ class MainActivity : FlutterActivity() {
     private lateinit var methodChannel: MethodChannel
     private var lastHomePressTime = 0L
     private val handler = Handler(Looper.getMainLooper())
-    private val backToTop = Runnable { methodChannel.invokeMethod("homePressed", null) }
+    private val backToTopInLauncher = Runnable { backToTop(animated = true) }
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -150,26 +150,32 @@ class MainActivity : FlutterActivity() {
 
     /**
      * Like the default launcher does, pressing Home twice shows the recent apps when the service is enabled, and
-     * pressing it once in the launcher brings it back to the top of its page.
+     * pressing it once brings the launcher back to the top of its page: right away when it comes back from another
+     * app, smoothly when it is already displayed.
      */
     private fun onHomePressed(inLauncher: Boolean) {
         val now = SystemClock.uptimeMillis()
         if (now - lastHomePressTime <= DOUBLE_HOME_PRESS_TIMEOUT_MS && RecentsAccessibilityService.showRecents()) {
-            handler.removeCallbacks(backToTop)
+            handler.removeCallbacks(backToTopInLauncher)
             lastHomePressTime = 0
             return
         }
         lastHomePressTime = now
-        if (inLauncher && ::methodChannel.isInitialized) {
-            handler.removeCallbacks(backToTop)
-            // waits to know whether Home is pressed twice, when it can be
-            if (RecentsAccessibilityService.enabled) {
-                handler.postDelayed(backToTop, DOUBLE_HOME_PRESS_TIMEOUT_MS)
-            } else {
-                backToTop.run()
-            }
+        if (!::methodChannel.isInitialized) {
+            return
+        }
+        handler.removeCallbacks(backToTopInLauncher)
+        if (!inLauncher) {
+            backToTop(animated = false)
+        } else if (RecentsAccessibilityService.enabled) {
+            // waits to know whether Home is pressed twice
+            handler.postDelayed(backToTopInLauncher, DOUBLE_HOME_PRESS_TIMEOUT_MS)
+        } else {
+            backToTop(animated = true)
         }
     }
+
+    private fun backToTop(animated: Boolean) = methodChannel.invokeMethod("homePressed", animated)
 
     override fun onResume() {
         super.onResume()
@@ -189,7 +195,7 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
-        handler.removeCallbacks(backToTop)
+        handler.removeCallbacks(backToTopInLauncher)
         val launcherApps = getSystemService(LAUNCHER_APPS_SERVICE) as LauncherApps
         launcherAppsCallbacks.forEach(launcherApps::unregisterCallback)
         if (::mediaSessionStreamHandler.isInitialized) {

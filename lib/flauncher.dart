@@ -55,7 +55,7 @@ class FLauncher extends StatelessWidget {
                         // sections have their own margins
                         padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
                         child: InitialFocus(
-                          homePressed: context.read<HomeService>(),
+                          homeService: context.read<HomeService>(),
                           child: _page(context, appsService.categoriesWithApps),
                         ),
                       )

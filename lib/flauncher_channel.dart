@@ -54,10 +54,11 @@ class FLauncherChannel {
   Future<void> openWatchNextProgram(String packageName, String? intentUri) async =>
       await _methodChannel.invokeMethod("openWatchNextProgram", {"packageName": packageName, "intentUri": intentUri});
 
-  /// [listener] is called when Home is pressed once while the launcher is displayed.
-  void addHomePressedListener(void Function() listener) => _methodChannel.setMethodCallHandler((call) async {
+  /// [listener] is called when Home is pressed once, with whether the launcher was already displayed.
+  void addHomePressedListener(void Function(bool inLauncher) listener) =>
+      _methodChannel.setMethodCallHandler((call) async {
         if (call.method == "homePressed") {
-          listener();
+          listener(call.arguments as bool? ?? true);
         }
       });
 

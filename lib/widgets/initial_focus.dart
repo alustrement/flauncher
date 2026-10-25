@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'package:flauncher/providers/home_service.dart';
 import 'package:flauncher/widgets/reveal_on_focus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -31,12 +32,13 @@ const _directionKeys = [
 /// whenever sections appear or disappear above it, e.g. the media playing which is known a bit after the launch, until
 /// the user moves.
 ///
-/// [homePressed] brings the page back to its top, every row back to its start, and the focus to the top again.
+/// Pressing Home ([homeService]) brings the page back to its top, every row back to its start, and the focus to the
+/// top again: smoothly when the launcher is already displayed, right away when it comes back from another app.
 class InitialFocus extends StatefulWidget {
-  final Listenable? homePressed;
+  final HomeService? homeService;
   final Widget child;
 
-  InitialFocus({Key? key, this.homePressed, required this.child}) : super(key: key);
+  InitialFocus({Key? key, this.homeService, required this.child}) : super(key: key);
 
   @override
   State<InitialFocus> createState() => _InitialFocusState();
@@ -50,22 +52,22 @@ class _InitialFocusState extends State<InitialFocus> {
   void initState() {
     super.initState();
     HardwareKeyboard.instance.addHandler(_onKey);
-    widget.homePressed?.addListener(_backToTop);
+    widget.homeService?.addListener(_backToTop);
     WidgetsBinding.instance.addPostFrameCallback((_) => _focusTop());
   }
 
   @override
   void didUpdateWidget(covariant InitialFocus oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.homePressed != oldWidget.homePressed) {
-      oldWidget.homePressed?.removeListener(_backToTop);
-      widget.homePressed?.addListener(_backToTop);
+    if (widget.homeService != oldWidget.homeService) {
+      oldWidget.homeService?.removeListener(_backToTop);
+      widget.homeService?.addListener(_backToTop);
     }
   }
 
   @override
   void dispose() {
-    widget.homePressed?.removeListener(_backToTop);
+    widget.homeService?.removeListener(_backToTop);
     HardwareKeyboard.instance.removeHandler(_onKey);
     _focusNode.dispose();
     super.dispose();
@@ -95,13 +97,19 @@ class _InitialFocusState extends State<InitialFocus> {
     final positions = {
       for (final node in _focusNode.traversalDescendants)
         if (node.context != null) ..._scrollPositions(node.context!),
-    };
-    await Future.wait(
-        positions.where((position) => position.pixels != position.minScrollExtent).map((position) => position.animateTo(
-              position.minScrollExtent,
-              duration: RevealOnFocus.duration,
-              curve: RevealOnFocus.curve,
-            )));
+    }.where((position) => position.pixels != position.minScrollExtent);
+    if (widget.homeService?.inLauncher ?? true) {
+      await Future.wait(positions.map((position) => position.animateTo(
+            position.minScrollExtent,
+            duration: RevealOnFocus.duration,
+            curve: RevealOnFocus.curve,
+          )));
+    } else {
+      for (final position in positions.toList()) {
+        position.jumpTo(position.minScrollExtent);
+      }
+      await WidgetsBinding.instance.endOfFrame;
+    }
     // the first element of the top row is now at its start, and built
     _focusTop();
   }
