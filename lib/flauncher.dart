@@ -24,6 +24,7 @@ import 'package:flauncher/database.dart';
 import 'package:flauncher/gradients.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
+import 'package:flauncher/providers/home_service.dart';
 import 'package:flauncher/providers/wallpaper_service.dart';
 import 'package:flauncher/widgets/apps_grid.dart';
 import 'package:flauncher/widgets/category_row.dart';
@@ -53,7 +54,10 @@ class FLauncher extends StatelessWidget {
                         // no horizontal margin: the horizontal lists reach the edges of the screen, and the other
                         // sections have their own margins
                         padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-                        child: InitialFocus(child: _page(context, appsService.categoriesWithApps)),
+                        child: InitialFocus(
+                          homePressed: context.read<HomeService>(),
+                          child: _page(context, appsService.categoriesWithApps),
+                        ),
                       )
                     : _emptyState(context),
               ),

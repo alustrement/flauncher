@@ -26,6 +26,8 @@ import android.graphics.Canvas
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
 import android.os.UserHandle
 import android.provider.Settings
@@ -51,11 +53,15 @@ class MainActivity : FlutterActivity() {
     val launcherAppsCallbacks = ArrayList<LauncherApps.Callback>()
     private lateinit var mediaSessionStreamHandler: MediaSessionStreamHandler
     private lateinit var watchNextStreamHandler: WatchNextStreamHandler
+    private lateinit var methodChannel: MethodChannel
     private var lastHomePressTime = 0L
+    private val handler = Handler(Looper.getMainLooper())
+    private val backToTop = Runnable { methodChannel.invokeMethod("homePressed", null) }
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, METHOD_CHANNEL).setMethodCallHandler { call, result ->
+        methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, METHOD_CHANNEL)
+        methodChannel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "getApplications" -> result.success(getApplications())
                 "applicationExists" -> result.success(applicationExists(call.arguments as String))
@@ -135,18 +141,34 @@ class MainActivity : FlutterActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        // every press on Home brings the launcher back with a new intent, wherever it is pressed
+        // every press on Home brings the launcher back with a new intent, wherever it is pressed; the launcher
+        // already displayed has the window focus, unlike when it comes back from another app
         if (intent.action == ACTION_MAIN && intent.hasCategory(CATEGORY_HOME)) {
-            onHomePressed()
+            onHomePressed(hasWindowFocus())
         }
     }
 
-    /** Pressing Home twice shows the recent apps, like the default launcher does, when the service is enabled. */
-    private fun onHomePressed() {
+    /**
+     * Like the default launcher does, pressing Home twice shows the recent apps when the service is enabled, and
+     * pressing it once in the launcher brings it back to the top of its page.
+     */
+    private fun onHomePressed(inLauncher: Boolean) {
         val now = SystemClock.uptimeMillis()
-        lastHomePressTime =
-            if (now - lastHomePressTime <= DOUBLE_HOME_PRESS_TIMEOUT_MS && RecentsAccessibilityService.showRecents()) 0
-            else now
+        if (now - lastHomePressTime <= DOUBLE_HOME_PRESS_TIMEOUT_MS && RecentsAccessibilityService.showRecents()) {
+            handler.removeCallbacks(backToTop)
+            lastHomePressTime = 0
+            return
+        }
+        lastHomePressTime = now
+        if (inLauncher && ::methodChannel.isInitialized) {
+            handler.removeCallbacks(backToTop)
+            // waits to know whether Home is pressed twice, when it can be
+            if (RecentsAccessibilityService.enabled) {
+                handler.postDelayed(backToTop, DOUBLE_HOME_PRESS_TIMEOUT_MS)
+            } else {
+                backToTop.run()
+            }
+        }
     }
 
     override fun onResume() {
@@ -167,6 +189,7 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
+        handler.removeCallbacks(backToTop)
         val launcherApps = getSystemService(LAUNCHER_APPS_SERVICE) as LauncherApps
         launcherAppsCallbacks.forEach(launcherApps::unregisterCallback)
         if (::mediaSessionStreamHandler.isInitialized) {

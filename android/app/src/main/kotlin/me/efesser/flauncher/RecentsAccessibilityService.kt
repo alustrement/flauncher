@@ -43,6 +43,8 @@ class RecentsAccessibilityService : AccessibilityService() {
     companion object {
         private var instance: RecentsAccessibilityService? = null
 
+        val enabled get() = instance != null
+
         /** Whether the recent apps are shown, i.e. whether the service is enabled. */
         fun showRecents(): Boolean = instance?.performGlobalAction(GLOBAL_ACTION_RECENTS) ?: false
     }

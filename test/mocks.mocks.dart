@@ -373,6 +373,14 @@ class MockFLauncherChannel extends _i1.Mock implements _i7.FLauncherChannel {
         returnValueForMissingStub: _i8.Future<void>.value(),
       ) as _i8.Future<void>);
   @override
+  void addHomePressedListener(void Function()? listener) => super.noSuchMethod(
+        Invocation.method(
+          #addHomePressedListener,
+          [listener],
+        ),
+        returnValueForMissingStub: null,
+      );
+  @override
   void addAppsChangedListener(void Function(Map<dynamic, dynamic>)? listener) => super.noSuchMethod(
         Invocation.method(
           #addAppsChangedListener,

@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'package:flauncher/widgets/reveal_on_focus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -29,10 +30,13 @@ const _directionKeys = [
 /// Focuses the element at the top of the page (the leftmost one of the top row) once it is displayed, and again
 /// whenever sections appear or disappear above it, e.g. the media playing which is known a bit after the launch, until
 /// the user moves.
+///
+/// [homePressed] brings the page back to its top, every row back to its start, and the focus to the top again.
 class InitialFocus extends StatefulWidget {
+  final Listenable? homePressed;
   final Widget child;
 
-  InitialFocus({Key? key, required this.child}) : super(key: key);
+  InitialFocus({Key? key, this.homePressed, required this.child}) : super(key: key);
 
   @override
   State<InitialFocus> createState() => _InitialFocusState();
@@ -46,11 +50,22 @@ class _InitialFocusState extends State<InitialFocus> {
   void initState() {
     super.initState();
     HardwareKeyboard.instance.addHandler(_onKey);
+    widget.homePressed?.addListener(_backToTop);
     WidgetsBinding.instance.addPostFrameCallback((_) => _focusTop());
   }
 
   @override
+  void didUpdateWidget(covariant InitialFocus oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.homePressed != oldWidget.homePressed) {
+      oldWidget.homePressed?.removeListener(_backToTop);
+      widget.homePressed?.addListener(_backToTop);
+    }
+  }
+
+  @override
   void dispose() {
+    widget.homePressed?.removeListener(_backToTop);
     HardwareKeyboard.instance.removeHandler(_onKey);
     _focusNode.dispose();
     super.dispose();
@@ -74,6 +89,31 @@ class _InitialFocusState extends State<InitialFocus> {
           child: SizeChangedLayoutNotifier(child: widget.child),
         ),
       );
+
+  Future<void> _backToTop() async {
+    _moved = false;
+    final positions = {
+      for (final node in _focusNode.traversalDescendants)
+        if (node.context != null) ..._scrollPositions(node.context!),
+    };
+    await Future.wait(
+        positions.where((position) => position.pixels != position.minScrollExtent).map((position) => position.animateTo(
+              position.minScrollExtent,
+              duration: RevealOnFocus.duration,
+              curve: RevealOnFocus.curve,
+            )));
+    // the first element of the top row is now at its start, and built
+    _focusTop();
+  }
+
+  /// The positions of the page and of the row or grid [context] is in.
+  Iterable<ScrollPosition> _scrollPositions(BuildContext context) sync* {
+    for (var scrollable = Scrollable.maybeOf(context);
+        scrollable != null;
+        scrollable = Scrollable.maybeOf(scrollable.context)) {
+      yield scrollable.position;
+    }
+  }
 
   void _focusTop() {
     if (_moved || !mounted) {
