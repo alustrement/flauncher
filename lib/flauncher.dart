@@ -47,16 +47,13 @@ class FLauncher extends StatelessWidget {
             ),
             Scaffold(
               backgroundColor: Colors.transparent,
-              // the page scrolls under the transparent top bar
-              extendBodyBehindAppBar: true,
-              appBar: _appBar(context),
               body: Consumer<AppsService>(
                 builder: (context, appsService, _) => appsService.initialized
                     ? SingleChildScrollView(
                         // no horizontal margin: the horizontal lists reach the edges of the screen, and the other
                         // sections have their own margins
-                        padding: EdgeInsets.only(top: RevealOnFocus.pageTop(context)),
-                        child: InitialFocus(child: _categories(appsService.categoriesWithApps)),
+                        padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+                        child: InitialFocus(child: _page(context, appsService.categoriesWithApps)),
                       )
                     : _emptyState(context),
               ),
@@ -65,8 +62,9 @@ class FLauncher extends StatelessWidget {
         ),
       );
 
-  Widget _categories(List<CategoryWithApps> categoriesWithApps) => Column(
+  Widget _page(BuildContext context, List<CategoryWithApps> categoriesWithApps) => Column(
         children: [
+          SkipInitialFocus(child: _topBar(context)),
           NowPlayingPanel(),
           WatchNextRow(),
           ...categoriesWithApps.map((categoryWithApps) {
@@ -92,38 +90,46 @@ class FLauncher extends StatelessWidget {
         ],
       );
 
-  AppBar _appBar(BuildContext context) => AppBar(
-        actions: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              Positioned(
-                left: 2.0,
-                top: 18.0,
-                child: ImageFiltered(
-                  imageFilter: ImageFilter.blur(sigmaX: 2, sigmaY: 2, tileMode: TileMode.decal),
-                  child: Icon(Icons.settings_outlined, color: Colors.black54),
-                ),
-              ),
-              IconButton(
-                padding: EdgeInsets.all(2),
-                constraints: BoxConstraints(),
-                splashRadius: 20,
-                color: ZenPalette.lavender,
-                focusColor: ZenPalette.waves.first.withOpacity(0.4),
-                icon: Icon(Icons.settings_outlined),
-                onPressed: () => showDialog(context: context, builder: (_) => SettingsPanel()),
-              ),
-            ],
-          ),
-          Padding(
-            padding: EdgeInsets.only(left: 16, right: 32),
-            child: Align(
+  /// The clock and the settings, which scroll with the page.
+  Widget _topBar(BuildContext context) => Container(
+        height: RevealOnFocus.topBarHeight,
+        padding: EdgeInsets.only(bottom: RevealOnFocus.topBarHeight - kToolbarHeight),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            RevealOnFocus(
+                child: Stack(
               alignment: Alignment.center,
-              child: TimeWidget(),
+              children: [
+                Positioned(
+                  left: 2.0,
+                  top: 18.0,
+                  child: ImageFiltered(
+                    imageFilter: ImageFilter.blur(sigmaX: 2, sigmaY: 2, tileMode: TileMode.decal),
+                    child: Icon(Icons.settings_outlined, color: Colors.black54),
+                  ),
+                ),
+                IconButton(
+                  padding: EdgeInsets.all(2),
+                  constraints: BoxConstraints(),
+                  splashRadius: 20,
+                  color: ZenPalette.lavender,
+                  focusColor: ZenPalette.waves.first.withOpacity(0.4),
+                  icon: Icon(Icons.settings_outlined),
+                  onPressed: () => showDialog(context: context, builder: (_) => SettingsPanel()),
+                ),
+              ],
+            )),
+            Padding(
+              padding: EdgeInsets.only(left: 16, right: 32),
+              child: Align(
+                alignment: Alignment.center,
+                child: TimeWidget(),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       );
 
   Widget _wallpaper(BuildContext context, Uint8List? wallpaperImage, FLauncherGradient gradient) =>

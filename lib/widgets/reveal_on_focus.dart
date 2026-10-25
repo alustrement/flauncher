@@ -23,7 +23,7 @@ import 'package:flutter/material.dart';
 /// the first section stands when the page isn't scrolled.
 ///
 /// The child must be a card of a row, or a row of a grid, without the section's title: the space for the title is
-/// left above it.
+/// left above it. In the top bar, it brings the page back to its top.
 class RevealOnFocus extends StatelessWidget {
   static const duration = Duration(milliseconds: 300);
   static const curve = Curves.easeOutCubic;
@@ -39,8 +39,11 @@ class RevealOnFocus extends StatelessWidget {
 
   RevealOnFocus({Key? key, required this.child}) : super(key: key);
 
-  /// Where the page's content starts, under the top bar.
-  static double pageTop(BuildContext context) => MediaQuery.of(context).padding.top + 16;
+  /// The top bar at the top of the page, with the clock and the settings, and its margin with the first section.
+  static const topBarHeight = kToolbarHeight + 16;
+
+  /// Where the first section stands, under the top bar.
+  static double pageTop(BuildContext context) => MediaQuery.of(context).padding.top + topBarHeight;
 
   @override
   Widget build(BuildContext context) => Focus(
