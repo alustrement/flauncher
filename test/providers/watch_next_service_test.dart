@@ -18,6 +18,7 @@
 
 import 'dart:typed_data';
 
+import 'package:flauncher/providers/media_service.dart';
 import 'package:flauncher/providers/watch_next_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
@@ -179,6 +180,47 @@ void main() {
         0.25,
       );
       expect(WatchNextProgram(id: 1, packageName: "app", position: Duration(minutes: 5)).progress, isNull);
+    });
+
+    test("isSameMediaAs matches the media of the same app with one of the program's titles", () {
+      final program = WatchNextProgram(
+        id: 1,
+        packageName: "fr.francetv.pluzz",
+        title: "\"Quelques mots d'amour\" avec Hafsia Herzi",
+      );
+
+      expect(
+        program.isSameMediaAs(
+          NowPlaying(
+            packageName: "fr.francetv.pluzz",
+            title: "Abdoul fait son cinéma",
+            artist: "\"Quelques mots d’amour\"  avec hafsia Herzi",
+          ),
+        ),
+        isTrue,
+      );
+      expect(
+        program.isSameMediaAs(
+          NowPlaying(packageName: "fr.francetv.pluzz", title: "Abdoul fait son cinéma", artist: "Un autre invité"),
+        ),
+        isFalse,
+      );
+      expect(
+        program.isSameMediaAs(
+          NowPlaying(packageName: "tv.arte.plus7", title: "\"Quelques mots d'amour\" avec Hafsia Herzi"),
+        ),
+        isFalse,
+      );
+      expect(program.isSameMediaAs(NowPlaying(packageName: "fr.francetv.pluzz")), isFalse);
+      expect(
+        WatchNextProgram(
+          id: 2,
+          packageName: "com.disney.disneyplus",
+          title: "Malcolm",
+          episodeTitle: "Caméra cachée",
+        ).isSameMediaAs(NowPlaying(packageName: "com.disney.disneyplus", title: "Caméra cachée")),
+        isTrue,
+      );
     });
   });
 }

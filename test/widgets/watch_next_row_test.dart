@@ -17,6 +17,7 @@
  */
 
 import 'package:flauncher/providers/apps_service.dart';
+import 'package:flauncher/providers/media_service.dart';
 import 'package:flauncher/providers/watch_next_service.dart';
 import 'package:flauncher/widgets/watch_next_row.dart';
 import 'package:flutter/material.dart';
@@ -37,7 +38,7 @@ void main() {
 
     await _pumpWidgetWithProviders(tester, watchNextService, MockAppsService());
 
-    expect(find.text("Continuer à regarder"), findsNothing);
+    expect(find.text("Lectures récentes"), findsNothing);
   });
 
   testWidgets("permission hint requests permission", (tester) async {
@@ -73,7 +74,7 @@ void main() {
 
     await mockNetworkImagesFor(() => _pumpWidgetWithProviders(tester, watchNextService, appsService));
 
-    expect(find.text("Continuer à regarder"), findsOneWidget);
+    expect(find.text("Lectures récentes"), findsOneWidget);
     expect(find.text("Malcolm"), findsOneWidget);
     expect(find.text("S1 E4 · Caméra cachée"), findsOneWidget);
     expect(find.text("L'amanite tue-mouche"), findsOneWidget);
@@ -95,17 +96,73 @@ void main() {
 
     verify(watchNextService.open(program));
   });
+
+  testWidgets("leaves out the media offered to be resumed", (tester) async {
+    final watchNextService = MockWatchNextService();
+    final appsService = MockAppsService();
+    when(watchNextService.permissionGranted).thenReturn(true);
+    when(watchNextService.programs).thenReturn([
+      WatchNextProgram(id: 1, packageName: "tv.arte.plus7", title: "L'amanite tue-mouche"),
+      WatchNextProgram(id: 2, packageName: "fr.francetv.pluzz", title: "C dans l'air"),
+    ]);
+    when(appsService.applications).thenReturn([]);
+
+    await _pumpWidgetWithProviders(
+      tester,
+      watchNextService,
+      appsService,
+      nowPlaying: NowPlaying(packageName: "tv.arte.plus7", title: "L’amanite tue-mouche"),
+    );
+
+    expect(find.text("L'amanite tue-mouche"), findsNothing);
+    expect(find.text("C dans l'air"), findsOneWidget);
+
+    await _pumpWidgetWithProviders(
+      tester,
+      watchNextService,
+      appsService,
+      nowPlaying: NowPlaying(packageName: "tv.arte.plus7", title: "L’amanite tue-mouche", playing: true),
+    );
+
+    expect(find.text("L'amanite tue-mouche"), findsOneWidget);
+  });
+
+  testWidgets("shows nothing when every program is offered to be resumed", (tester) async {
+    final watchNextService = MockWatchNextService();
+    when(watchNextService.permissionGranted).thenReturn(true);
+    when(watchNextService.programs)
+        .thenReturn([WatchNextProgram(id: 1, packageName: "tv.arte.plus7", title: "L'amanite tue-mouche")]);
+
+    await _pumpWidgetWithProviders(
+      tester,
+      watchNextService,
+      MockAppsService(),
+      nowPlaying: NowPlaying(packageName: "tv.arte.plus7", title: "L'amanite tue-mouche"),
+    );
+
+    expect(find.text("Lectures récentes"), findsNothing);
+  });
+}
+
+MediaService _mediaService(NowPlaying? nowPlaying, NowPlaying? spotify) {
+  final mediaService = MockMediaService();
+  when(mediaService.nowPlaying).thenReturn(nowPlaying);
+  when(mediaService.spotify).thenReturn(spotify);
+  return mediaService;
 }
 
 Future<void> _pumpWidgetWithProviders(
   WidgetTester tester,
   WatchNextService watchNextService,
-  AppsService appsService,
-) async {
+  AppsService appsService, {
+  NowPlaying? nowPlaying,
+  NowPlaying? spotify,
+}) async {
   await tester.pumpWidget(
     MultiProvider(
       providers: [
         ChangeNotifierProvider<WatchNextService>.value(value: watchNextService),
+        ChangeNotifierProvider<MediaService>.value(value: _mediaService(nowPlaying, spotify)),
         ChangeNotifierProvider<AppsService>.value(value: appsService),
       ],
       builder: (_, _) => MaterialApp(

@@ -19,6 +19,7 @@
 import 'package:flauncher/database.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
+import 'package:flauncher/providers/media_service.dart';
 import 'package:flauncher/providers/watch_next_service.dart';
 import 'package:flauncher/widgets/initial_focus.dart';
 import 'package:flauncher/widgets/reveal_on_focus.dart';
@@ -33,20 +34,28 @@ const _progressInset = 10.0;
 const _progressHeight = 4.0;
 const _textShadows = [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 8)];
 
+/// The media offered in "Reprendre la lecture" are left out.
 class WatchNextRow extends StatelessWidget {
   @override
-  Widget build(BuildContext context) => Consumer<WatchNextService>(
-    builder: (context, watchNextService, _) {
+  Widget build(BuildContext context) => Consumer2<WatchNextService, MediaService>(
+    builder: (context, watchNextService, mediaService, _) {
       if (!watchNextService.permissionGranted) {
         return _section(
           context,
           SkipInitialFocus(child: _PermissionHint(onPressed: watchNextService.requestPermission)),
         );
       }
-      if (watchNextService.programs.isEmpty) {
+      final nowPlaying = mediaService.nowPlaying;
+      final resumable = [
+        if (nowPlaying != null && nowPlaying.resumable) nowPlaying,
+        if (mediaService.spotify != null) mediaService.spotify!,
+      ];
+      final programs = watchNextService.programs
+          .where((program) => !resumable.any(program.isSameMediaAs))
+          .toList(growable: false);
+      if (programs.isEmpty) {
         return SizedBox.shrink();
       }
-      final programs = watchNextService.programs;
       return _section(
         context,
         SizedBox(
@@ -76,7 +85,7 @@ class WatchNextRow extends StatelessWidget {
         Padding(
           padding: EdgeInsets.only(left: 32, bottom: 8),
           child: Text(
-            "Continuer à regarder",
+            "Lectures récentes",
             style: Theme.of(context).textTheme.titleLarge!.copyWith(color: ZenPalette.lavender, shadows: _textShadows),
           ),
         ),

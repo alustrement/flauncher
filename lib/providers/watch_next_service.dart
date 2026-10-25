@@ -19,6 +19,7 @@
 import 'dart:collection';
 
 import 'package:flauncher/flauncher_channel.dart';
+import 'package:flauncher/providers/media_service.dart';
 import 'package:flutter/foundation.dart';
 
 const _maxPrograms = 20;
@@ -104,6 +105,20 @@ class WatchNextProgram {
       position == other.position &&
       duration == other.duration &&
       intentUri == other.intentUri;
+
+  /// Whether [media] is this program: the session of some apps gives the title of the program as subtitle, e.g. the
+  /// show as title and the program as subtitle.
+  bool isSameMediaAs(NowPlaying media) {
+    if (media.packageName != packageName) {
+      return false;
+    }
+    final mediaTitles = [media.title, media.artist].nonNulls.map(_normalize).where((title) => title.isNotEmpty);
+    final programTitles = [title, episodeTitle].nonNulls.map(_normalize).toSet();
+    return mediaTitles.any(programTitles.contains);
+  }
+
+  static String _normalize(String title) =>
+      title.replaceAll("’", "'").replaceAll(RegExp(r"\s+"), " ").trim().toLowerCase();
 
   /// Watched fraction, or null when unknown.
   double? get progress {
