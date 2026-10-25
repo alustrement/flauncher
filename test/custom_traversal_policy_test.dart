@@ -185,6 +185,30 @@ void main() {
     await tester.pump();
     expect(secondRowNodes.first.hasFocus, isTrue);
   });
+
+  testWidgets("going right from the last element of a row stays there, even when the row below is longer",
+      (tester) async {
+    final firstRowNodes = List.generate(2, (index) => FocusNode(debugLabel: "first row item $index"));
+    final secondRowNodes = List.generate(4, (index) => FocusNode(debugLabel: "second row item $index"));
+    await tester.pumpWidget(MaterialApp(
+      home: FocusTraversalGroup(
+        policy: RowByRowTraversalPolicy(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: firstRowNodes.map((node) => _focusable(node, height: 100, width: 150)).toList()),
+            Row(children: secondRowNodes.map((node) => _focusable(node, height: 100, width: 150)).toList()),
+          ],
+        ),
+      ),
+    ));
+    firstRowNodes.last.requestFocus();
+    await tester.pump();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pump();
+    expect(firstRowNodes.last.hasFocus, isTrue);
+  });
 }
 
 Widget _focusable(FocusNode focusNode, {required double height, double width = 100}) => Focus(

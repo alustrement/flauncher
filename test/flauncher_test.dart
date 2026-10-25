@@ -666,7 +666,7 @@ void main() {
     }
   });
 
-  testWidgets("Moving right or up can go the settings icon", (tester) async {
+  testWidgets("Moving up can go the settings icon, moving right stays on the row", (tester) async {
     // given
     final appsService = MockAppsService();
     final wallpaperService = MockWallpaperService();
@@ -734,25 +734,30 @@ void main() {
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    Element? tv2 = findAppCardByPackageName(tester, "me.efesser.tv2");
+    expect(Focus.of(tv2!).hasFocus, isTrue);
 
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
     Element? settingsIcon = findSettingsIcon(tester);
     expect(settingsIcon, isNotNull);
-    expect(Focus.of(tv1).hasFocus, isFalse);
     expect(Focus.of(settingsIcon!).hasFocus, isTrue);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
     expect(Focus.of(settingsIcon).hasFocus, isFalse);
     expect(Focus.of(tv1).hasFocus, isTrue);
 
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
-    expect(Focus.of(settingsIcon).hasFocus, isTrue);
+    // the second row is longer: going right from the end of the first one doesn't go down to it
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    expect(Focus.of(tv2).hasFocus, isTrue);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
-    expect(Focus.of(settingsIcon).hasFocus, isTrue);
+    Element? music3 = findAppCardByPackageName(tester, "me.efesser.music3");
+    expect(Focus.of(music3!).hasFocus, isTrue);
+    expect(Focus.of(settingsIcon).hasFocus, isFalse);
   });
 }
 
