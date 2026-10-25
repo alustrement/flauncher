@@ -995,11 +995,6 @@ class MockSettingsService extends _i1.Mock implements _i10.SettingsService {
         returnValue: false,
       ) as bool);
   @override
-  bool get appHighlightAnimationEnabled => (super.noSuchMethod(
-        Invocation.getter(#appHighlightAnimationEnabled),
-        returnValue: false,
-      ) as bool);
-  @override
   bool get unsplashEnabled => (super.noSuchMethod(
         Invocation.getter(#unsplashEnabled),
         returnValue: false,
@@ -1013,15 +1008,6 @@ class MockSettingsService extends _i1.Mock implements _i10.SettingsService {
   _i8.Future<void> setUse24HourTimeFormat(bool? value) => (super.noSuchMethod(
         Invocation.method(
           #setUse24HourTimeFormat,
-          [value],
-        ),
-        returnValue: _i8.Future<void>.value(),
-        returnValueForMissingStub: _i8.Future<void>.value(),
-      ) as _i8.Future<void>);
-  @override
-  _i8.Future<void> setAppHighlightAnimationEnabled(bool? value) => (super.noSuchMethod(
-        Invocation.method(
-          #setAppHighlightAnimationEnabled,
           [value],
         ),
         returnValue: _i8.Future<void>.value(),

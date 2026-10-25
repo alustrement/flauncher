@@ -49,7 +49,6 @@ void main() {
     when(appsService.categoriesWithApps).thenReturn([]);
     when(appsService.applications).thenReturn([]);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
-    when(settingsService.appHighlightAnimationEnabled).thenReturn(true);
 
     await _pumpWidgetWithProviders(tester, settingsService, appsService);
 
@@ -65,7 +64,6 @@ void main() {
     when(appsService.categoriesWithApps).thenReturn([]);
     when(appsService.applications).thenReturn([]);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
-    when(settingsService.appHighlightAnimationEnabled).thenReturn(true);
 
     await _pumpWidgetWithProviders(tester, settingsService, appsService);
 
@@ -82,7 +80,6 @@ void main() {
     when(appsService.categoriesWithApps).thenReturn([]);
     when(appsService.applications).thenReturn([]);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
-    when(settingsService.appHighlightAnimationEnabled).thenReturn(true);
 
     await _pumpWidgetWithProviders(tester, settingsService, appsService);
 
@@ -100,7 +97,6 @@ void main() {
     when(appsService.categoriesWithApps).thenReturn([]);
     when(appsService.applications).thenReturn([]);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
-    when(settingsService.appHighlightAnimationEnabled).thenReturn(true);
 
     await _pumpWidgetWithProviders(tester, settingsService, appsService);
 
@@ -119,7 +115,6 @@ void main() {
     when(appsService.categoriesWithApps).thenReturn([]);
     when(appsService.applications).thenReturn([]);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
-    when(settingsService.appHighlightAnimationEnabled).thenReturn(true);
 
     await _pumpWidgetWithProviders(tester, settingsService, appsService);
 
@@ -139,7 +134,6 @@ void main() {
     when(appsService.categoriesWithApps).thenReturn([]);
     when(appsService.applications).thenReturn([]);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
-    when(settingsService.appHighlightAnimationEnabled).thenReturn(true);
     PackageInfoPlatform.instance = _MockPackageInfoPlatform();
 
     await _pumpWidgetWithProviders(tester, settingsService, appsService);

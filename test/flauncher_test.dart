@@ -23,7 +23,6 @@ import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/home_service.dart';
 import 'package:flauncher/providers/media_service.dart';
 import 'package:flauncher/providers/settings_service.dart';
-import 'package:flauncher/providers/ticker_model.dart';
 import 'package:flauncher/providers/wallpaper_service.dart';
 import 'package:flauncher/providers/watch_next_service.dart';
 import 'package:flauncher/widgets/application_info_panel.dart';
@@ -82,7 +81,6 @@ void main() {
       ]),
     ]);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
-    when(settingsService.appHighlightAnimationEnabled).thenReturn(true);
 
     await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
 
@@ -179,7 +177,6 @@ void main() {
       CategoryWithApps(fakeCategory(name: "Applications", order: 1), []),
     ]);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
-    when(settingsService.appHighlightAnimationEnabled).thenReturn(true);
     await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
@@ -199,7 +196,6 @@ void main() {
     when(wallpaperService.wallpaperBytes).thenReturn(null);
     when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
-    when(settingsService.appHighlightAnimationEnabled).thenReturn(true);
     final app = fakeApp(
       packageName: "me.efesser.flauncher",
       name: "FLauncher",
@@ -227,7 +223,6 @@ void main() {
     when(wallpaperService.wallpaperBytes).thenReturn(null);
     when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
-    when(settingsService.appHighlightAnimationEnabled).thenReturn(true);
     final applicationsCategory = fakeCategory(name: "Applications", order: 1);
     when(appsService.categoriesWithApps).thenReturn([
       CategoryWithApps(fakeCategory(name: "Favorites", order: 0), []),
@@ -257,7 +252,6 @@ void main() {
     when(wallpaperService.wallpaperBytes).thenReturn(null);
     when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
-    when(settingsService.appHighlightAnimationEnabled).thenReturn(true);
     final applicationsCategory = fakeCategory(name: "Applications", order: 1, type: CategoryType.grid);
     when(appsService.categoriesWithApps).thenReturn([
       CategoryWithApps(fakeCategory(name: "Favorites", order: 0), []),
@@ -302,7 +296,6 @@ void main() {
     when(wallpaperService.wallpaperBytes).thenReturn(null);
     when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
-    when(settingsService.appHighlightAnimationEnabled).thenReturn(true);
     final applicationsCategory = fakeCategory(name: "Applications", order: 1, type: CategoryType.row);
     when(appsService.categoriesWithApps).thenReturn([
       CategoryWithApps(fakeCategory(name: "Favorites", order: 0), []),
@@ -349,7 +342,6 @@ void main() {
     when(wallpaperService.wallpaperBytes).thenReturn(null);
     when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
-    when(settingsService.appHighlightAnimationEnabled).thenReturn(true);
 
     /*
      * we are creating 3 rows like the following:
@@ -464,7 +456,6 @@ void main() {
     when(wallpaperService.wallpaperBytes).thenReturn(null);
     when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
-    when(settingsService.appHighlightAnimationEnabled).thenReturn(true);
 
     /*
      * we are creating 2 rows like the following:
@@ -593,7 +584,6 @@ void main() {
       when(wallpaperService.wallpaperBytes).thenReturn(null);
       when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
       when(settingsService.use24HourTimeFormat).thenReturn(false);
-      when(settingsService.appHighlightAnimationEnabled).thenReturn(false);
       when(appsService.categoriesWithApps).thenReturn([
         CategoryWithApps(fakeCategory(name: "tv", order: 0, type: CategoryType.row), [
           for (var i = 1; i <= 2; ++i)
@@ -686,7 +676,6 @@ void main() {
     when(wallpaperService.wallpaperBytes).thenReturn(null);
     when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
-    when(settingsService.appHighlightAnimationEnabled).thenReturn(false);
     when(appsService.categoriesWithApps).thenReturn([
       for (var row = 0; row < 10; ++row)
         CategoryWithApps(fakeCategory(name: "row $row", order: row, type: CategoryType.row), [
@@ -728,7 +717,6 @@ void main() {
     when(wallpaperService.wallpaperBytes).thenReturn(null);
     when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
-    when(settingsService.appHighlightAnimationEnabled).thenReturn(true);
 
     /*
      * we are creating 2 rows like the following:
@@ -837,7 +825,6 @@ Future<void> _pumpWidgetWithProviders(
         ChangeNotifierProvider<WatchNextService>.value(value: watchNextService),
         ChangeNotifierProvider<SettingsService>.value(value: settingsService),
         ChangeNotifierProvider<HomeService>.value(value: homeService ?? HomeService(MockFLauncherChannel())),
-        Provider<TickerModel>(create: (_) => TickerModel(tester))
       ],
       builder: (_, __) => MaterialApp(
         home: FLauncher(),

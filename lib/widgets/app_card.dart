@@ -21,8 +21,6 @@ import 'dart:async';
 import 'package:flauncher/database.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
-import 'package:flauncher/providers/settings_service.dart';
-import 'package:flauncher/providers/ticker_model.dart';
 import 'package:flauncher/widgets/application_info_panel.dart';
 import 'package:flauncher/widgets/focus_keyboard_listener.dart';
 import 'package:flutter/foundation.dart' hide Category;
@@ -51,41 +49,9 @@ class AppCard extends StatefulWidget {
   _AppCardState createState() => _AppCardState();
 }
 
-class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
+class _AppCardState extends State<AppCard> {
   bool _moving = false;
   MemoryImage? _imageProvider;
-  late final AnimationController _animation = AnimationController(
-    vsync: Provider.of<TickerModel>(context, listen: false).tickerProvider ?? this,
-    duration: Duration(
-      milliseconds: 800,
-    ),
-  );
-
-  @override
-  void initState() {
-    super.initState();
-    _animation.addStatusListener((animationStatus) {
-      switch (animationStatus) {
-        case AnimationStatus.completed:
-          _animation.reverse();
-          break;
-        case AnimationStatus.dismissed:
-          _animation.forward();
-          break;
-        case AnimationStatus.forward:
-        case AnimationStatus.reverse:
-          // nothing to do
-          break;
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _animation.dispose();
-    super.dispose();
-  }
-
   ImageProvider _cachedMemoryImage(Uint8List bytes) {
     if (!listEquals(bytes, _imageProvider?.bytes)) {
       _imageProvider = MemoryImage(bytes);
@@ -166,30 +132,15 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
                       child: Container(color: Colors.black),
                     ),
                   ),
-                  Selector<SettingsService, bool>(
-                    selector: (_, settingsService) => settingsService.appHighlightAnimationEnabled,
-                    builder: (context, appHighlightAnimationEnabled, __) {
-                      if (appHighlightAnimationEnabled) {
-                        _animation.forward();
-                      } else {
-                        _animation.stop();
-                      }
-                      return AnimatedBuilder(
-                        animation: _animation,
-                        builder: (context, child) => IgnorePointer(
-                          child: AnimatedContainer(
-                            duration: Duration(milliseconds: 200),
-                            curve: Curves.easeInOut,
-                            decoration: BoxDecoration(
-                              border: Focus.of(context).hasFocus
-                                  ? Border.all(color: _borderColor(appHighlightAnimationEnabled), width: 2)
-                                  : null,
-                              borderRadius: BorderRadius.circular(_radius),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
+                  IgnorePointer(
+                    child: AnimatedContainer(
+                      duration: Duration(milliseconds: 200),
+                      curve: Curves.easeInOut,
+                      decoration: BoxDecoration(
+                        border: Focus.of(context).hasFocus ? Border.all(color: ZenPalette.accent, width: 2) : null,
+                        borderRadius: BorderRadius.circular(_radius),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -197,10 +148,6 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
           ),
         ),
       );
-
-  /// The border slowly pulses between the accent color and white when the highlight animation is enabled.
-  Color _borderColor(bool animated) =>
-      animated ? Color.lerp(ZenPalette.accent, Colors.white, _animation.value)! : ZenPalette.accent;
 
   Matrix4 _scaleTransform(BuildContext context) {
     final scale = _moving

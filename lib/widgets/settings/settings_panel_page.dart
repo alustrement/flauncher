@@ -89,13 +89,6 @@ class SettingsPanelPage extends StatelessWidget {
                 title: Text("Format 24 heures"),
                 dense: true,
               ),
-              SwitchListTile(
-                contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                value: settingsService.appHighlightAnimationEnabled,
-                onChanged: (value) => settingsService.setAppHighlightAnimationEnabled(value),
-                title: Text("Animation des applis sélectionnées"),
-                dense: true,
-              ),
               Divider(),
               TextButton(
                 child: Row(
