@@ -17,12 +17,14 @@
  */
 
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:flauncher/database.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/media_service.dart';
 import 'package:flauncher/widgets/ensure_visible.dart';
+import 'package:flauncher/widgets/zen_waves_painter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -117,6 +119,7 @@ class _PanelState extends State<_Panel> {
           child: Stack(
             fit: StackFit.expand,
             children: [
+              IgnorePointer(child: RepaintBoundary(child: _ArtworkWaves(image: artImage))),
               InkWell(
                 focusColor: Colors.transparent,
                 onFocusChange: (focused) => setState(() => _focused = focused),
@@ -136,15 +139,16 @@ class _PanelState extends State<_Panel> {
                             SizedBox(height: 4),
                             Text(
                               title,
-                              style: textTheme.headlineSmall!.copyWith(fontWeight: FontWeight.w500),
+                              style:
+                                  textTheme.headlineSmall!.copyWith(fontWeight: FontWeight.w500, shadows: _textShadows),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                             if (subtitle.isNotEmpty)
                               Text(
                                 subtitle,
-                                style: textTheme.titleMedium!
-                                    .copyWith(color: ZenPalette.lavender, fontWeight: FontWeight.w300),
+                                style: textTheme.titleMedium!.copyWith(
+                                    color: ZenPalette.lavender, fontWeight: FontWeight.w300, shadows: _textShadows),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -184,6 +188,57 @@ class _PanelState extends State<_Panel> {
     }
     return null;
   }
+}
+
+/// The blurred artwork seen through the waves of the background: the tint gets lighter below each wave, so that the
+/// artwork's colors show more and more towards the bottom.
+class _ArtworkWaves extends StatelessWidget {
+  final ImageProvider? image;
+
+  _ArtworkWaves({required this.image});
+
+  @override
+  Widget build(BuildContext context) => Stack(
+        fit: StackFit.expand,
+        children: [
+          if (image != null)
+            ImageFiltered(
+              imageFilter: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+              child: Image(image: image!, fit: BoxFit.cover, gaplessPlayback: true),
+            ),
+          CustomPaint(painter: _ArtworkWavesPainter()),
+        ],
+      );
+}
+
+class _ArtworkWavesPainter extends CustomPainter {
+  /// Where the top of the panel is on the background's canvas, just above the crest of its first wave.
+  static const _top = 490.0;
+
+  /// Opacity of the tint above the first wave, then below each wave.
+  static const _tints = [0.86, 0.68, 0.52, 0.38, 0.26, 0.16];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // same proportions as the background: the panel only shows the crests of the first waves
+    final scale = size.width / ZenWavesPainter.width;
+    // in a layer, each wave replaces the tint of the ones behind instead of adding to it
+    canvas.saveLayer(Offset.zero & size, Paint());
+    canvas.scale(scale);
+    canvas.translate(0, -_top);
+    final paint = Paint()..blendMode = BlendMode.src;
+    canvas.drawRect(
+      Rect.fromLTWH(0, _top, ZenWavesPainter.width, size.height / scale),
+      paint..color = ZenPalette.surface.withOpacity(_tints[0]),
+    );
+    for (var i = 0; i < ZenWavesPainter.waveCount; ++i) {
+      canvas.drawPath(ZenWavesPainter.wave(i), paint..color = ZenPalette.surface.withOpacity(_tints[i + 1]));
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_ArtworkWavesPainter oldDelegate) => false;
 }
 
 class _AppLabel extends StatelessWidget {

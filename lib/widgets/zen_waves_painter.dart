@@ -25,8 +25,8 @@ import 'package:flutter/widgets.dart';
 /// A curve is either a cubic Bézier (two control points and its end), or a smooth one (second control point and end)
 /// whose first control point mirrors the previous curve's second one, like SVG's "S" command.
 class ZenWavesPainter extends CustomPainter {
-  static const _width = 1920.0;
-  static const _height = 1080.0;
+  static const width = 1920.0;
+  static const height = 1080.0;
   static const _opacity = 0.9;
 
   static const _waveStarts = [Offset(0, 760), Offset(0, 880), Offset(0, 900), Offset(0, 960), Offset(0, 1010)];
@@ -64,26 +64,31 @@ class ZenWavesPainter extends CustomPainter {
     ],
   ];
 
+  static int get waveCount => _waves.length;
+
   const ZenWavesPainter();
+
+  /// The [index]-th wave, from the back to the front, filled down to the bottom of the 1920x1080 canvas.
+  static Path wave(int index) {
+    final wave = Path()..moveTo(_waveStarts[index].dx, _waveStarts[index].dy);
+    _addCurves(wave, _waveStarts[index], _waves[index]);
+    return wave
+      ..lineTo(width, height)
+      ..lineTo(0, height)
+      ..close();
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
     canvas.save();
-    canvas.scale(size.width / _width, size.height / _height);
-
-    for (var i = 0; i < _waves.length; ++i) {
-      final wave = Path()..moveTo(_waveStarts[i].dx, _waveStarts[i].dy);
-      _addCurves(wave, _waveStarts[i], _waves[i]);
-      wave
-        ..lineTo(_width, _height)
-        ..lineTo(0, _height)
-        ..close();
-      canvas.drawPath(wave, Paint()..color = ZenPalette.waves[i].withOpacity(_opacity));
+    canvas.scale(size.width / width, size.height / height);
+    for (var i = 0; i < waveCount; ++i) {
+      canvas.drawPath(wave(i), Paint()..color = ZenPalette.waves[i].withOpacity(_opacity));
     }
     canvas.restore();
   }
 
-  void _addCurves(Path path, Offset start, List<List<Offset>> curves) {
+  static void _addCurves(Path path, Offset start, List<List<Offset>> curves) {
     var current = start;
     var lastControl = start;
     for (final curve in curves) {
