@@ -392,10 +392,14 @@ class _ProgressBarState extends State<_ProgressBar> {
   Widget build(BuildContext context) {
     final duration = widget.nowPlaying.duration!;
     final position = widget.nowPlaying.currentPosition(DateTime.now()) ?? Duration.zero;
-    final textStyle = Theme.of(context).textTheme.labelMedium!.copyWith(color: ZenPalette.lavender);
+    final textStyle = Theme.of(context)
+        .textTheme
+        .labelMedium!
+        .copyWith(color: ZenPalette.lavender, fontFeatures: [ui.FontFeature.tabularFigures()]);
+    final timeWidth = _timeWidth(context, duration, textStyle);
     return Row(
       children: [
-        Text(_format(position), style: textStyle),
+        SizedBox(width: timeWidth, child: Text(_format(position), style: textStyle, textAlign: TextAlign.end)),
         SizedBox(width: 8),
         Expanded(
           child: ClipRRect(
@@ -409,9 +413,22 @@ class _ProgressBarState extends State<_ProgressBar> {
           ),
         ),
         SizedBox(width: 8),
-        Text(_format(duration), style: textStyle),
+        SizedBox(width: timeWidth, child: Text(_format(duration), style: textStyle)),
       ],
     );
+  }
+
+  /// Both times take the room of the duration written with the widest digit, so that the bar keeps its size while the
+  /// position moves, whatever the digits of the font.
+  double _timeWidth(BuildContext context, Duration duration, TextStyle style) {
+    double width(String text) => (TextPainter(
+          text: TextSpan(text: text, style: style),
+          textDirection: TextDirection.ltr,
+          textScaleFactor: MediaQuery.textScaleFactorOf(context),
+        )..layout())
+            .width;
+    final widestDigit = List.generate(10, (digit) => "$digit").reduce((a, b) => width(b) > width(a) ? b : a);
+    return width(_format(duration).replaceAll(RegExp(r"\d"), widestDigit)).ceilToDouble();
   }
 
   String _format(Duration duration) {

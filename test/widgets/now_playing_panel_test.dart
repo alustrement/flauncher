@@ -75,6 +75,29 @@ void main() {
     expect(find.text("3:56"), findsOneWidget);
   });
 
+  testWidgets("the progress bar keeps its size while the position moves", (tester) async {
+    final mediaService = MockMediaService();
+    final appsService = MockAppsService();
+    when(mediaService.permissionGranted).thenReturn(true);
+    when(appsService.applications).thenReturn([]);
+    NowPlaying at(Duration position) => NowPlaying(
+          packageName: "com.spotify.tv.android",
+          title: "Bittersweet",
+          duration: Duration(minutes: 12, seconds: 34),
+          position: position,
+        );
+
+    when(mediaService.nowPlaying).thenReturn(at(Duration(seconds: 1)));
+    await _pumpWidgetWithProviders(tester, mediaService, appsService);
+    expect(find.text("0:01"), findsOneWidget);
+    final width = tester.getSize(find.byType(LinearProgressIndicator)).width;
+
+    when(mediaService.nowPlaying).thenReturn(at(Duration(minutes: 11, seconds: 11)));
+    await _pumpWidgetWithProviders(tester, mediaService, appsService);
+    expect(find.text("11:11"), findsOneWidget);
+    expect(tester.getSize(find.byType(LinearProgressIndicator)).width, width);
+  });
+
   testWidgets("does not repeat the title as subtitle", (tester) async {
     final mediaService = MockMediaService();
     final appsService = MockAppsService();
