@@ -4,7 +4,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i8;
-import 'dart:typed_data' as _i14;
+import 'dart:typed_data' as _i15;
 import 'dart:ui' as _i11;
 
 import 'package:drift/drift.dart' as _i4;
@@ -16,6 +16,7 @@ import 'package:flauncher/providers/apps_service.dart' as _i12;
 import 'package:flauncher/providers/media_service.dart' as _i13;
 import 'package:flauncher/providers/settings_service.dart' as _i10;
 import 'package:flauncher/providers/wallpaper_service.dart' as _i9;
+import 'package:flauncher/providers/watch_next_service.dart' as _i14;
 import 'package:flauncher/unsplash_service.dart' as _i3;
 import 'package:mockito/mockito.dart' as _i1;
 
@@ -374,6 +375,31 @@ class MockFLauncherChannel extends _i1.Mock implements _i7.FLauncherChannel {
         returnValueForMissingStub: _i8.Future<void>.value(),
       ) as _i8.Future<void>);
   @override
+  _i8.Future<void> requestWatchNextPermission() => (super.noSuchMethod(
+        Invocation.method(
+          #requestWatchNextPermission,
+          [],
+        ),
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
+  @override
+  _i8.Future<void> openWatchNextProgram(
+    String? packageName,
+    String? intentUri,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #openWatchNextProgram,
+          [
+            packageName,
+            intentUri,
+          ],
+        ),
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
+  @override
   void addAppsChangedListener(void Function(Map<dynamic, dynamic>)? listener) => super.noSuchMethod(
         Invocation.method(
           #addAppsChangedListener,
@@ -385,6 +411,14 @@ class MockFLauncherChannel extends _i1.Mock implements _i7.FLauncherChannel {
   void addMediaSessionListener(void Function(Map<dynamic, dynamic>)? listener) => super.noSuchMethod(
         Invocation.method(
           #addMediaSessionListener,
+          [listener],
+        ),
+        returnValueForMissingStub: null,
+      );
+  @override
+  void addWatchNextListener(void Function(Map<dynamic, dynamic>)? listener) => super.noSuchMethod(
+        Invocation.method(
+          #addWatchNextListener,
           [listener],
         ),
         returnValueForMissingStub: null,
@@ -900,6 +934,81 @@ class MockMediaService extends _i1.Mock implements _i13.MediaService {
       );
 }
 
+/// A class which mocks [WatchNextService].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockWatchNextService extends _i1.Mock implements _i14.WatchNextService {
+  MockWatchNextService() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  bool get permissionGranted => (super.noSuchMethod(
+        Invocation.getter(#permissionGranted),
+        returnValue: false,
+      ) as bool);
+  @override
+  List<_i14.WatchNextProgram> get programs => (super.noSuchMethod(
+        Invocation.getter(#programs),
+        returnValue: <_i14.WatchNextProgram>[],
+      ) as List<_i14.WatchNextProgram>);
+  @override
+  bool get hasListeners => (super.noSuchMethod(
+        Invocation.getter(#hasListeners),
+        returnValue: false,
+      ) as bool);
+  @override
+  _i8.Future<void> requestPermission() => (super.noSuchMethod(
+        Invocation.method(
+          #requestPermission,
+          [],
+        ),
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
+  @override
+  _i8.Future<void> open(_i14.WatchNextProgram? program) => (super.noSuchMethod(
+        Invocation.method(
+          #open,
+          [program],
+        ),
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
+  @override
+  void addListener(_i11.VoidCallback? listener) => super.noSuchMethod(
+        Invocation.method(
+          #addListener,
+          [listener],
+        ),
+        returnValueForMissingStub: null,
+      );
+  @override
+  void removeListener(_i11.VoidCallback? listener) => super.noSuchMethod(
+        Invocation.method(
+          #removeListener,
+          [listener],
+        ),
+        returnValueForMissingStub: null,
+      );
+  @override
+  void dispose() => super.noSuchMethod(
+        Invocation.method(
+          #dispose,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+  @override
+  void notifyListeners() => super.noSuchMethod(
+        Invocation.method(
+          #notifyListeners,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+}
+
 /// A class which mocks [SettingsService].
 ///
 /// See the documentation for Mockito's code generation for more information.
@@ -1029,13 +1138,13 @@ class MockUnsplashService extends _i1.Mock implements _i3.UnsplashService {
         returnValue: _i8.Future<List<_i3.Photo>>.value(<_i3.Photo>[]),
       ) as _i8.Future<List<_i3.Photo>>);
   @override
-  _i8.Future<_i14.Uint8List> downloadPhoto(_i3.Photo? photo) => (super.noSuchMethod(
+  _i8.Future<_i15.Uint8List> downloadPhoto(_i3.Photo? photo) => (super.noSuchMethod(
         Invocation.method(
           #downloadPhoto,
           [photo],
         ),
-        returnValue: _i8.Future<_i14.Uint8List>.value(_i14.Uint8List(0)),
-      ) as _i8.Future<_i14.Uint8List>);
+        returnValue: _i8.Future<_i15.Uint8List>.value(_i15.Uint8List(0)),
+      ) as _i8.Future<_i15.Uint8List>);
 }
 
 /// A class which mocks [FLauncherDatabase].

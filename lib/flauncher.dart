@@ -28,6 +28,7 @@ import 'package:flauncher/widgets/category_row.dart';
 import 'package:flauncher/widgets/now_playing_panel.dart';
 import 'package:flauncher/widgets/settings/settings_panel.dart';
 import 'package:flauncher/widgets/time_widget.dart';
+import 'package:flauncher/widgets/watch_next_row.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -59,6 +60,7 @@ class FLauncher extends StatelessWidget {
   Widget _categories(List<CategoryWithApps> categoriesWithApps) => Column(
         children: [
           NowPlayingPanel(),
+          WatchNextRow(),
           ...categoriesWithApps.map((categoryWithApps) {
             switch (categoryWithApps.category.type) {
               case CategoryType.row:

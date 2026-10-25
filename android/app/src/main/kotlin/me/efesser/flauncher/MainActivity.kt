@@ -41,10 +41,13 @@ import java.io.Serializable
 private const val METHOD_CHANNEL = "me.efesser.flauncher/method"
 private const val EVENT_CHANNEL = "me.efesser.flauncher/event"
 private const val MEDIA_EVENT_CHANNEL = "me.efesser.flauncher/media"
+private const val WATCH_NEXT_EVENT_CHANNEL = "me.efesser.flauncher/watch_next"
+private const val WATCH_NEXT_PERMISSION_REQUEST_CODE = 1
 
 class MainActivity : FlutterActivity() {
     val launcherAppsCallbacks = ArrayList<LauncherApps.Callback>()
     private lateinit var mediaSessionStreamHandler: MediaSessionStreamHandler
+    private lateinit var watchNextStreamHandler: WatchNextStreamHandler
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -64,6 +67,12 @@ class MainActivity : FlutterActivity() {
                 "mediaSkipToPrevious" -> result.success(mediaSessionStreamHandler.skipToPrevious())
                 "openMediaSession" -> result.success(
                     mediaSessionStreamHandler.openSessionActivity() || launchApp(call.arguments as String))
+                "requestWatchNextPermission" -> result.success(requestWatchNextPermission())
+                "openWatchNextProgram" -> {
+                    val packageName = call.argument<String>("packageName")!!
+                    result.success(
+                        watchNextStreamHandler.open(call.argument("intentUri"), packageName) || launchApp(packageName))
+                }
                 else -> throw IllegalArgumentException()
             }
         }
@@ -110,12 +119,26 @@ class MainActivity : FlutterActivity() {
         mediaSessionStreamHandler = MediaSessionStreamHandler(this)
         EventChannel(flutterEngine.dartExecutor.binaryMessenger, MEDIA_EVENT_CHANNEL)
             .setStreamHandler(mediaSessionStreamHandler)
+
+        watchNextStreamHandler = WatchNextStreamHandler(this)
+        EventChannel(flutterEngine.dartExecutor.binaryMessenger, WATCH_NEXT_EVENT_CHANNEL)
+            .setStreamHandler(watchNextStreamHandler)
     }
 
     override fun onResume() {
         super.onResume()
         if (::mediaSessionStreamHandler.isInitialized) {
             mediaSessionStreamHandler.refresh()
+        }
+        if (::watchNextStreamHandler.isInitialized) {
+            watchNextStreamHandler.refresh()
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == WATCH_NEXT_PERMISSION_REQUEST_CODE) {
+            watchNextStreamHandler.refresh()
         }
     }
 
@@ -124,6 +147,9 @@ class MainActivity : FlutterActivity() {
         launcherAppsCallbacks.forEach(launcherApps::unregisterCallback)
         if (::mediaSessionStreamHandler.isInitialized) {
             mediaSessionStreamHandler.dispose()
+        }
+        if (::watchNextStreamHandler.isInitialized) {
+            watchNextStreamHandler.dispose()
         }
         super.onDestroy()
     }
@@ -225,6 +251,13 @@ class MainActivity : FlutterActivity() {
             .let(::startActivity)
         true
     } catch (e: Exception) {
+        false
+    }
+
+    private fun requestWatchNextPermission() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        requestPermissions(arrayOf(READ_TV_LISTINGS), WATCH_NEXT_PERMISSION_REQUEST_CODE)
+        true
+    } else {
         false
     }
 

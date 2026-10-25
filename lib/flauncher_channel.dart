@@ -24,6 +24,7 @@ class FLauncherChannel {
   static const _methodChannel = MethodChannel('me.efesser.flauncher/method');
   static const _eventChannel = EventChannel('me.efesser.flauncher/event');
   static const _mediaEventChannel = EventChannel('me.efesser.flauncher/media');
+  static const _watchNextEventChannel = EventChannel('me.efesser.flauncher/watch_next');
 
   Future<List<dynamic>> getApplications() async => (await _methodChannel.invokeListMethod('getApplications'))!;
 
@@ -54,9 +55,17 @@ class FLauncherChannel {
   Future<void> openMediaSession(String packageName) async =>
       await _methodChannel.invokeMethod("openMediaSession", packageName);
 
+  Future<void> requestWatchNextPermission() async => await _methodChannel.invokeMethod("requestWatchNextPermission");
+
+  Future<void> openWatchNextProgram(String packageName, String? intentUri) async =>
+      await _methodChannel.invokeMethod("openWatchNextProgram", {"packageName": packageName, "intentUri": intentUri});
+
   void addAppsChangedListener(void Function(Map<dynamic, dynamic>) listener) =>
       _eventChannel.receiveBroadcastStream().listen((event) => listener(event));
 
   void addMediaSessionListener(void Function(Map<dynamic, dynamic>) listener) =>
       _mediaEventChannel.receiveBroadcastStream().listen((event) => listener(event));
+
+  void addWatchNextListener(void Function(Map<dynamic, dynamic>) listener) =>
+      _watchNextEventChannel.receiveBroadcastStream().listen((event) => listener(event));
 }

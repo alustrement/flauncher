@@ -25,6 +25,7 @@ import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/media_service.dart';
 import 'package:flauncher/providers/settings_service.dart';
 import 'package:flauncher/providers/wallpaper_service.dart';
+import 'package:flauncher/providers/watch_next_service.dart';
 import 'package:flauncher/unsplash_service.dart';
 import 'package:mockito/annotations.dart';
 
@@ -33,6 +34,7 @@ import 'package:mockito/annotations.dart';
   WallpaperService,
   AppsService,
   MediaService,
+  WatchNextService,
   SettingsService,
   UnsplashService,
 ], customMocks: [

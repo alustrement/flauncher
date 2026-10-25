@@ -1,0 +1,286 @@
+/*
+ * FLauncher
+ * Copyright (C) 2021  Étienne Fesser
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import 'package:flauncher/database.dart';
+import 'package:flauncher/providers/apps_service.dart';
+import 'package:flauncher/providers/watch_next_service.dart';
+import 'package:flauncher/widgets/ensure_visible.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+const _rowHeight = 170.0;
+const _textShadows = [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 8)];
+
+class WatchNextRow extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Consumer<WatchNextService>(
+        builder: (context, watchNextService, _) {
+          if (!watchNextService.permissionGranted) {
+            return _section(context, _PermissionHint(onPressed: watchNextService.requestPermission));
+          }
+          if (watchNextService.programs.isEmpty) {
+            return SizedBox.shrink();
+          }
+          final programs = watchNextService.programs;
+          return _section(
+            context,
+            SizedBox(
+              height: _rowHeight,
+              child: ListView.builder(
+                padding: EdgeInsets.all(8),
+                scrollDirection: Axis.horizontal,
+                itemCount: programs.length,
+                itemBuilder: (context, index) => _EnsureVisibleInRow(
+                  key: Key("watch-next-${programs[index].id}"),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                    child: _ProgramCard(
+                      program: programs[index],
+                      onPressed: () => watchNextService.open(programs[index]),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      );
+
+  Widget _section(BuildContext context, Widget child) => Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: EnsureVisible(
+          alignment: 0.1,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(left: 16, bottom: 8),
+                child: Text("Continue watching",
+                    style: Theme.of(context).textTheme.titleLarge!.copyWith(shadows: _textShadows)),
+              ),
+              child,
+            ],
+          ),
+        ),
+      );
+}
+
+/// Only scrolls the row horizontally: scrolling vertically is left to the whole section, so that its title stays
+/// visible, which would not be the case with this taller-than-usual row if cards were aligned instead.
+class _EnsureVisibleInRow extends StatelessWidget {
+  final Widget child;
+
+  _EnsureVisibleInRow({Key? key, required this.child}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) => Focus(
+        canRequestFocus: false,
+        onFocusChange: (focused) {
+          if (focused) {
+            Scrollable.of(context).position.ensureVisible(
+                  context.findRenderObject()!,
+                  alignment: 0.1,
+                  duration: Duration(milliseconds: 100),
+                  curve: Curves.easeInOut,
+                );
+          }
+        },
+        child: child,
+      );
+}
+
+class _ProgramCard extends StatefulWidget {
+  final WatchNextProgram program;
+  final VoidCallback onPressed;
+
+  _ProgramCard({required this.program, required this.onPressed});
+
+  @override
+  State<_ProgramCard> createState() => _ProgramCardState();
+}
+
+class _ProgramCardState extends State<_ProgramCard> {
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final program = widget.program;
+    final application = context.select<AppsService, App?>((appsService) {
+      final matches = appsService.applications.where((app) => app.packageName == program.packageName);
+      return matches.isNotEmpty ? matches.first : null;
+    });
+    final textTheme = Theme.of(context).textTheme;
+    final subtitle = program.subtitle;
+    final progress = program.progress;
+
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: AnimatedScale(
+        scale: _focused ? 1.1 : 1.0,
+        duration: Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        child: Material(
+          borderRadius: BorderRadius.circular(8),
+          clipBehavior: Clip.antiAlias,
+          elevation: _focused ? 16 : 0,
+          shadowColor: Colors.black,
+          color: Theme.of(context).cardColor,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              InkWell(
+                focusColor: Colors.transparent,
+                onFocusChange: (focused) => setState(() => _focused = focused),
+                onTap: widget.onPressed,
+                child: _image(program, application),
+              ),
+              IgnorePointer(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      stops: [0.35, 1.0],
+                      colors: [Colors.transparent, Colors.black.withOpacity(0.85)],
+                    ),
+                  ),
+                ),
+              ),
+              if (application?.icon != null)
+                Positioned(
+                  top: 6,
+                  left: 6,
+                  child: IgnorePointer(
+                    child: Image.memory(application!.icon!, height: 24, gaplessPlayback: true),
+                  ),
+                ),
+              Positioned(
+                left: 8,
+                right: 8,
+                bottom: progress != null ? 12 : 8,
+                child: IgnorePointer(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        program.title ?? application?.name ?? program.packageName,
+                        style: textTheme.titleSmall!.copyWith(fontWeight: FontWeight.bold, shadows: _textShadows),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (subtitle != null)
+                        Text(
+                          subtitle,
+                          style: textTheme.bodySmall!.copyWith(color: Colors.white70, shadows: _textShadows),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              if (progress != null)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 4,
+                    backgroundColor: Colors.white24,
+                    valueColor: AlwaysStoppedAnimation(Colors.red.shade600),
+                  ),
+                ),
+              IgnorePointer(
+                child: AnimatedContainer(
+                  duration: Duration(milliseconds: 200),
+                  decoration: BoxDecoration(
+                    border: _focused ? Border.all(color: Colors.white, width: 3) : null,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _image(WatchNextProgram program, App? application) {
+    final ImageProvider image;
+    if (program.image != null) {
+      image = MemoryImage(program.image!);
+    } else if (program.imageUri != null) {
+      image = ResizeImage(NetworkImage(program.imageUri!), width: 640);
+    } else {
+      return _placeholder(application);
+    }
+    return Ink.image(
+      image: image,
+      fit: BoxFit.cover,
+      onImageError: (_, __) {},
+    );
+  }
+
+  Widget _placeholder(App? application) => application?.banner != null
+      ? Ink.image(image: MemoryImage(application!.banner!), fit: BoxFit.cover)
+      : Center(child: Icon(Icons.movie_outlined, size: 48, color: Colors.white54));
+}
+
+class _PermissionHint extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  _PermissionHint({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(Icons.history, size: 32, color: Colors.white70),
+                SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Access to TV listings is required to display what you can continue watching.",
+                          style: Theme.of(context).textTheme.titleSmall),
+                      SizedBox(height: 4),
+                      SelectableText(
+                        "adb shell pm grant me.efesser.flauncher android.permission.READ_TV_LISTINGS",
+                        style: Theme.of(context).textTheme.bodySmall!.copyWith(fontFamily: "monospace"),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 16),
+                EnsureVisible(
+                  alignment: 0.1,
+                  child: ElevatedButton(onPressed: onPressed, child: Text("Grant access")),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+}

@@ -24,6 +24,7 @@ import 'package:flauncher/providers/media_service.dart';
 import 'package:flauncher/providers/settings_service.dart';
 import 'package:flauncher/providers/ticker_model.dart';
 import 'package:flauncher/providers/wallpaper_service.dart';
+import 'package:flauncher/providers/watch_next_service.dart';
 import 'package:flauncher/widgets/application_info_panel.dart';
 import 'package:flauncher/widgets/apps_grid.dart';
 import 'package:flauncher/widgets/category_row.dart';
@@ -654,12 +655,16 @@ Future<void> _pumpWidgetWithProviders(
   final mediaService = MockMediaService();
   when(mediaService.permissionGranted).thenReturn(true);
   when(mediaService.nowPlaying).thenReturn(null);
+  final watchNextService = MockWatchNextService();
+  when(watchNextService.permissionGranted).thenReturn(true);
+  when(watchNextService.programs).thenReturn([]);
   await tester.pumpWidget(
     MultiProvider(
       providers: [
         ChangeNotifierProvider<WallpaperService>.value(value: wallpaperService),
         ChangeNotifierProvider<AppsService>.value(value: appsService),
         ChangeNotifierProvider<MediaService>.value(value: mediaService),
+        ChangeNotifierProvider<WatchNextService>.value(value: watchNextService),
         ChangeNotifierProvider<SettingsService>.value(value: settingsService),
         Provider<TickerModel>(create: (_) => TickerModel(tester))
       ],

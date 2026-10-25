@@ -22,6 +22,7 @@ import 'package:flauncher/providers/media_service.dart';
 import 'package:flauncher/providers/settings_service.dart';
 import 'package:flauncher/providers/ticker_model.dart';
 import 'package:flauncher/providers/wallpaper_service.dart';
+import 'package:flauncher/providers/watch_next_service.dart';
 import 'package:flauncher/unsplash_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -69,6 +70,7 @@ class FLauncherApp extends StatelessWidget {
           ChangeNotifierProvider(create: (_) => SettingsService(_sharedPreferences, _unsplashEnabled), lazy: false),
           ChangeNotifierProvider(create: (_) => AppsService(_fLauncherChannel, _fLauncherDatabase)),
           ChangeNotifierProvider(create: (_) => MediaService(_fLauncherChannel)),
+          ChangeNotifierProvider(create: (_) => WatchNextService(_fLauncherChannel)),
           ChangeNotifierProxyProvider<SettingsService, WallpaperService>(
               create: (_) => WallpaperService(_imagePicker, _fLauncherChannel, _unsplashService),
               update: (_, settingsService, wallpaperService) => wallpaperService!..settingsService = settingsService),
