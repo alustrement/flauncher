@@ -29,6 +29,7 @@ import 'package:flauncher/widgets/application_info_panel.dart';
 import 'package:flauncher/widgets/apps_grid.dart';
 import 'package:flauncher/widgets/category_row.dart';
 import 'package:flauncher/widgets/settings/settings_panel_page.dart';
+import 'package:flauncher/widgets/reveal_on_focus.dart';
 import 'package:flauncher/widgets/zen_waves_painter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -574,6 +575,46 @@ void main() {
     // check if going left on the first app stays on the same app
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
     expect(Focus.of(music1).hasFocus, isTrue);
+  });
+
+  testWidgets("Moving down brings every row at the same height", (tester) async {
+    final appsService = MockAppsService();
+    final wallpaperService = MockWallpaperService();
+    final settingsService = MockSettingsService();
+    when(appsService.initialized).thenReturn(true);
+    when(wallpaperService.wallpaperBytes).thenReturn(null);
+    when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
+    when(settingsService.use24HourTimeFormat).thenReturn(false);
+    when(settingsService.appHighlightAnimationEnabled).thenReturn(false);
+    when(appsService.categoriesWithApps).thenReturn([
+      for (var row = 0; row < 10; ++row)
+        CategoryWithApps(fakeCategory(name: "row $row", order: row, type: CategoryType.row), [
+          for (var column = 0; column < 3; ++column)
+            fakeApp(
+              packageName: "me.efesser.app$row.$column",
+              name: "app $row.$column",
+              banner: kTransparentImage,
+              icon: kTransparentImage,
+            ),
+        ]),
+    ]);
+
+    await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
+
+    double focusedRowTop(int row) {
+      final card = findAppCardByPackageName(tester, "me.efesser.app$row.0")!;
+      expect(Focus.of(card).hasFocus, isTrue);
+      return tester.getTopLeft(find.byWidget(card.widget)).dy;
+    }
+
+    // the first row is where every row comes when focused, until the end of the page
+    final top = focusedRowTop(0);
+    for (var row = 1; row < 5; ++row) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      await tester.pump(RevealOnFocus.duration);
+      expect(focusedRowTop(row), moreOrLessEquals(top, epsilon: 0.5));
+    }
   });
 
   testWidgets("Moving right or up can go the settings icon", (tester) async {

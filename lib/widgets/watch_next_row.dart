@@ -20,7 +20,7 @@ import 'package:flauncher/database.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/watch_next_service.dart';
-import 'package:flauncher/widgets/ensure_visible.dart';
+import 'package:flauncher/widgets/reveal_on_focus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -47,7 +47,7 @@ class WatchNextRow extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                 scrollDirection: Axis.horizontal,
                 itemCount: programs.length,
-                itemBuilder: (context, index) => _EnsureVisibleInRow(
+                itemBuilder: (context, index) => RevealOnFocus(
                   key: Key("watch-next-${programs[index].id}"),
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 8),
@@ -65,47 +65,20 @@ class WatchNextRow extends StatelessWidget {
 
   Widget _section(BuildContext context, Widget child) => Padding(
         padding: EdgeInsets.symmetric(vertical: 8),
-        child: EnsureVisible(
-          alignment: 0.1,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: EdgeInsets.only(left: 32, bottom: 8),
-                child: Text("Continue watching",
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge!
-                        .copyWith(color: ZenPalette.lavender, shadows: _textShadows)),
-              ),
-              child,
-            ],
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(left: 32, bottom: 8),
+              child: Text("Continue watching",
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge!
+                      .copyWith(color: ZenPalette.lavender, shadows: _textShadows)),
+            ),
+            child,
+          ],
         ),
-      );
-}
-
-/// Only scrolls the row horizontally: scrolling vertically is left to the whole section, so that its title stays
-/// visible, which would not be the case with this taller-than-usual row if cards were aligned instead.
-class _EnsureVisibleInRow extends StatelessWidget {
-  final Widget child;
-
-  _EnsureVisibleInRow({Key? key, required this.child}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) => Focus(
-        canRequestFocus: false,
-        onFocusChange: (focused) {
-          if (focused) {
-            Scrollable.of(context).position.ensureVisible(
-                  context.findRenderObject()!,
-                  alignment: 0.1,
-                  duration: Duration(milliseconds: 100),
-                  curve: Curves.easeInOut,
-                );
-          }
-        },
-        child: child,
       );
 }
 
@@ -263,7 +236,8 @@ class _PermissionHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: EdgeInsets.symmetric(horizontal: 32, vertical: 8),
-        child: Card(
+        child: RevealOnFocus(
+            child: Card(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: EdgeInsets.all(16),
@@ -286,13 +260,10 @@ class _PermissionHint extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: 16),
-                EnsureVisible(
-                  alignment: 0.1,
-                  child: ElevatedButton(onPressed: onPressed, child: Text("Grant access")),
-                ),
+                ElevatedButton(onPressed: onPressed, child: Text("Grant access")),
               ],
             ),
           ),
-        ),
+        )),
       );
 }

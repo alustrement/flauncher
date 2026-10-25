@@ -28,6 +28,7 @@ import 'package:flauncher/providers/wallpaper_service.dart';
 import 'package:flauncher/widgets/apps_grid.dart';
 import 'package:flauncher/widgets/category_row.dart';
 import 'package:flauncher/widgets/now_playing_panel.dart';
+import 'package:flauncher/widgets/reveal_on_focus.dart';
 import 'package:flauncher/widgets/settings/settings_panel.dart';
 import 'package:flauncher/widgets/time_widget.dart';
 import 'package:flauncher/widgets/watch_next_row.dart';
@@ -45,16 +46,18 @@ class FLauncher extends StatelessWidget {
             ),
             Scaffold(
               backgroundColor: Colors.transparent,
+              // the page scrolls under the transparent top bar
+              extendBodyBehindAppBar: true,
               appBar: _appBar(context),
-              body: Padding(
-                // no horizontal margin: the horizontal lists reach the edges of the screen, and the other sections have
-                // their own margins
-                padding: EdgeInsets.only(top: 16),
-                child: Consumer<AppsService>(
-                  builder: (context, appsService, _) => appsService.initialized
-                      ? SingleChildScrollView(child: _categories(appsService.categoriesWithApps))
-                      : _emptyState(context),
-                ),
+              body: Consumer<AppsService>(
+                builder: (context, appsService, _) => appsService.initialized
+                    ? SingleChildScrollView(
+                        // no horizontal margin: the horizontal lists reach the edges of the screen, and the other
+                        // sections have their own margins
+                        padding: EdgeInsets.only(top: RevealOnFocus.pageTop(context)),
+                        child: _categories(appsService.categoriesWithApps),
+                      )
+                    : _emptyState(context),
               ),
             ),
           ],

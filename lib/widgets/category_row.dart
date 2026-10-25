@@ -20,7 +20,7 @@ import 'package:flauncher/database.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/widgets/app_card.dart';
-import 'package:flauncher/widgets/ensure_visible.dart';
+import 'package:flauncher/widgets/reveal_on_focus.dart';
 import 'package:flauncher/widgets/settings/categories_panel_page.dart';
 import 'package:flauncher/widgets/settings/settings_panel.dart';
 import 'package:flutter/material.dart';
@@ -54,9 +54,8 @@ class CategoryRow extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                     scrollDirection: Axis.horizontal,
                     childrenDelegate: SliverChildBuilderDelegate(
-                      (context, index) => EnsureVisible(
+                      (context, index) => RevealOnFocus(
                         key: Key("${category.id}-${applications[index].packageName}"),
-                        alignment: 0.1,
                         child: Padding(
                           padding: EdgeInsets.symmetric(horizontal: 8),
                           child: AppCard(
@@ -82,8 +81,7 @@ class CategoryRow extends StatelessWidget {
 
   Widget _emptyState(BuildContext context) => SizedBox(
         height: 110,
-        child: EnsureVisible(
-          alignment: 0.1,
+        child: RevealOnFocus(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 24),
             child: Align(

@@ -22,7 +22,7 @@ import 'package:flauncher/database.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/widgets/app_card.dart';
-import 'package:flauncher/widgets/ensure_visible.dart';
+import 'package:flauncher/widgets/reveal_on_focus.dart';
 import 'package:flauncher/widgets/settings/categories_panel_page.dart';
 import 'package:flauncher/widgets/settings/settings_panel.dart';
 import 'package:flutter/material.dart';
@@ -58,9 +58,8 @@ class AppsGrid extends StatelessWidget {
                   gridDelegate: _buildSliverGridDelegate(),
                   padding: EdgeInsets.fromLTRB(32, 16, 32, 16),
                   childrenDelegate: SliverChildBuilderDelegate(
-                    (context, index) => EnsureVisible(
+                    (context, index) => RevealOnFocus(
                       key: Key("${category.id}-${applications[index].packageName}"),
-                      alignment: 0.5,
                       child: AppCard(
                         category: category,
                         application: applications[index],
@@ -129,8 +128,7 @@ class AppsGrid extends StatelessWidget {
         padding: EdgeInsets.only(top: 8),
         child: SizedBox(
           height: 110,
-          child: EnsureVisible(
-            alignment: 0.1,
+          child: RevealOnFocus(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 24),
               child: Align(

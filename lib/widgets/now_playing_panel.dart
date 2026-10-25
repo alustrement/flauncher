@@ -24,7 +24,7 @@ import 'package:flauncher/database.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/media_service.dart';
-import 'package:flauncher/widgets/ensure_visible.dart';
+import 'package:flauncher/widgets/reveal_on_focus.dart';
 import 'package:flauncher/widgets/zen_waves_painter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -51,22 +51,22 @@ class NowPlayingPanel extends StatelessWidget {
 
   Widget _section(BuildContext context, Widget child) => Padding(
         padding: EdgeInsets.symmetric(vertical: 8),
-        child: EnsureVisible(
-          alignment: 0.1,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: EdgeInsets.only(left: 32, bottom: 8),
-                child: Text("Now playing",
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge!
-                        .copyWith(color: ZenPalette.lavender, shadows: _textShadows)),
-              ),
-              Padding(padding: EdgeInsets.symmetric(horizontal: 32, vertical: 8), child: child),
-            ],
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(left: 32, bottom: 8),
+              child: Text("Now playing",
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge!
+                      .copyWith(color: ZenPalette.lavender, shadows: _textShadows)),
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+              child: RevealOnFocus(child: child),
+            ),
+          ],
         ),
       );
 }
