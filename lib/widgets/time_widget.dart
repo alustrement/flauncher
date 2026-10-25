@@ -35,8 +35,7 @@ class _TimeWidgetState extends State<TimeWidget> {
   @override
   void initState() {
     super.initState();
-    _now = DateTime.now();
-    _timer = Timer.periodic(Duration(seconds: 1), (_) => _refreshTime());
+    _refreshTime();
   }
 
   @override
@@ -60,9 +59,10 @@ class _TimeWidgetState extends State<TimeWidget> {
         ),
       );
 
+  /// Only when the minute changes, rather than every second.
   void _refreshTime() {
-    setState(() {
-      _now = DateTime.now();
-    });
+    _now = DateTime.now();
+    final nextMinute = DateTime(_now.year, _now.month, _now.day, _now.hour, _now.minute + 1);
+    _timer = Timer(nextMinute.difference(_now), () => setState(_refreshTime));
   }
 }

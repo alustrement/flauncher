@@ -54,8 +54,10 @@ class WatchNextProgram {
     this.intentUri,
   });
 
-  factory WatchNextProgram.fromMap(Map<dynamic, dynamic> map) {
+  /// [previousImage] is reused when the image did not change, so that image widgets don't reload it.
+  factory WatchNextProgram.fromMap(Map<dynamic, dynamic> map, {Uint8List? previousImage}) {
     final type = map["watchNextType"] as int?;
+    final image = map["image"] as Uint8List?;
     return WatchNextProgram(
       id: map["id"],
       packageName: map["packageName"],
@@ -65,7 +67,7 @@ class WatchNextProgram {
       seasonNumber: map["seasonNumber"],
       episodeNumber: map["episodeNumber"],
       imageUri: map["imageUri"],
-      image: map["image"],
+      image: image != null && listEquals(image, previousImage) ? previousImage : image,
       position: map["position"] != null ? Duration(milliseconds: map["position"]) : null,
       duration: map["duration"] != null ? Duration(milliseconds: map["duration"]) : null,
       intentUri: map["intentUri"],
@@ -88,6 +90,20 @@ class WatchNextProgram {
     }
     return parts.isNotEmpty ? parts.join(" · ") : null;
   }
+
+  bool sameAs(WatchNextProgram other) =>
+      id == other.id &&
+      packageName == other.packageName &&
+      type == other.type &&
+      title == other.title &&
+      episodeTitle == other.episodeTitle &&
+      seasonNumber == other.seasonNumber &&
+      episodeNumber == other.episodeNumber &&
+      imageUri == other.imageUri &&
+      identical(image, other.image) &&
+      position == other.position &&
+      duration == other.duration &&
+      intentUri == other.intentUri;
 
   /// Watched fraction, or null when unknown.
   double? get progress {
@@ -112,13 +128,22 @@ class WatchNextService extends ChangeNotifier {
     _fLauncherChannel.addWatchNextListener(_onWatchNextEvent);
   }
 
+  /// The programs are sent again each time the launcher comes back: it is only rebuilt when they changed.
   void _onWatchNextEvent(Map<dynamic, dynamic> event) {
-    _permissionGranted = event["permissionGranted"];
-    final programs = (event["programs"] as List<dynamic>?) ?? [];
-    _programs = programs
+    final permissionGranted = event["permissionGranted"] as bool;
+    final previousImages = {for (final program in _programs) program.id: program.image};
+    final programs = ((event["programs"] as List<dynamic>?) ?? [])
         .take(_maxPrograms)
-        .map((program) => WatchNextProgram.fromMap(program as Map<dynamic, dynamic>))
+        .map((program) => program as Map<dynamic, dynamic>)
+        .map((program) => WatchNextProgram.fromMap(program, previousImage: previousImages[program["id"]]))
         .toList(growable: false);
+    if (permissionGranted == _permissionGranted &&
+        programs.length == _programs.length &&
+        Iterable.generate(programs.length).every((i) => programs[i].sameAs(_programs[i]))) {
+      return;
+    }
+    _permissionGranted = permissionGranted;
+    _programs = programs;
     notifyListeners();
   }
 

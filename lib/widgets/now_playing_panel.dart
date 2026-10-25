@@ -371,6 +371,8 @@ class _ProgressBar extends StatefulWidget {
 
 class _ProgressBarState extends State<_ProgressBar> {
   Timer? _timer;
+  String? _timeWidthKey;
+  double _timeWidth = 0;
 
   @override
   void initState() {
@@ -403,8 +405,10 @@ class _ProgressBarState extends State<_ProgressBar> {
         .textTheme
         .labelMedium!
         .copyWith(color: ZenPalette.lavender, fontFeatures: [ui.FontFeature.tabularFigures()]);
-    final timeWidth = _timeWidth(context, duration, textStyle);
-    return Row(
+    final timeWidth = _cachedTimeWidth(context, duration, textStyle);
+    // its own layer, as it is repainted twice a second
+    return RepaintBoundary(
+        child: Row(
       children: [
         SizedBox(width: timeWidth, child: Text(_format(position), style: textStyle, textAlign: TextAlign.end)),
         SizedBox(width: 8),
@@ -422,12 +426,23 @@ class _ProgressBarState extends State<_ProgressBar> {
         SizedBox(width: 8),
         SizedBox(width: timeWidth, child: Text(_format(duration), style: textStyle)),
       ],
-    );
+    ));
+  }
+
+  /// Measuring the digits takes a dozen text layouts, which are only done again when the duration's format changes.
+  double _cachedTimeWidth(BuildContext context, Duration duration, TextStyle style) {
+    final key =
+        "${_format(duration).replaceAll(RegExp(r"\d"), "0")} ${MediaQuery.textScaleFactorOf(context)} ${style.hashCode}";
+    if (key != _timeWidthKey) {
+      _timeWidthKey = key;
+      _timeWidth = _measureTimeWidth(context, duration, style);
+    }
+    return _timeWidth;
   }
 
   /// Both times take the room of the duration written with the widest digit, so that the bar keeps its size while the
   /// position moves, whatever the digits of the font.
-  double _timeWidth(BuildContext context, Duration duration, TextStyle style) {
+  double _measureTimeWidth(BuildContext context, Duration duration, TextStyle style) {
     double width(String text) => (TextPainter(
           text: TextSpan(text: text, style: style),
           textDirection: TextDirection.ltr,

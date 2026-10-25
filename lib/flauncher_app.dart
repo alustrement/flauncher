@@ -62,8 +62,9 @@ class FLauncherApp extends StatelessWidget {
         providers: [
           ChangeNotifierProvider(create: (_) => SettingsService(_sharedPreferences), lazy: false),
           ChangeNotifierProvider(create: (_) => AppsService(_fLauncherChannel, _fLauncherDatabase)),
-          ChangeNotifierProvider(create: (_) => MediaService(_fLauncherChannel)),
-          ChangeNotifierProvider(create: (_) => WatchNextService(_fLauncherChannel)),
+          // listening right away, so that the media playing and the programs are known by the time the apps are shown
+          ChangeNotifierProvider(create: (_) => MediaService(_fLauncherChannel), lazy: false),
+          ChangeNotifierProvider(create: (_) => WatchNextService(_fLauncherChannel), lazy: false),
           ChangeNotifierProvider(create: (_) => HomeService(_fLauncherChannel), lazy: false),
         ],
         child: MaterialApp(

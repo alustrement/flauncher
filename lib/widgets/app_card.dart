@@ -23,7 +23,6 @@ import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/widgets/application_info_panel.dart';
 import 'package:flauncher/widgets/focus_keyboard_listener.dart';
-import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -51,13 +50,6 @@ class AppCard extends StatefulWidget {
 
 class _AppCardState extends State<AppCard> {
   bool _moving = false;
-  MemoryImage? _imageProvider;
-  ImageProvider _cachedMemoryImage(Uint8List bytes) {
-    if (!listEquals(bytes, _imageProvider?.bytes)) {
-      _imageProvider = MemoryImage(bytes);
-    }
-    return _imageProvider!;
-  }
 
   @override
   Widget build(BuildContext context) => FocusKeyboardListener(
@@ -93,7 +85,7 @@ class _AppCardState extends State<AppCard> {
                     onTap: () => _onPressed(context, null),
                     onLongPress: () => _onLongPress(context, null),
                     child: widget.application.banner != null
-                        ? Ink.image(image: _cachedMemoryImage(widget.application.banner!), fit: BoxFit.cover)
+                        ? Ink.image(image: MemoryImage(widget.application.banner!), fit: BoxFit.cover)
                         : Padding(
                             padding: EdgeInsets.all(12),
                             child: Row(
@@ -103,7 +95,7 @@ class _AppCardState extends State<AppCard> {
                                   child: Center(
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
-                                      child: Image(image: _cachedMemoryImage(widget.application.icon!)),
+                                      child: Image(image: MemoryImage(widget.application.icon!), gaplessPlayback: true),
                                     ),
                                   ),
                                 ),
@@ -125,18 +117,12 @@ class _AppCardState extends State<AppCard> {
                   ),
                   if (_moving) ..._arrows(),
                   IgnorePointer(
-                    child: AnimatedOpacity(
-                      duration: Duration(milliseconds: 200),
-                      curve: Curves.easeInOut,
-                      opacity: Focus.of(context).hasFocus ? 0 : 0.10,
-                      child: Container(color: Colors.black),
-                    ),
-                  ),
-                  IgnorePointer(
                     child: AnimatedContainer(
                       duration: Duration(milliseconds: 200),
                       curve: Curves.easeInOut,
+                      // a translucent color rather than an opacity, which would take a layer for each card
                       decoration: BoxDecoration(
+                        color: Focus.of(context).hasFocus ? Colors.transparent : Colors.black.withOpacity(0.10),
                         border: Focus.of(context).hasFocus ? Border.all(color: ZenPalette.accent, width: 2) : null,
                         borderRadius: BorderRadius.circular(_radius),
                       ),

@@ -27,9 +27,10 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   Paint.enableDithering = true;
 
+  // the database starts opening while the preferences load
+  final fLauncherDatabase = FLauncherDatabase(connect());
   final sharedPreferences = await SharedPreferences.getInstance();
   final fLauncherChannel = FLauncherChannel();
-  final fLauncherDatabase = FLauncherDatabase(connect());
   runApp(
     FLauncherApp(
       sharedPreferences,

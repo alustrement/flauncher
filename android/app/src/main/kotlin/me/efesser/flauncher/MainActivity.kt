@@ -41,6 +41,8 @@ import io.flutter.plugin.common.EventChannel.StreamHandler
 import io.flutter.plugin.common.MethodChannel
 import java.io.ByteArrayOutputStream
 import java.io.Serializable
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
 
 private const val METHOD_CHANNEL = "me.efesser.flauncher/method"
 private const val EVENT_CHANNEL = "me.efesser.flauncher/event"
@@ -48,6 +50,11 @@ private const val MEDIA_EVENT_CHANNEL = "me.efesser.flauncher/media"
 private const val WATCH_NEXT_EVENT_CHANNEL = "me.efesser.flauncher/watch_next"
 private const val WATCH_NEXT_PERMISSION_REQUEST_CODE = 1
 private const val DOUBLE_HOME_PRESS_TIMEOUT_MS = 400L
+
+// twice the size they are shown at, larger images would only take longer to encode and decode
+private const val BANNER_MAX_WIDTH = 640
+private const val BANNER_MAX_HEIGHT = 360
+private const val ICON_MAX_SIZE = 256
 
 class MainActivity : FlutterActivity() {
     val launcherAppsCallbacks = ArrayList<LauncherApps.Callback>()
@@ -58,12 +65,23 @@ class MainActivity : FlutterActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private val backToTopInLauncher = Runnable { backToTop(animated = true) }
 
+    // loading the labels and images of the apps takes a while, which must not hold up the key events
+    private val appsExecutor = Executors.newSingleThreadExecutor()
+    private val appsLoadingPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
+
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, METHOD_CHANNEL)
         methodChannel.setMethodCallHandler { call, result ->
             when (call.method) {
-                "getApplications" -> result.success(getApplications())
+                "getApplications" -> appsExecutor.execute {
+                    try {
+                        val applications = getApplications()
+                        handler.post { result.success(applications) }
+                    } catch (e: Exception) {
+                        handler.post { result.error("getApplications", e.toString(), null) }
+                    }
+                }
                 "applicationExists" -> result.success(applicationExists(call.arguments as String))
                 "launchApp" -> result.success(launchApp(call.arguments as String))
                 "openSettings" -> result.success(openSettings())
@@ -93,22 +111,27 @@ class MainActivity : FlutterActivity() {
                         events.success(mapOf("action" to "PACKAGE_REMOVED", "packageName" to packageName))
                     }
 
-                    override fun onPackageAdded(packageName: String, user: UserHandle) {
-                        getApplication(packageName)
-                            ?.let { events.success(mapOf("action" to "PACKAGE_ADDED", "activitiyInfo" to it)) }
-                    }
-
-                    override fun onPackageChanged(packageName: String, user: UserHandle) {
-                        getApplication(packageName)
-                            ?.let { events.success(mapOf("action" to "PACKAGE_CHANGED", "activitiyInfo" to it)) }
-                    }
-
-                    override fun onPackagesAvailable(packageNames: Array<out String>, user: UserHandle, replacing: Boolean) {
-                        val applications = packageNames.map(::getApplication)
-                        if (applications.isNotEmpty()) {
-                            events.success(mapOf("action" to "PACKAGES_AVAILABLE", "activitiesInfo" to applications))
+                    override fun onPackageAdded(packageName: String, user: UserHandle) = appsExecutor.execute {
+                        getApplication(packageName)?.let {
+                            handler.post { events.success(mapOf("action" to "PACKAGE_ADDED", "activitiyInfo" to it)) }
                         }
                     }
+
+                    override fun onPackageChanged(packageName: String, user: UserHandle) = appsExecutor.execute {
+                        getApplication(packageName)?.let {
+                            handler.post { events.success(mapOf("action" to "PACKAGE_CHANGED", "activitiyInfo" to it)) }
+                        }
+                    }
+
+                    override fun onPackagesAvailable(packageNames: Array<out String>, user: UserHandle, replacing: Boolean) =
+                        appsExecutor.execute {
+                            val applications = packageNames.map(::getApplication)
+                            if (applications.isNotEmpty()) {
+                                handler.post {
+                                    events.success(mapOf("action" to "PACKAGES_AVAILABLE", "activitiesInfo" to applications))
+                                }
+                            }
+                        }
 
                     override fun onPackagesUnavailable(packageNames: Array<out String>, user: UserHandle, replacing: Boolean) {}
                 }
@@ -187,6 +210,17 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    /**
+     * Flutter empties its image cache when the system asks to trim memory, which it does as soon as an app is opened
+     * and hides the launcher: all the images would then be decoded again when coming back. They are only given up
+     * once the system really runs short of memory.
+     */
+    override fun onTrimMemory(level: Int) {
+        if (level != TRIM_MEMORY_UI_HIDDEN) {
+            super.onTrimMemory(level)
+        }
+    }
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == WATCH_NEXT_PERMISSION_REQUEST_CODE) {
@@ -204,6 +238,8 @@ class MainActivity : FlutterActivity() {
         if (::watchNextStreamHandler.isInitialized) {
             watchNextStreamHandler.dispose()
         }
+        appsExecutor.shutdown()
+        appsLoadingPool.shutdown()
         super.onDestroy()
     }
 
@@ -211,7 +247,9 @@ class MainActivity : FlutterActivity() {
         val tvActivitiesInfo = queryIntentActivities(false)
         val nonTvActivitiesInfo = queryIntentActivities(true)
                 .filter { nonTvActivityInfo -> !tvActivitiesInfo.any { tvActivityInfo -> tvActivityInfo.packageName == nonTvActivityInfo.packageName } }
-        return tvActivitiesInfo.map { buildAppMap(it, false) } + nonTvActivitiesInfo.map { buildAppMap(it, true) }
+        val tasks = tvActivitiesInfo.map { Callable { buildAppMap(it, false) } } +
+                nonTvActivitiesInfo.map { Callable { buildAppMap(it, true) } }
+        return appsLoadingPool.invokeAll(tasks).map { it.get() }
     }
 
     private fun getApplication(packageName: String): Map<String, Serializable?>? {
@@ -244,8 +282,9 @@ class MainActivity : FlutterActivity() {
     private fun buildAppMap(activityInfo: ActivityInfo, sideloaded: Boolean) = mapOf(
             "name" to activityInfo.loadLabel(packageManager).toString(),
             "packageName" to activityInfo.packageName,
-            "banner" to activityInfo.loadBanner(packageManager)?.let(::drawableToByteArray),
-            "icon" to activityInfo.loadIcon(packageManager)?.let(::drawableToByteArray),
+            "banner" to activityInfo.loadBanner(packageManager)
+                ?.let { drawableToByteArray(it, BANNER_MAX_WIDTH, BANNER_MAX_HEIGHT) },
+            "icon" to activityInfo.loadIcon(packageManager)?.let { drawableToByteArray(it, ICON_MAX_SIZE, ICON_MAX_SIZE) },
             "version" to packageManager.getPackageInfo(activityInfo.packageName, 0).versionName,
             "sideloaded" to sideloaded,
     )
@@ -307,13 +346,17 @@ class MainActivity : FlutterActivity() {
         false
     }
 
-    private fun drawableToByteArray(drawable: Drawable): ByteArray? {
+    /** The image is scaled down to fit in [maxWidth]x[maxHeight], keeping its aspect ratio. */
+    private fun drawableToByteArray(drawable: Drawable, maxWidth: Int, maxHeight: Int): ByteArray? {
         if (drawable.intrinsicWidth <= 0 || drawable.intrinsicHeight <= 0) {
             return null
         }
 
         fun drawableToBitmap(drawable: Drawable): Bitmap {
-            val bitmap = Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+            val scale = minOf(1f, maxWidth.toFloat() / drawable.intrinsicWidth, maxHeight.toFloat() / drawable.intrinsicHeight)
+            val width = maxOf(1, (drawable.intrinsicWidth * scale).toInt())
+            val height = maxOf(1, (drawable.intrinsicHeight * scale).toInt())
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(bitmap)
             drawable.setBounds(0, 0, canvas.width, canvas.height)
             drawable.draw(canvas)

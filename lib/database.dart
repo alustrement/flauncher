@@ -211,8 +211,10 @@ class FLauncherDatabase extends _$FLauncherDatabase {
   }
 }
 
+/// The database runs in a background isolate, so that reading and writing the images of the applications doesn't hold
+/// up the UI.
 DatabaseConnection connect() => DatabaseConnection.delayed(() async {
       final dbFolder = await getApplicationDocumentsDirectory();
       final file = File(path.join(dbFolder.path, 'db.sqlite'));
-      return DatabaseConnection(NativeDatabase(file, logStatements: kDebugMode));
+      return NativeDatabase.createBackgroundConnection(file, logStatements: kDebugMode);
     }());

@@ -34,6 +34,9 @@ class AppsService extends ChangeNotifier {
   List<App> _applications = [];
   List<CategoryWithApps> _categoriesWithApps = [];
 
+  /// The instances of the applications last read from the database, by package name.
+  Map<String, App> _knownApplications = {};
+
   bool get initialized => _initialized;
 
   List<App> get applications => UnmodifiableListView(_applications);
@@ -47,6 +50,14 @@ class AppsService extends ChangeNotifier {
   }
 
   Future<void> _init() async {
+    // the applications known from the last launch are shown right away, while the system's are scanned; on the first
+    // launch, the scan is needed to fill the default categories
+    await _reloadCategories();
+    if (!_database.wasCreated) {
+      await _reloadApplications();
+      _initialized = true;
+      notifyListeners();
+    }
     await _refreshState(shouldNotifyListeners: false);
     if (_database.wasCreated) {
       await _initDefaultCategories();
@@ -64,8 +75,8 @@ class AppsService extends ChangeNotifier {
           await _database.deleteApps([event["packageName"]]);
           break;
       }
-      _categoriesWithApps = await _database.listCategoriesWithVisibleApps();
-      _applications = await _database.listApplications();
+      await _reloadCategories();
+      await _reloadApplications();
       notifyListeners();
     });
     _initialized = true;
@@ -113,7 +124,7 @@ class AppsService extends ChangeNotifier {
             );
           }
         }
-        _categoriesWithApps = await _database.listCategoriesWithVisibleApps();
+        await _reloadCategories();
       });
 
   Future<void> _refreshState({bool shouldNotifyListeners = true}) async {
@@ -135,12 +146,34 @@ class AppsService extends ChangeNotifier {
       await _database.persistApps(appsFromSystem);
       await _database.deleteApps(uninstalledApplications);
 
-      _categoriesWithApps = await _database.listCategoriesWithVisibleApps();
-      _applications = await _database.listApplications();
+      await _reloadCategories();
+      await _reloadApplications();
     });
     if (shouldNotifyListeners) {
       notifyListeners();
     }
+  }
+
+  /// The applications which didn't change keep their instance, and so their images, which aren't decoded again.
+  App _knownInstance(App application) {
+    final known = _knownApplications[application.packageName];
+    if (known != null && _sameApplication(known, application)) {
+      return known;
+    }
+    _knownApplications[application.packageName] = application;
+    return application;
+  }
+
+  Future<void> _reloadCategories() async {
+    _categoriesWithApps = (await _database.listCategoriesWithVisibleApps())
+        .map((item) => CategoryWithApps(item.category, item.applications.map(_knownInstance).toList()))
+        .toList();
+  }
+
+  /// Also forgets the applications which aren't there anymore.
+  Future<void> _reloadApplications() async {
+    _applications = (await _database.listApplications()).map(_knownInstance).toList();
+    _knownApplications = {for (final application in _applications) application.packageName: application};
   }
 
   Future<void> launchApp(App app) => _fLauncherChannel.launchApp(app.packageName);
@@ -164,7 +197,7 @@ class AppsService extends ChangeNotifier {
         order: index,
       )
     ]);
-    _categoriesWithApps = await _database.listCategoriesWithVisibleApps();
+    await _reloadCategories();
     if (shouldNotifyListeners) {
       notifyListeners();
     }
@@ -172,7 +205,7 @@ class AppsService extends ChangeNotifier {
 
   Future<void> removeFromCategory(App app, Category category) async {
     await _database.deleteAppCategory(category.id, app.packageName);
-    _categoriesWithApps = await _database.listCategoriesWithVisibleApps();
+    await _reloadCategories();
     notifyListeners();
   }
 
@@ -187,7 +220,7 @@ class AppsService extends ChangeNotifier {
       ));
     }
     await _database.replaceAppsCategories(orderedAppCategories);
-    _categoriesWithApps = await _database.listCategoriesWithVisibleApps();
+    await _reloadCategories();
     notifyListeners();
   }
 
@@ -206,7 +239,7 @@ class AppsService extends ChangeNotifier {
     }
     await _database.insertCategory(CategoriesCompanion.insert(name: categoryName, order: 0));
     await _database.updateCategories(orderedCategories);
-    _categoriesWithApps = await _database.listCategoriesWithVisibleApps();
+    await _reloadCategories();
     if (shouldNotifyListeners) {
       notifyListeners();
     }
@@ -214,13 +247,13 @@ class AppsService extends ChangeNotifier {
 
   Future<void> renameCategory(Category category, String categoryName) async {
     await _database.updateCategory(category.id, CategoriesCompanion(name: Value(categoryName)));
-    _categoriesWithApps = await _database.listCategoriesWithVisibleApps();
+    await _reloadCategories();
     notifyListeners();
   }
 
   Future<void> deleteCategory(Category category) async {
     await _database.deleteCategory(category.id);
-    _categoriesWithApps = await _database.listCategoriesWithVisibleApps();
+    await _reloadCategories();
     notifyListeners();
   }
 
@@ -233,27 +266,27 @@ class AppsService extends ChangeNotifier {
       orderedCategories.add(CategoriesCompanion(id: Value(category.id), order: Value(i)));
     }
     await _database.updateCategories(orderedCategories);
-    _categoriesWithApps = await _database.listCategoriesWithVisibleApps();
+    await _reloadCategories();
     notifyListeners();
   }
 
   Future<void> hideApplication(App application) async {
     await _database.updateApp(application.packageName, AppsCompanion(hidden: Value(true)));
-    _categoriesWithApps = await _database.listCategoriesWithVisibleApps();
-    _applications = await _database.listApplications();
+    await _reloadCategories();
+    await _reloadApplications();
     notifyListeners();
   }
 
   Future<void> unHideApplication(App application) async {
     await _database.updateApp(application.packageName, AppsCompanion(hidden: Value(false)));
-    _categoriesWithApps = await _database.listCategoriesWithVisibleApps();
-    _applications = await _database.listApplications();
+    await _reloadCategories();
+    await _reloadApplications();
     notifyListeners();
   }
 
   Future<void> setCategoryType(Category category, CategoryType type, {bool shouldNotifyListeners = true}) async {
     await _database.updateCategory(category.id, CategoriesCompanion(type: Value(type)));
-    _categoriesWithApps = await _database.listCategoriesWithVisibleApps();
+    await _reloadCategories();
     if (shouldNotifyListeners) {
       notifyListeners();
     }
@@ -261,19 +294,40 @@ class AppsService extends ChangeNotifier {
 
   Future<void> setCategorySort(Category category, CategorySort sort) async {
     await _database.updateCategory(category.id, CategoriesCompanion(sort: Value(sort)));
-    _categoriesWithApps = await _database.listCategoriesWithVisibleApps();
+    await _reloadCategories();
     notifyListeners();
   }
 
   Future<void> setCategoryColumnsCount(Category category, int columnsCount) async {
     await _database.updateCategory(category.id, CategoriesCompanion(columnsCount: Value(columnsCount)));
-    _categoriesWithApps = await _database.listCategoriesWithVisibleApps();
+    await _reloadCategories();
     notifyListeners();
   }
 
   Future<void> setCategoryRowHeight(Category category, int rowHeight) async {
     await _database.updateCategory(category.id, CategoriesCompanion(rowHeight: Value(rowHeight)));
-    _categoriesWithApps = await _database.listCategoriesWithVisibleApps();
+    await _reloadCategories();
     notifyListeners();
   }
+}
+
+bool _sameApplication(App a, App b) =>
+    a.copyWith(banner: Value(null), icon: Value(null)) == b.copyWith(banner: Value(null), icon: Value(null)) &&
+    _sameBytes(a.banner, b.banner) &&
+    _sameBytes(a.icon, b.icon);
+
+/// Faster than the generic list equality, which matters for the images of all the applications.
+bool _sameBytes(Uint8List? a, Uint8List? b) {
+  if (identical(a, b)) {
+    return true;
+  }
+  if (a == null || b == null || a.length != b.length) {
+    return false;
+  }
+  for (var i = 0; i < a.length; ++i) {
+    if (a[i] != b[i]) {
+      return false;
+    }
+  }
+  return true;
 }

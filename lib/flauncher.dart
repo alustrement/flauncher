@@ -50,9 +50,12 @@ class FLauncher extends StatelessWidget {
                         // no horizontal margin: the horizontal lists reach the edges of the screen, and the other
                         // sections have their own margins
                         padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-                        child: InitialFocus(
-                          homeService: context.read<HomeService>(),
-                          child: _page(context, appsService.categoriesWithApps),
+                        // scrolling only moves the page's layer instead of painting it again on every frame
+                        child: RepaintBoundary(
+                          child: InitialFocus(
+                            homeService: context.read<HomeService>(),
+                            child: _page(context, appsService.categoriesWithApps),
+                          ),
                         ),
                       )
                     : _emptyState(context),

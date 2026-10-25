@@ -16,6 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'dart:typed_data';
+
 import 'package:flauncher/providers/watch_next_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
@@ -78,6 +80,34 @@ void main() {
       listener({"permissionGranted": true, "programs": List.generate(30, _programMap)});
 
       expect(watchNextService.programs.map((program) => program.id), List.generate(20, (index) => index));
+    });
+
+    test("only notifies when the programs changed, and keeps their images", () {
+      final channel = MockFLauncherChannel();
+      final watchNextService = WatchNextService(channel);
+      final listener = verify(channel.addWatchNextListener(captureAny)).captured.single;
+      var notifications = 0;
+      watchNextService.addListener(() => ++notifications);
+      Map<String, dynamic> event(int position) => {
+            "permissionGranted": true,
+            "programs": [
+              {
+                ..._programMap(1),
+                "image": Uint8List.fromList([1, 2, 3]),
+                "position": position
+              }
+            ],
+          };
+
+      listener(event(1000));
+      final image = watchNextService.programs.single.image;
+      listener(event(1000));
+      expect(notifications, 1);
+
+      listener(event(2000));
+      expect(notifications, 2);
+      expect(watchNextService.programs.single.position, Duration(seconds: 2));
+      expect(watchNextService.programs.single.image, same(image));
     });
 
     test("reports missing permission", () {

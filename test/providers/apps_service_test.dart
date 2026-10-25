@@ -16,6 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'dart:async';
+
 import 'package:drift/drift.dart';
 import 'package:flauncher/database.dart';
 import 'package:flauncher/providers/apps_service.dart';
@@ -187,6 +189,60 @@ void main() {
         database.listCategoriesWithVisibleApps(),
         database.listApplications(),
       ]);
+    });
+
+    test("shows the applications of the last launch while the system's are scanned", () async {
+      final channel = MockFLauncherChannel();
+      final database = MockFLauncherDatabase();
+      final scan = Completer<List<dynamic>>();
+      when(channel.getApplications()).thenAnswer((_) => scan.future);
+      when(channel.applicationExists(any)).thenAnswer((_) => Future.value(true));
+      final category = fakeCategory();
+      final app = fakeApp();
+      when(database.listApplications()).thenAnswer((_) => Future.value([app]));
+      when(database.listCategoriesWithVisibleApps()).thenAnswer((_) => Future.value([
+            CategoryWithApps(category, [app])
+          ]));
+      when(database.transaction(any)).thenAnswer((realInvocation) => realInvocation.positionalArguments[0]());
+      when(database.wasCreated).thenReturn(false);
+      final appsService = AppsService(channel, database);
+      await untilCalled(channel.getApplications());
+
+      expect(appsService.initialized, isTrue);
+      expect(appsService.applications, [app]);
+      expect(appsService.categoriesWithApps.single.applications, [app]);
+      scan.complete([]);
+      await untilCalled(channel.addAppsChangedListener(any));
+    });
+
+    test("keeps the instances of the applications which didn't change", () async {
+      final channel = MockFLauncherChannel();
+      final database = MockFLauncherDatabase();
+      final category = fakeCategory();
+      App unchanged() => fakeApp(packageName: "unchanged.app", banner: Uint8List.fromList([1, 2, 3]));
+      App changed(int version) =>
+          fakeApp(packageName: "changed.app", version: "$version", banner: Uint8List.fromList([1, 2, 3]));
+      var version = 1;
+      when(channel.getApplications()).thenAnswer((_) => Future.value([]));
+      when(channel.applicationExists(any)).thenAnswer((_) => Future.value(true));
+      when(database.listApplications()).thenAnswer((_) => Future.value([unchanged(), changed(version)]));
+      when(database.listCategoriesWithVisibleApps()).thenAnswer((_) => Future.value([
+            CategoryWithApps(category, [unchanged(), changed(version)])
+          ]));
+      when(database.transaction(any)).thenAnswer((realInvocation) => realInvocation.positionalArguments[0]());
+      when(database.wasCreated).thenReturn(false);
+      final appsService = AppsService(channel, database);
+      await untilCalled(channel.addAppsChangedListener(any));
+      final before = appsService.applications;
+      expect(appsService.categoriesWithApps.single.applications, everyElement(isIn(before)));
+
+      version = 2;
+      await appsService.renameCategory(category, "Renamed");
+
+      final after = appsService.categoriesWithApps.single.applications;
+      expect(after[0], same(before[0]));
+      expect(after[1], isNot(same(before[1])));
+      expect(after[1].version, "2");
     });
   });
 
