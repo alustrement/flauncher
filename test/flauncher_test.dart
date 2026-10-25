@@ -740,7 +740,7 @@ Future<void> _pumpWidgetWithProviders(
   final mediaService = MockMediaService();
   when(mediaService.permissionGranted).thenReturn(true);
   when(mediaService.nowPlaying).thenReturn(nowPlaying);
-  when(mediaService.lastSpotify).thenReturn(null);
+  when(mediaService.spotify).thenReturn(null);
   final watchNextService = MockWatchNextService();
   when(watchNextService.permissionGranted).thenReturn(true);
   when(watchNextService.programs).thenReturn([]);

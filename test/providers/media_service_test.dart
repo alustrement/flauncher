@@ -96,40 +96,37 @@ void main() {
       expect(mediaService.nowPlaying, isNull);
     });
 
-    test("exposes the last Spotify media while nothing plays", () {
+    test("exposes Spotify's paused media next to a video", () {
       final channel = MockFLauncherChannel();
       final mediaService = MediaService(channel);
       final listener = verify(channel.addMediaSessionListener(captureAny)).captured.single;
 
       listener({
         "permissionGranted": true,
-        "session": null,
-        "lastSpotify": {
+        "session": {"packageName": "app.smarttube.fdroid", "title": "Une vidéo"},
+        "spotify": {
           "packageName": "com.spotify.tv.android",
           "title": "Bittersweet",
           "artist": "Lianne La Havas",
-          "duration": 236640,
           "playing": false,
-          "position": 120000,
         },
       });
 
-      final lastSpotify = mediaService.lastSpotify!;
-      expect(mediaService.nowPlaying, isNull);
-      expect(lastSpotify.title, "Bittersweet");
-      expect(lastSpotify.artist, "Lianne La Havas");
-      expect(lastSpotify.playing, isFalse);
-      expect(lastSpotify.currentPosition(DateTime.now()), Duration(minutes: 2));
+      expect(mediaService.nowPlaying!.resumable, isTrue);
+      final spotify = mediaService.spotify!;
+      expect(spotify.title, "Bittersweet");
+      expect(spotify.artist, "Lianne La Havas");
+      expect(spotify.resumable, isFalse);
 
       listener({
         "permissionGranted": true,
-        "session": {"packageName": "fr.francetv.pluzz"},
+        "session": {"packageName": "com.spotify.tv.android"},
       });
 
-      expect(mediaService.lastSpotify, isNull);
+      expect(mediaService.spotify, isNull);
     });
 
-    test("keeps the artwork of the last Spotify media when it is resumed", () {
+    test("keeps the artwork of Spotify's media when it is resumed", () {
       final channel = MockFLauncherChannel();
       final mediaService = MediaService(channel);
       final listener = verify(channel.addMediaSessionListener(captureAny)).captured.single;
@@ -137,13 +134,13 @@ void main() {
 
       listener({
         "permissionGranted": true,
-        "session": null,
-        "lastSpotify": {
+        "session": {"packageName": "app.smarttube.fdroid"},
+        "spotify": {
           ...media,
           "art": Uint8List.fromList([1, 2, 3]),
         },
       });
-      final art = mediaService.lastSpotify!.art;
+      final art = mediaService.spotify!.art;
       listener({
         "permissionGranted": true,
         "session": {
@@ -153,8 +150,25 @@ void main() {
         },
       });
 
-      expect(mediaService.lastSpotify, isNull);
+      expect(mediaService.spotify, isNull);
       expect(identical(mediaService.nowPlaying!.art, art), isTrue);
+    });
+
+    test("tells the channel which media is focused, whatever the order of the focus changes", () async {
+      final channel = MockFLauncherChannel();
+      final mediaService = MediaService(channel);
+
+      await mediaService.setMediaFocused("app.smarttube.fdroid", true);
+      await mediaService.setMediaFocused("com.spotify.tv.android", true);
+      await mediaService.setMediaFocused("app.smarttube.fdroid", false);
+      await mediaService.setMediaFocused("com.spotify.tv.android", false);
+
+      verifyInOrder([
+        channel.setFocusedMedia("app.smarttube.fdroid"),
+        channel.setFocusedMedia("com.spotify.tv.android"),
+        channel.setFocusedMedia(null),
+      ]);
+      verifyNever(channel.setFocusedMedia(any));
     });
 
     test("resumeSpotify calls channel", () async {
@@ -189,6 +203,20 @@ void main() {
       await mediaService.openPlayer();
 
       verify(channel.openMediaSession("com.spotify.tv.android"));
+    });
+  });
+
+  group("NowPlaying.resumable", () {
+    test("a paused media of another app than Spotify is resumable", () {
+      expect(NowPlaying(packageName: "app.smarttube.fdroid").resumable, isTrue);
+    });
+
+    test("a media playing is not resumable", () {
+      expect(NowPlaying(packageName: "app.smarttube.fdroid", playing: true).resumable, isFalse);
+    });
+
+    test("Spotify's media is not resumable", () {
+      expect(NowPlaying(packageName: "com.spotify.tv.android").resumable, isFalse);
     });
   });
 

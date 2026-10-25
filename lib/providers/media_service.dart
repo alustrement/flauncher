@@ -19,6 +19,8 @@
 import 'package:flauncher/flauncher_channel.dart';
 import 'package:flutter/foundation.dart';
 
+const spotifyPackage = "com.spotify.tv.android";
+
 class NowPlaying {
   final String packageName;
   final String? title;
@@ -46,16 +48,17 @@ class NowPlaying {
     this.speed = 1.0,
   });
 
-  /// [previousArt] is reused when the artwork did not change, so that image widgets don't reload it.
-  factory NowPlaying.fromMap(Map<dynamic, dynamic> map, {Uint8List? previousArt}) {
+  /// The one of [previousArts] equal to the artwork is reused, so that image widgets don't reload it.
+  factory NowPlaying.fromMap(Map<dynamic, dynamic> map, {Iterable<Uint8List?> previousArts = const []}) {
     final art = map["art"] as Uint8List?;
+    final previousArt = art != null ? previousArts.where((previous) => listEquals(art, previous)).firstOrNull : null;
     return NowPlaying(
       packageName: map["packageName"],
       title: map["title"],
       artist: map["artist"],
       album: map["album"],
       duration: map["duration"] != null ? Duration(milliseconds: map["duration"]) : null,
-      art: art != null && listEquals(art, previousArt) ? previousArt : art,
+      art: previousArt ?? art,
       artUri: map["artUri"],
       playing: map["playing"] ?? false,
       position: map["position"] != null ? Duration(milliseconds: map["position"]) : null,
@@ -65,6 +68,10 @@ class NowPlaying {
       speed: map["speed"] ?? 1.0,
     );
   }
+
+  /// A paused media of another app than Spotify, a video which doesn't play in the background, is offered to be
+  /// resumed next to Spotify's.
+  bool get resumable => !playing && packageName != spotifyPackage;
 
   /// Extrapolates the playback position from the last reported one.
   Duration? currentPosition(DateTime now) {
@@ -86,14 +93,15 @@ class MediaService extends ChangeNotifier {
   final FLauncherChannel _fLauncherChannel;
   bool _permissionGranted = true;
   NowPlaying? _nowPlaying;
-  NowPlaying? _lastSpotify;
+  NowPlaying? _spotify;
+  String? _focusedMedia;
 
   bool get permissionGranted => _permissionGranted;
 
   NowPlaying? get nowPlaying => _nowPlaying;
 
-  /// The last media played on Spotify, paused where it was left, while nothing plays.
-  NowPlaying? get lastSpotify => _lastSpotify;
+  /// Spotify's paused media, next to a [NowPlaying.resumable] media, to be resumed.
+  NowPlaying? get spotify => _spotify;
 
   MediaService(this._fLauncherChannel) {
     _fLauncherChannel.addMediaSessionListener(_onMediaSessionEvent);
@@ -102,11 +110,11 @@ class MediaService extends ChangeNotifier {
   void _onMediaSessionEvent(Map<dynamic, dynamic> event) {
     _permissionGranted = event["permissionGranted"];
     final session = event["session"] as Map<dynamic, dynamic>?;
-    // the last Spotify media and the media playing are never sent together, and resuming the former keeps its artwork
-    final previousArt = _nowPlaying?.art ?? _lastSpotify?.art;
-    _nowPlaying = session != null ? NowPlaying.fromMap(session, previousArt: previousArt) : null;
-    final lastSpotify = event["lastSpotify"] as Map<dynamic, dynamic>?;
-    _lastSpotify = lastSpotify != null ? NowPlaying.fromMap(lastSpotify, previousArt: previousArt) : null;
+    final spotify = event["spotify"] as Map<dynamic, dynamic>?;
+    // resuming Spotify's media brings it from beside the video to the media playing
+    final previousArts = [_nowPlaying?.art, _spotify?.art];
+    _nowPlaying = session != null ? NowPlaying.fromMap(session, previousArts: previousArts) : null;
+    _spotify = spotify != null ? NowPlaying.fromMap(spotify, previousArts: previousArts) : null;
     notifyListeners();
   }
 
@@ -117,4 +125,17 @@ class MediaService extends ChangeNotifier {
   }
 
   Future<void> resumeSpotify() => _fLauncherChannel.resumeSpotify();
+
+  /// Media keys go to the focused media when Spotify's is shown next to a video. Focus changes come in any order when
+  /// it moves from one to the other, hence the media losing it only clears it when it still has it.
+  Future<void> setMediaFocused(String packageName, bool focused) async {
+    if (focused) {
+      _focusedMedia = packageName;
+    } else if (_focusedMedia == packageName) {
+      _focusedMedia = null;
+    } else {
+      return;
+    }
+    await _fLauncherChannel.setFocusedMedia(_focusedMedia);
+  }
 }

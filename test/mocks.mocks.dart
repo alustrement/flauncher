@@ -200,6 +200,13 @@ class MockFLauncherChannel extends _i1.Mock implements _i7.FLauncherChannel {
   ) as _i6.Future<void>);
 
   @override
+  _i6.Future<void> setFocusedMedia(String? packageName) => (super.noSuchMethod(
+    Invocation.method(#setFocusedMedia, [packageName]),
+    returnValue: _i6.Future<void>.value(),
+    returnValueForMissingStub: _i6.Future<void>.value(),
+  ) as _i6.Future<void>);
+
+  @override
   _i6.Future<void> requestWatchNextPermission() => (super.noSuchMethod(
     Invocation.method(#requestWatchNextPermission, []),
     returnValue: _i6.Future<void>.value(),
@@ -438,6 +445,13 @@ class MockMediaService extends _i1.Mock implements _i10.MediaService {
   @override
   _i6.Future<void> resumeSpotify() => (super.noSuchMethod(
     Invocation.method(#resumeSpotify, []),
+    returnValue: _i6.Future<void>.value(),
+    returnValueForMissingStub: _i6.Future<void>.value(),
+  ) as _i6.Future<void>);
+
+  @override
+  _i6.Future<void> setMediaFocused(String? packageName, bool? focused) => (super.noSuchMethod(
+    Invocation.method(#setMediaFocused, [packageName, focused]),
     returnValue: _i6.Future<void>.value(),
     returnValueForMissingStub: _i6.Future<void>.value(),
   ) as _i6.Future<void>);

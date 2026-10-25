@@ -21,7 +21,6 @@ package me.efesser.flauncher
 import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -40,9 +39,12 @@ import android.view.KeyEvent
 import io.flutter.plugin.common.EventChannel.EventSink
 import io.flutter.plugin.common.EventChannel.StreamHandler
 import java.io.ByteArrayOutputStream
+import java.util.WeakHashMap
+
+const val SPOTIFY_PACKAGE = "com.spotify.tv.android"
 
 private const val ART_MAX_SIZE = 512
-private const val SPOTIFY_RESUME_TIMEOUT_MS = 15_000L
+private const val LAST_PLAYED_PREFERENCES_NAME = "last_played"
 
 private val ACTIVE_STATES = setOf(
     PlaybackState.STATE_PLAYING,
@@ -84,11 +86,19 @@ class MediaSessionStreamHandler(
     private var sessionsListenerRegistered = false
     private var controllers: List<MediaController> = emptyList()
     private var currentController: MediaController? = null
-    private var lastArtBitmap: Bitmap? = null
-    private var lastArtBytes: ByteArray? = null
+    // the artworks of the media and of Spotify's, which are sent together
+    private val artBytes = WeakHashMap<Bitmap, ByteArray>()
     private var lastEngagements: Map<String, Long> = emptyMap()
-    private val lastSpotifyMedia = LastSpotifyMedia(context)
-    private var spotifyWokenUpAt = 0L
+    private val lastPlayedPreferences = context.getSharedPreferences(LAST_PLAYED_PREFERENCES_NAME, Context.MODE_PRIVATE)
+    private val lastPlayed: MutableMap<String, Long> =
+        lastPlayedPreferences.all.mapNotNull { (packageName, time) -> (time as? Long)?.let { packageName to it } }
+            .toMap(HashMap())
+    private var playingPackages: Set<String> = emptySet()
+    private var currentSession: Map<String, Any?>? = null
+    private var goneSession: Map<String, Any?>? = null
+    private var goneAt = 0L
+    private var spotifyAside = false
+    private var focusedMedia: String? = null
 
     private val sessionsChangedListener = MediaSessionManager.OnActiveSessionsChangedListener {
         updateControllers(it ?: emptyList())
@@ -130,6 +140,11 @@ class MediaSessionStreamHandler(
         selectController()
     }
 
+    /** [packageName] is the app of the media focused on the home screen, if any. */
+    fun setFocusedMedia(packageName: String?) {
+        focusedMedia = packageName
+    }
+
     /**
      * Forwards media keys to the session shown on the home screen, as the system would otherwise send them to its
      * own pick (the last session which received one).
@@ -137,21 +152,34 @@ class MediaSessionStreamHandler(
      * Videos must not play behind the launcher though: for anything that isn't known to be audio, play keys open the
      * app instead and other keys are ignored.
      *
-     * When the last Spotify media is shown instead, play keys resume it behind the launcher.
+     * When the media of a session which is gone is shown instead, play keys open its app.
+     *
+     * When Spotify's paused media is shown next to a video, media keys go to the one focused, and are ignored when
+     * neither is.
      */
     fun dispatchMediaKey(event: KeyEvent): Boolean {
         if (event.keyCode !in MEDIA_KEYS) {
             return false
         }
-        val controller = currentController
-        if (controller == null) {
-            if (event.keyCode !in PLAY_KEYS || lastSpotifyMedia.media == null) {
-                return false
+        if (spotifyAside) {
+            when (focusedMedia) {
+                null -> return true
+                SPOTIFY_PACKAGE -> {
+                    spotifyController()?.dispatchMediaButtonEvent(event)
+                    return true
+                }
             }
-            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
-                playSpotify()
+        }
+        val controller = currentController
+        val gone = goneSession
+        if (controller == null && gone != null) {
+            if (event.keyCode in PLAY_KEYS && event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+                launchApp(gone["packageName"] as String)
             }
             return true
+        }
+        if (controller == null) {
+            return false
         }
         if (isAudio(controller)) {
             return controller.dispatchMediaButtonEvent(event)
@@ -172,63 +200,19 @@ class MediaSessionStreamHandler(
         } || launchApp(controller.packageName)
     }
 
-    /**
-     * Resumes the last media played on Spotify, in Spotify: its session is told to play when it is still there,
-     * otherwise the media is opened from its URI.
-     */
+    /** Resumes Spotify's paused media in Spotify, or opens Spotify when it has none. */
     fun resumeSpotify(): Boolean {
-        val controller = spotifyController()
-        if (controller != null) {
-            controller.transportControls.play()
-            return try {
-                controller.sessionActivity?.send() != null
-            } catch (e: PendingIntent.CanceledException) {
-                false
-            } || launchApp(SPOTIFY_PACKAGE)
-        }
-        return openSpotifyUri(lastSpotifyMedia.mediaId) || launchApp(SPOTIFY_PACKAGE)
-    }
-
-    /**
-     * Resumes Spotify's playback behind the launcher. Once Spotify's session is gone, its media button receiver
-     * starts its service again, which brings its last media back paused: it is played once its session is there.
-     */
-    private fun playSpotify() {
-        val controller = spotifyController()
-        if (controller != null) {
-            controller.transportControls.play()
-            return
-        }
-        spotifyWokenUpAt = SystemClock.elapsedRealtime()
-        for (action in listOf(KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP)) {
-            context.sendBroadcast(
-                Intent(Intent.ACTION_MEDIA_BUTTON)
-                    .setPackage(SPOTIFY_PACKAGE)
-                    // e.g. after Spotify has been force stopped
-                    .addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
-                    .putExtra(Intent.EXTRA_KEY_EVENT, KeyEvent(action, KeyEvent.KEYCODE_MEDIA_PLAY))
-            )
-        }
+        val controller = spotifyController() ?: return launchApp(SPOTIFY_PACKAGE)
+        controller.transportControls.play()
+        return try {
+            controller.sessionActivity?.send() != null
+        } catch (e: PendingIntent.CanceledException) {
+            false
+        } || launchApp(SPOTIFY_PACKAGE)
     }
 
     private fun spotifyController() =
         controllers.firstOrNull { it.packageName == SPOTIFY_PACKAGE && it.metadata != null }
-
-    private fun openSpotifyUri(uri: String?): Boolean {
-        if (uri == null || !uri.startsWith("spotify:")) {
-            return false
-        }
-        return try {
-            context.startActivity(
-                Intent(Intent.ACTION_VIEW, Uri.parse(uri))
-                    .setPackage(SPOTIFY_PACKAGE)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            )
-            true
-        } catch (e: Exception) {
-            false
-        }
-    }
 
     /** Audio attributes are often left unknown by video apps, so only an explicit audio declaration is trusted. */
     private fun isAudio(controller: MediaController): Boolean {
@@ -272,46 +256,94 @@ class MediaSessionStreamHandler(
 
     /**
      * Picks the playing session first, otherwise a paused one which still has something to show, unless another app
-     * has been watched since it was paused.
+     * has been watched or played since it was paused.
      *
-     * Spotify's media is remembered while it is shown, and sent when nothing else is, to be resumed.
+     * Some apps release their session as soon as they leave the foreground (e.g. SmartTube): the media of the session
+     * shown is then kept, paused, until another media is paused or another app is watched or played.
+     *
+     * Next to a paused media of another app, a video which doesn't play in the background, Spotify's paused media is
+     * sent too, to be resumed.
      */
     private fun selectController() {
-        if (spotifyWokenUpAt > 0) {
-            val spotify = spotifyController()
-            if (SystemClock.elapsedRealtime() - spotifyWokenUpAt > SPOTIFY_RESUME_TIMEOUT_MS) {
-                spotifyWokenUpAt = 0
-            } else if (spotify != null) {
-                spotifyWokenUpAt = 0
-                spotify.transportControls.play()
-            }
-        }
-        val controller = controllers.firstOrNull { it.playbackState?.state in ACTIVE_STATES }
+        rememberPlayed()
+        rememberGoneSession()
+        val controller = controllers.firstOrNull(::isPlaying)
             ?: controllers.firstOrNull {
-                it.metadata != null && it.playbackState?.state == PlaybackState.STATE_PAUSED && !isOutdated(it)
+                isShowable(it) && !isOutdated(it) && (goneSession == null || (pausedAt(it) ?: 0) > goneAt)
             }
-        currentController = controller
-        val session = controller?.let(::buildSessionMap)
-        if (controller?.packageName == SPOTIFY_PACKAGE && controller.metadata != null) {
-            lastSpotifyMedia.remember(session!!, controller.metadata?.getString(MediaMetadata.METADATA_KEY_MEDIA_ID))
+        if (controller != null || goneSession?.let { isOutdated(it["packageName"] as String, goneAt) } == true) {
+            goneSession = null
         }
+        currentController = controller
+        val session = controller?.let(::buildSessionMap) ?: goneSession
+        currentSession = session
+        val resumable = session != null && session["playing"] != true && session["packageName"] != SPOTIFY_PACKAGE
+        val spotify = if (resumable) spotifyController() else null
+        spotifyAside = spotify != null
         events?.success(mapOf(
             "permissionGranted" to true,
             "session" to session,
-            "lastSpotify" to if (session == null) lastSpotifyMedia.media else null,
+            "spotify" to spotify?.let(::buildSessionMap),
         ))
     }
 
-    private fun isOutdated(controller: MediaController): Boolean {
-        val state = controller.playbackState ?: return false
-        if (state.lastPositionUpdateTime <= 0) {
-            return false
+    /**
+     * Some apps release their session as soon as they leave the foreground (e.g. SmartTube), which would bring back
+     * an older paused session: the time each app was last seen playing is remembered, when it starts and stops, and
+     * kept across restarts of the launcher.
+     */
+    private fun rememberPlayed() {
+        val playing = controllers.filter(::isPlaying).map { it.packageName }.toSet()
+        val changed = (playing - playingPackages) + (playingPackages - playing)
+        playingPackages = playing
+        if (changed.isEmpty()) {
+            return
         }
-        val pausedAt = System.currentTimeMillis() - (SystemClock.elapsedRealtime() - state.lastPositionUpdateTime)
-        return lastEngagements.any { (packageName, lastEngagement) ->
-            packageName != controller.packageName && lastEngagement > pausedAt
+        val now = System.currentTimeMillis()
+        val editor = lastPlayedPreferences.edit()
+        for (packageName in changed) {
+            lastPlayed[packageName] = now
+            editor.putLong(packageName, now)
         }
+        editor.apply()
     }
+
+    /** Keeps the media shown, paused, when its app has no session to show anymore. Spotify's is resumed instead. */
+    private fun rememberGoneSession() {
+        val session = currentSession ?: return
+        val packageName = session["packageName"] as String
+        if (packageName == SPOTIFY_PACKAGE || session === goneSession ||
+            controllers.any { it.packageName == packageName && (isPlaying(it) || isShowable(it)) }
+        ) {
+            return
+        }
+        goneSession = session + mapOf("playing" to false, "position" to currentPosition(session))
+        goneAt = System.currentTimeMillis()
+    }
+
+    private fun isPlaying(controller: MediaController) = controller.playbackState?.state in ACTIVE_STATES
+
+    private fun isShowable(controller: MediaController) =
+        controller.metadata != null && controller.playbackState?.state == PlaybackState.STATE_PAUSED
+
+    private fun pausedAt(controller: MediaController): Long? {
+        val state = controller.playbackState ?: return null
+        if (state.lastPositionUpdateTime <= 0) {
+            return null
+        }
+        return System.currentTimeMillis() - (SystemClock.elapsedRealtime() - state.lastPositionUpdateTime)
+    }
+
+    private fun isOutdated(controller: MediaController): Boolean {
+        val pausedAt = pausedAt(controller) ?: return false
+        return isOutdated(controller.packageName, pausedAt)
+    }
+
+    /** Whether another app has been watched or played since [pausedAt]. */
+    private fun isOutdated(packageName: String, pausedAt: Long) =
+        (lastEngagements.entries + lastPlayed.entries).any { (otherPackageName, lastTime) ->
+            otherPackageName != packageName && lastTime > pausedAt
+        }
 
     private fun buildSessionMap(controller: MediaController): Map<String, Any?> {
         val metadata = controller.metadata
@@ -346,20 +378,29 @@ class MediaSessionStreamHandler(
         )
     }
 
-    private fun bitmapToByteArray(bitmap: Bitmap): ByteArray {
-        if (bitmap !== lastArtBitmap) {
-            val scale = ART_MAX_SIZE.toFloat() / maxOf(bitmap.width, bitmap.height)
-            val scaled = if (scale < 1) {
-                Bitmap.createScaledBitmap(bitmap, (bitmap.width * scale).toInt(), (bitmap.height * scale).toInt(), true)
-            } else {
-                bitmap
-            }
-            val stream = ByteArrayOutputStream()
-            scaled.compress(Bitmap.CompressFormat.JPEG, 90, stream)
-            lastArtBitmap = bitmap
-            lastArtBytes = stream.toByteArray()
+    /** Extrapolates the playback position of a session map from the last reported one. */
+    private fun currentPosition(session: Map<String, Any?>): Long? {
+        val position = session["position"] as Long? ?: return null
+        val updatedAt = session["positionUpdatedAt"] as Long?
+        if (session["playing"] != true || updatedAt == null) {
+            return position
         }
-        return lastArtBytes!!
+        val speed = session["speed"] as Double? ?: 1.0
+        val current = position + ((System.currentTimeMillis() - updatedAt) * speed).toLong()
+        val duration = session["duration"] as Long?
+        return if (duration != null) minOf(current, duration) else current
+    }
+
+    private fun bitmapToByteArray(bitmap: Bitmap): ByteArray = artBytes.getOrPut(bitmap) {
+        val scale = ART_MAX_SIZE.toFloat() / maxOf(bitmap.width, bitmap.height)
+        val scaled = if (scale < 1) {
+            Bitmap.createScaledBitmap(bitmap, (bitmap.width * scale).toInt(), (bitmap.height * scale).toInt(), true)
+        } else {
+            bitmap
+        }
+        val stream = ByteArrayOutputStream()
+        scaled.compress(Bitmap.CompressFormat.JPEG, 90, stream)
+        stream.toByteArray()
     }
 
     private fun loadContentUri(uri: String): ByteArray? = try {

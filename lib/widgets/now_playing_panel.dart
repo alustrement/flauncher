@@ -33,9 +33,20 @@ import 'package:provider/provider.dart';
 const _panelHeight = 150.0;
 const _artSize = 126.0;
 const _radius = 16.0;
+const _columnSpacing = 24.0;
 const _textShadows = [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 8)];
 
-class NowPlayingPanel extends StatelessWidget {
+/// The media playing, or Spotify's paused one, full width. A video doesn't play in the background though: once it has
+/// been watched, it is offered to be resumed next to Spotify's paused media, or next to Spotify itself when it has none.
+class NowPlayingPanel extends StatefulWidget {
+  @override
+  State<NowPlayingPanel> createState() => _NowPlayingPanelState();
+}
+
+class _NowPlayingPanelState extends State<NowPlayingPanel> {
+  /// Spotify's panel keeps its focus when it moves from beside the video to full width, once its media is resumed.
+  final _panelKeys = <String, GlobalKey>{};
+
   @override
   Widget build(BuildContext context) => Consumer<MediaService>(
     builder: (context, mediaService, _) {
@@ -43,23 +54,36 @@ class NowPlayingPanel extends StatelessWidget {
         return _section(context, "En cours de lecture", SkipInitialFocus(child: _PermissionHint()));
       }
       final nowPlaying = mediaService.nowPlaying;
-      if (nowPlaying != null) {
-        return _section(
-          context,
-          "En cours de lecture",
-          _Panel(nowPlaying: nowPlaying, onPressed: mediaService.openPlayer),
-        );
+      if (nowPlaying == null) {
+        return SizedBox.shrink();
       }
-      final lastSpotify = mediaService.lastSpotify;
-      if (lastSpotify != null) {
-        return _section(
-          context,
-          "Reprendre la lecture sur Spotify",
-          _Panel(nowPlaying: lastSpotify, onPressed: mediaService.resumeSpotify),
-        );
+      final panel = _panel(mediaService, nowPlaying, mediaService.openPlayer);
+      if (!nowPlaying.resumable) {
+        return _section(context, "En cours de lecture", panel);
       }
-      return SizedBox.shrink();
+      final spotify = mediaService.spotify;
+      return _section(
+        context,
+        "Reprendre la lecture",
+        Row(
+          children: [
+            Expanded(child: panel),
+            if (spotify != null) ...[
+              SizedBox(width: _columnSpacing),
+              Expanded(child: _panel(mediaService, spotify, mediaService.resumeSpotify)),
+            ] else
+              _SpotifyCard(),
+          ],
+        ),
+      );
     },
+  );
+
+  Widget _panel(MediaService mediaService, NowPlaying nowPlaying, VoidCallback onPressed) => _Panel(
+    key: _panelKeys.putIfAbsent(nowPlaying.packageName, () => GlobalKey()),
+    nowPlaying: nowPlaying,
+    onPressed: onPressed,
+    onFocusChange: (focused) => mediaService.setMediaFocused(nowPlaying.packageName, focused),
   );
 
   Widget _section(BuildContext context, String title, Widget child) => Padding(
@@ -86,8 +110,9 @@ class NowPlayingPanel extends StatelessWidget {
 class _Panel extends StatefulWidget {
   final NowPlaying nowPlaying;
   final VoidCallback onPressed;
+  final ValueChanged<bool> onFocusChange;
 
-  _Panel({required this.nowPlaying, required this.onPressed});
+  _Panel({super.key, required this.nowPlaying, required this.onPressed, required this.onFocusChange});
 
   @override
   State<_Panel> createState() => _PanelState();
@@ -95,6 +120,14 @@ class _Panel extends StatefulWidget {
 
 class _PanelState extends State<_Panel> {
   bool _focused = false;
+
+  @override
+  void dispose() {
+    if (_focused) {
+      widget.onFocusChange(false);
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -142,7 +175,10 @@ class _PanelState extends State<_Panel> {
               ),
               InkWell(
                 focusColor: Colors.transparent,
-                onFocusChange: (focused) => setState(() => _focused = focused),
+                onFocusChange: (focused) {
+                  setState(() => _focused = focused);
+                  widget.onFocusChange(focused);
+                },
                 onTap: widget.onPressed,
                 child: Padding(
                   padding: EdgeInsets.all(12),
@@ -212,6 +248,83 @@ class _PanelState extends State<_Panel> {
       return NetworkImage(nowPlaying.artUri!);
     }
     return null;
+  }
+}
+
+/// Opens Spotify when it has no media to resume. Nothing is shown without Spotify.
+class _SpotifyCard extends StatefulWidget {
+  @override
+  State<_SpotifyCard> createState() => _SpotifyCardState();
+}
+
+class _SpotifyCardState extends State<_SpotifyCard> {
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final application = context.select<AppsService, App?>((appsService) {
+      final matches = appsService.applications.where((app) => app.packageName == spotifyPackage);
+      return matches.isNotEmpty ? matches.first : null;
+    });
+    if (application == null) {
+      return SizedBox.shrink();
+    }
+    return Padding(
+      padding: EdgeInsets.only(left: _columnSpacing),
+      child: AnimatedScale(
+        scale: _focused ? 1.04 : 1.0,
+        duration: Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: 200),
+          height: _panelHeight,
+          width: _panelHeight * 16 / 9,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(_radius),
+            boxShadow: _focused ? ZenPalette.focusGlow : [],
+          ),
+          child: Material(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(_radius),
+              side: application.banner == null
+                  ? BorderSide(color: ZenPalette.lavender.withValues(alpha: 0.18))
+                  : BorderSide.none,
+            ),
+            clipBehavior: Clip.antiAlias,
+            elevation: _focused ? 16 : 8,
+            shadowColor: Colors.black,
+            color: ZenPalette.surface,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                InkWell(
+                  focusColor: Colors.transparent,
+                  onFocusChange: (focused) => setState(() => _focused = focused),
+                  onTap: () => context.read<AppsService>().launchApp(application),
+                  child: application.banner != null
+                      ? Ink.image(image: MemoryImage(application.banner!), fit: BoxFit.cover)
+                      : Padding(
+                          padding: EdgeInsets.all(32),
+                          child: application.icon != null
+                              ? Image.memory(application.icon!, gaplessPlayback: true)
+                              : Center(child: Text(application.name)),
+                        ),
+                ),
+                IgnorePointer(
+                  child: AnimatedContainer(
+                    duration: Duration(milliseconds: 200),
+                    decoration: BoxDecoration(
+                      border: _focused ? Border.all(color: ZenPalette.accent, width: 2) : null,
+                      borderRadius: BorderRadius.circular(_radius),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

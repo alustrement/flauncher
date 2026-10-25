@@ -35,11 +35,12 @@ void main() {
     final mediaService = MockMediaService();
     when(mediaService.permissionGranted).thenReturn(true);
     when(mediaService.nowPlaying).thenReturn(null);
-    when(mediaService.lastSpotify).thenReturn(null);
+    when(mediaService.spotify).thenReturn(null);
 
     await _pumpWidgetWithProviders(tester, mediaService, MockAppsService());
 
     expect(find.text("En cours de lecture"), findsNothing);
+    expect(find.text("Reprendre la lecture"), findsNothing);
   });
 
   testWidgets("shows permission hint when access is missing", (tester) async {
@@ -56,6 +57,7 @@ void main() {
     final mediaService = MockMediaService();
     final appsService = MockAppsService();
     when(mediaService.permissionGranted).thenReturn(true);
+    when(mediaService.spotify).thenReturn(null);
     when(mediaService.nowPlaying).thenReturn(
       NowPlaying(
         packageName: "com.spotify.tv.android",
@@ -82,6 +84,7 @@ void main() {
     final mediaService = MockMediaService();
     final appsService = MockAppsService();
     when(mediaService.permissionGranted).thenReturn(true);
+    when(mediaService.spotify).thenReturn(null);
     when(appsService.applications).thenReturn([]);
     NowPlaying at(Duration position) => NowPlaying(
       packageName: "com.spotify.tv.android",
@@ -105,6 +108,7 @@ void main() {
     final mediaService = MockMediaService();
     final appsService = MockAppsService();
     when(mediaService.permissionGranted).thenReturn(true);
+    when(mediaService.spotify).thenReturn(null);
     when(mediaService.nowPlaying)
         .thenReturn(NowPlaying(packageName: "fr.francetv.pluzz", title: "C dans l'air", artist: "C dans l'air"));
     when(appsService.applications).thenReturn([]);
@@ -118,6 +122,7 @@ void main() {
     final mediaService = MockMediaService();
     final appsService = MockAppsService();
     when(mediaService.permissionGranted).thenReturn(true);
+    when(mediaService.spotify).thenReturn(null);
     when(mediaService.nowPlaying).thenReturn(NowPlaying(packageName: "com.spotify.tv.android", playing: true));
     when(appsService.applications).thenReturn([]);
 
@@ -129,12 +134,12 @@ void main() {
     verify(mediaService.openPlayer());
   });
 
-  testWidgets("offers to resume the last Spotify media while nothing plays", (tester) async {
+  testWidgets("offers to resume a video next to Spotify's paused media", (tester) async {
     final mediaService = MockMediaService();
     final appsService = MockAppsService();
     when(mediaService.permissionGranted).thenReturn(true);
-    when(mediaService.nowPlaying).thenReturn(null);
-    when(mediaService.lastSpotify).thenReturn(
+    when(mediaService.nowPlaying).thenReturn(NowPlaying(packageName: "app.smarttube.fdroid", title: "Une vidéo"));
+    when(mediaService.spotify).thenReturn(
       NowPlaying(
         packageName: "com.spotify.tv.android",
         title: "Bittersweet",
@@ -147,33 +152,91 @@ void main() {
 
     await _pumpWidgetWithProviders(tester, mediaService, appsService);
 
-    expect(find.text("Reprendre la lecture sur Spotify"), findsOneWidget);
+    expect(find.text("Reprendre la lecture"), findsOneWidget);
     expect(find.text("En cours de lecture"), findsNothing);
+    expect(find.text("Une vidéo"), findsOneWidget);
     expect(find.text("Bittersweet"), findsOneWidget);
+    expect(tester.getCenter(find.text("Une vidéo")).dx, lessThan(tester.getCenter(find.text("Bittersweet")).dx));
     expect(tester.widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator)).value, 0.25);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
+    verify(mediaService.openPlayer());
 
+    verify(mediaService.setMediaFocused("app.smarttube.fdroid", true));
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
     verify(mediaService.resumeSpotify());
+    verify(mediaService.setMediaFocused("app.smarttube.fdroid", false));
+    verify(mediaService.setMediaFocused("com.spotify.tv.android", true));
+  });
+
+  testWidgets("Spotify's panel keeps the focus once its media is resumed", (tester) async {
+    final mediaService = MockMediaService();
+    final appsService = MockAppsService();
+    final spotify = NowPlaying(packageName: "com.spotify.tv.android", title: "Bittersweet");
+    when(mediaService.permissionGranted).thenReturn(true);
+    when(mediaService.nowPlaying).thenReturn(NowPlaying(packageName: "app.smarttube.fdroid", title: "Une vidéo"));
+    when(mediaService.spotify).thenReturn(spotify);
+    when(appsService.applications).thenReturn([]);
+
+    await _pumpWidgetWithProviders(tester, mediaService, appsService);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
+
+    when(mediaService.nowPlaying).thenReturn(spotify);
+    when(mediaService.spotify).thenReturn(null);
+    await _pumpWidgetWithProviders(tester, mediaService, appsService);
+    expect(find.text("En cours de lecture"), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    verify(mediaService.openPlayer());
+    verifyNever(mediaService.setMediaFocused("com.spotify.tv.android", false));
+  });
+
+  testWidgets("offers to open Spotify next to a video when Spotify has no media", (tester) async {
+    final mediaService = MockMediaService();
+    final appsService = MockAppsService();
+    final spotify = fakeApp(packageName: "com.spotify.tv.android", name: "Spotify");
+    when(mediaService.permissionGranted).thenReturn(true);
+    when(mediaService.nowPlaying).thenReturn(NowPlaying(packageName: "app.smarttube.fdroid", title: "Une vidéo"));
+    when(mediaService.spotify).thenReturn(null);
+    when(appsService.applications).thenReturn([spotify]);
+    when(appsService.launchApp(any)).thenAnswer((_) async {});
+
+    await _pumpWidgetWithProviders(tester, mediaService, appsService);
+
+    expect(find.text("Reprendre la lecture"), findsOneWidget);
+    expect(find.text("Spotify"), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    verify(appsService.launchApp(spotify));
     verifyNever(mediaService.openPlayer());
   });
 
-  testWidgets("the media playing comes before the last Spotify media", (tester) async {
+  testWidgets("Spotify's media is shown alone, full width, while it plays or is paused", (tester) async {
     final mediaService = MockMediaService();
     final appsService = MockAppsService();
     when(mediaService.permissionGranted).thenReturn(true);
-    when(mediaService.nowPlaying).thenReturn(NowPlaying(packageName: "fr.francetv.pluzz", title: "Dans l'air"));
-    when(mediaService.lastSpotify).thenReturn(NowPlaying(packageName: "com.spotify.tv.android", title: "Bittersweet"));
-    when(appsService.applications).thenReturn([]);
+    when(mediaService.nowPlaying).thenReturn(NowPlaying(packageName: "com.spotify.tv.android", title: "Bittersweet"));
+    when(mediaService.spotify).thenReturn(null);
+    when(appsService.applications).thenReturn([fakeApp(packageName: "com.spotify.tv.android", name: "Spotify")]);
 
     await _pumpWidgetWithProviders(tester, mediaService, appsService);
 
     expect(find.text("En cours de lecture"), findsOneWidget);
-    expect(find.text("Dans l'air"), findsOneWidget);
-    expect(find.text("Reprendre la lecture sur Spotify"), findsNothing);
-    expect(find.text("Bittersweet"), findsNothing);
+    expect(find.text("Reprendre la lecture"), findsNothing);
+    expect(find.text("Bittersweet"), findsOneWidget);
+    expect(find.byType(InkWell), findsOneWidget);
   });
 
   testWidgets("artwork keeps its aspect ratio", (tester) async {
@@ -181,6 +244,7 @@ void main() {
     final appsService = MockAppsService();
     final art = base64Decode(_png16x9);
     when(mediaService.permissionGranted).thenReturn(true);
+    when(mediaService.spotify).thenReturn(null);
     when(mediaService.nowPlaying)
         .thenReturn(NowPlaying(packageName: "fr.francetv.pluzz", title: "C dans l'air", art: art));
     when(appsService.applications).thenReturn([]);
@@ -199,6 +263,7 @@ void main() {
     final appsService = MockAppsService();
     final art = base64Decode(_png16x9);
     when(mediaService.permissionGranted).thenReturn(true);
+    when(mediaService.spotify).thenReturn(null);
     when(appsService.applications).thenReturn([]);
 
     when(mediaService.nowPlaying)

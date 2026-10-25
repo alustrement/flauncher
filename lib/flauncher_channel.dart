@@ -48,6 +48,9 @@ class FLauncherChannel {
 
   Future<void> resumeSpotify() async => await _methodChannel.invokeMethod("resumeSpotify");
 
+  Future<void> setFocusedMedia(String? packageName) async =>
+      await _methodChannel.invokeMethod("setFocusedMedia", packageName);
+
   Future<void> requestWatchNextPermission() async => await _methodChannel.invokeMethod("requestWatchNextPermission");
 
   Future<void> openWatchNextProgram(String packageName, String? intentUri) async =>
