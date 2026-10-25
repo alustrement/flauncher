@@ -16,16 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flauncher/custom_traversal_policy.dart';
 import 'package:flauncher/database.dart';
-import 'package:flauncher/gradients.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/home_service.dart';
-import 'package:flauncher/providers/wallpaper_service.dart';
 import 'package:flauncher/widgets/apps_grid.dart';
 import 'package:flauncher/widgets/category_row.dart';
 import 'package:flauncher/widgets/initial_focus.dart';
@@ -34,6 +31,7 @@ import 'package:flauncher/widgets/reveal_on_focus.dart';
 import 'package:flauncher/widgets/settings/settings_panel.dart';
 import 'package:flauncher/widgets/time_widget.dart';
 import 'package:flauncher/widgets/watch_next_row.dart';
+import 'package:flauncher/widgets/zen_waves_painter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -43,9 +41,7 @@ class FLauncher extends StatelessWidget {
         policy: RowByRowTraversalPolicy(),
         child: Stack(
           children: [
-            Consumer<WallpaperService>(
-              builder: (_, wallpaper, __) => _wallpaper(context, wallpaper.wallpaperBytes, wallpaper.gradient),
-            ),
+            _background(),
             Scaffold(
               backgroundColor: Colors.transparent,
               body: Consumer<AppsService>(
@@ -136,22 +132,12 @@ class FLauncher extends StatelessWidget {
         ),
       );
 
-  Widget _wallpaper(BuildContext context, Uint8List? wallpaperImage, FLauncherGradient gradient) =>
-      wallpaperImage != null
-          ? Image.memory(
-              wallpaperImage,
-              key: Key("background"),
-              fit: BoxFit.cover,
-              height: window.physicalSize.height,
-              width: window.physicalSize.width,
-            )
-          : Container(
-              key: Key("background"),
-              decoration: BoxDecoration(gradient: gradient.gradient),
-              child: gradient.painter != null
-                  ? RepaintBoundary(child: CustomPaint(painter: gradient.painter, child: SizedBox.expand()))
-                  : null,
-            );
+  /// The night blue of the Zen look, with its layers of violet waves.
+  Widget _background() => Container(
+        key: Key("background"),
+        color: ZenPalette.night,
+        child: RepaintBoundary(child: CustomPaint(painter: ZenWavesPainter(), child: SizedBox.expand())),
+      );
 
   /// In the middle of the upper half of the screen, where the splash screen shows FLauncher's name.
   Widget _emptyState(BuildContext context) => Align(

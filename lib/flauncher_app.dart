@@ -22,13 +22,10 @@ import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/home_service.dart';
 import 'package:flauncher/providers/media_service.dart';
 import 'package:flauncher/providers/settings_service.dart';
-import 'package:flauncher/providers/wallpaper_service.dart';
 import 'package:flauncher/providers/watch_next_service.dart';
-import 'package:flauncher/unsplash_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -38,11 +35,8 @@ import 'flauncher_channel.dart';
 
 class FLauncherApp extends StatelessWidget {
   final SharedPreferences _sharedPreferences;
-  final ImagePicker _imagePicker;
   final FLauncherChannel _fLauncherChannel;
   final FLauncherDatabase _fLauncherDatabase;
-  final UnsplashService _unsplashService;
-  final bool _unsplashEnabled;
 
   static const MaterialColor _swatch = MaterialColor(0xFF6F5DF1, <int, Color>{
     50: Color(0xFFEEEBFF),
@@ -59,24 +53,18 @@ class FLauncherApp extends StatelessWidget {
 
   FLauncherApp(
     this._sharedPreferences,
-    this._imagePicker,
     this._fLauncherChannel,
     this._fLauncherDatabase,
-    this._unsplashService,
-    this._unsplashEnabled,
   );
 
   @override
   Widget build(BuildContext context) => MultiProvider(
         providers: [
-          ChangeNotifierProvider(create: (_) => SettingsService(_sharedPreferences, _unsplashEnabled), lazy: false),
+          ChangeNotifierProvider(create: (_) => SettingsService(_sharedPreferences), lazy: false),
           ChangeNotifierProvider(create: (_) => AppsService(_fLauncherChannel, _fLauncherDatabase)),
           ChangeNotifierProvider(create: (_) => MediaService(_fLauncherChannel)),
           ChangeNotifierProvider(create: (_) => WatchNextService(_fLauncherChannel)),
           ChangeNotifierProvider(create: (_) => HomeService(_fLauncherChannel), lazy: false),
-          ChangeNotifierProxyProvider<SettingsService, WallpaperService>(
-              create: (_) => WallpaperService(_imagePicker, _fLauncherChannel, _unsplashService),
-              update: (_, settingsService, wallpaperService) => wallpaperService!..settingsService = settingsService),
         ],
         child: MaterialApp(
           locale: Locale("fr"),

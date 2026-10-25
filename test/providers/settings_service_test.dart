@@ -28,90 +28,18 @@ void main() {
 
   test("setUse24HourTimeFormat", () async {
     final sharedPreferences = await SharedPreferences.getInstance();
-    final settingsService = SettingsService(sharedPreferences, false);
+    final settingsService = SettingsService(sharedPreferences);
 
     await settingsService.setUse24HourTimeFormat(true);
 
     expect(sharedPreferences.getBool("use_24_hour_time_format"), isTrue);
   });
 
-  test("setGradientUuid", () async {
-    final sharedPreferences = await SharedPreferences.getInstance();
-    final settingsService = SettingsService(sharedPreferences, false);
-
-    await settingsService.setGradientUuid("4730aa2d-1a90-49a6-9942-ffe82f470e26");
-
-    expect(sharedPreferences.getString("gradient_uuid"), "4730aa2d-1a90-49a6-9942-ffe82f470e26");
-  });
-
-  group("setUnsplashAuthor", () {
-    test("with value saves author info", () async {
-      final sharedPreferences = await SharedPreferences.getInstance();
-      final settingsService = SettingsService(sharedPreferences, false);
-
-      await settingsService.setUnsplashAuthor("unsplash author");
-
-      expect(sharedPreferences.getString("unsplash_author"), "unsplash author");
-    });
-
-    test("without value erases author info", () async {
-      final sharedPreferences = await SharedPreferences.getInstance();
-      await sharedPreferences.setString("unsplash_author", "unsplash author");
-      final settingsService = SettingsService(sharedPreferences, false);
-
-      await settingsService.setUnsplashAuthor(null);
-
-      expect(sharedPreferences.getString("unsplash_author"), isNull);
-    });
-  });
-
-  test("unsplashEnabled", () async {
-    final sharedPreferences = await SharedPreferences.getInstance();
-    final settingsService = SettingsService(sharedPreferences, true);
-
-    final unsplashEnabled = settingsService.unsplashEnabled;
-
-    expect(unsplashEnabled, isTrue);
-  });
-
-  test("unsplashAuthor", () async {
-    final sharedPreferences = await SharedPreferences.getInstance();
-    await sharedPreferences.setString("unsplash_author", "unsplash author");
-    final settingsService = SettingsService(sharedPreferences, false);
-
-    final unsplashAuthor = settingsService.unsplashAuthor;
-
-    expect(unsplashAuthor, "unsplash author");
-  });
-
-  group("getGradientUuid", () {
-    test("without uuid from shared preferences", () async {
-      final sharedPreferences = await SharedPreferences.getInstance();
-      await sharedPreferences.clear();
-      final settingsService = SettingsService(sharedPreferences, false);
-
-      final gradientUuid = settingsService.gradientUuid;
-
-      expect(gradientUuid, null);
-    });
-
-    test("with uuid from shared preferences", () async {
-      final sharedPreferences = await SharedPreferences.getInstance();
-      await sharedPreferences.clear();
-      sharedPreferences.setString("gradient_uuid", "4730aa2d-1a90-49a6-9942-ffe82f470e26");
-      final settingsService = SettingsService(sharedPreferences, false);
-
-      final gradientUuid = settingsService.gradientUuid;
-
-      expect(gradientUuid, "4730aa2d-1a90-49a6-9942-ffe82f470e26");
-    });
-  });
-
   group("getUse24HourTimeFormat", () {
     test("without value from shared preferences", () async {
       final sharedPreferences = await SharedPreferences.getInstance();
       await sharedPreferences.clear();
-      final settingsService = SettingsService(sharedPreferences, false);
+      final settingsService = SettingsService(sharedPreferences);
 
       final use24HourTimeFormat = settingsService.use24HourTimeFormat;
 
@@ -122,7 +50,7 @@ void main() {
       final sharedPreferences = await SharedPreferences.getInstance();
       await sharedPreferences.clear();
       sharedPreferences.setBool("use_24_hour_time_format", false);
-      final settingsService = SettingsService(sharedPreferences, false);
+      final settingsService = SettingsService(sharedPreferences);
 
       final use24HourTimeFormat = settingsService.use24HourTimeFormat;
 

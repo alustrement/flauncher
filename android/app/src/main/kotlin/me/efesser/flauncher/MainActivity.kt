@@ -70,7 +70,6 @@ class MainActivity : FlutterActivity() {
                 "openAppInfo" -> result.success(openAppInfo(call.arguments as String))
                 "uninstallApp" -> result.success(uninstallApp(call.arguments as String))
                 "isDefaultLauncher" -> result.success(isDefaultLauncher())
-                "checkForGetContentAvailability" -> result.success(checkForGetContentAvailability())
                 "startAmbientMode" -> result.success(startAmbientMode())
                 "openMediaSession" -> result.success(
                     mediaSessionStreamHandler.openPlayer() || launchApp(call.arguments as String))
@@ -281,13 +280,6 @@ class MainActivity : FlutterActivity() {
                 .setData(Uri.fromParts("package", packageName, null))
                 .let(::startActivity)
         true
-    } catch (e: Exception) {
-        false
-    }
-
-    private fun checkForGetContentAvailability() = try {
-        val intentActivities = packageManager.queryIntentActivities(Intent(ACTION_GET_CONTENT, null).setTypeAndNormalize("image/*"), 0)
-        intentActivities.isNotEmpty()
     } catch (e: Exception) {
         false
     }

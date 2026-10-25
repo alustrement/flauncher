@@ -18,12 +18,10 @@
 
 import 'package:flauncher/database.dart';
 import 'package:flauncher/flauncher.dart';
-import 'package:flauncher/gradients.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/home_service.dart';
 import 'package:flauncher/providers/media_service.dart';
 import 'package:flauncher/providers/settings_service.dart';
-import 'package:flauncher/providers/wallpaper_service.dart';
 import 'package:flauncher/providers/watch_next_service.dart';
 import 'package:flauncher/widgets/application_info_panel.dart';
 import 'package:flauncher/widgets/apps_grid.dart';
@@ -52,12 +50,9 @@ void main() {
   });
 
   testWidgets("Home page shows categories with apps", (tester) async {
-    final wallpaperService = MockWallpaperService();
     final appsService = MockAppsService();
     final settingsService = MockSettingsService();
     when(appsService.initialized).thenReturn(true);
-    when(wallpaperService.wallpaperBytes).thenReturn(null);
-    when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
     final favoritesCategory = fakeCategory(name: "Favorites", order: 0, type: CategoryType.row);
     final applicationsCategory = fakeCategory(name: "Applications", order: 1);
     when(appsService.categoriesWithApps).thenReturn([
@@ -82,7 +77,7 @@ void main() {
     ]);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
 
-    await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
+    await _pumpWidgetWithProviders(tester, appsService, settingsService);
 
     expect(find.text("Applications"), findsOneWidget);
     expect(find.text("Favorites"), findsOneWidget);
@@ -94,12 +89,9 @@ void main() {
   });
 
   testWidgets("Home page shows category empty-state", (tester) async {
-    final wallpaperService = MockWallpaperService();
     final appsService = MockAppsService();
     final settingsService = MockSettingsService();
     when(appsService.initialized).thenReturn(true);
-    when(wallpaperService.wallpaperBytes).thenReturn(null);
-    when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
     final applicationsCategory = fakeCategory(name: "Applications", order: 0, type: CategoryType.grid);
     final favoritesCategory = fakeCategory(name: "Favorites", order: 1, type: CategoryType.row);
     when(appsService.categoriesWithApps).thenReturn([
@@ -108,7 +100,7 @@ void main() {
     ]);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
 
-    await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
+    await _pumpWidgetWithProviders(tester, appsService, settingsService);
 
     expect(find.text("Applications"), findsOneWidget);
     expect(find.text("Favorites"), findsOneWidget);
@@ -117,47 +109,14 @@ void main() {
     expect(find.text("Cette catégorie est vide."), findsNWidgets(2));
   });
 
-  testWidgets("Home page displays background image", (tester) async {
-    final wallpaperService = MockWallpaperService();
+  testWidgets("Home page paints the Zen waves in the background", (tester) async {
     final appsService = MockAppsService();
     final settingsService = MockSettingsService();
     when(appsService.initialized).thenReturn(true);
     when(appsService.categoriesWithApps).thenReturn([]);
-    when(wallpaperService.wallpaperBytes).thenReturn(kTransparentImage);
-    when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
 
-    await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
-
-    expect(tester.widget(find.byKey(Key("background"))), isA<Image>());
-  });
-
-  testWidgets("Home page displays background gradient", (tester) async {
-    final wallpaperService = MockWallpaperService();
-    final appsService = MockAppsService();
-    final settingsService = MockSettingsService();
-    when(appsService.initialized).thenReturn(true);
-    when(appsService.categoriesWithApps).thenReturn([]);
-    when(wallpaperService.wallpaperBytes).thenReturn(null);
-    when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
-    when(settingsService.use24HourTimeFormat).thenReturn(false);
-
-    await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
-
-    expect(tester.widget(find.byKey(Key("background"))), isA<Container>());
-  });
-
-  testWidgets("Home page paints the waves of the Zen gradient", (tester) async {
-    final wallpaperService = MockWallpaperService();
-    final appsService = MockAppsService();
-    final settingsService = MockSettingsService();
-    when(appsService.initialized).thenReturn(true);
-    when(appsService.categoriesWithApps).thenReturn([]);
-    when(wallpaperService.wallpaperBytes).thenReturn(null);
-    when(wallpaperService.gradient).thenReturn(FLauncherGradients.zen);
-    when(settingsService.use24HourTimeFormat).thenReturn(false);
-
-    await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
+    await _pumpWidgetWithProviders(tester, appsService, settingsService);
 
     final background = find.byKey(Key("background"));
     final waves = find.descendant(of: background, matching: find.byType(CustomPaint));
@@ -166,18 +125,15 @@ void main() {
   });
 
   testWidgets("Pressing select on settings icon opens SettingsPanel", (tester) async {
-    final wallpaperService = MockWallpaperService();
     final appsService = MockAppsService();
     final settingsService = MockSettingsService();
     when(appsService.initialized).thenReturn(true);
-    when(wallpaperService.wallpaperBytes).thenReturn(null);
-    when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
     when(appsService.categoriesWithApps).thenReturn([
       CategoryWithApps(fakeCategory(name: "Favorites", order: 0), []),
       CategoryWithApps(fakeCategory(name: "Applications", order: 1), []),
     ]);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
-    await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
+    await _pumpWidgetWithProviders(tester, appsService, settingsService);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
@@ -189,12 +145,9 @@ void main() {
   });
 
   testWidgets("Pressing select on app opens ApplicationInfoPanel", (tester) async {
-    final wallpaperService = MockWallpaperService();
     final appsService = MockAppsService();
     final settingsService = MockSettingsService();
     when(appsService.initialized).thenReturn(true);
-    when(wallpaperService.wallpaperBytes).thenReturn(null);
-    when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
     final app = fakeApp(
       packageName: "me.efesser.flauncher",
@@ -207,7 +160,7 @@ void main() {
       CategoryWithApps(fakeCategory(name: "Favorites", order: 0), []),
       CategoryWithApps(fakeCategory(name: "Applications", order: 1), [app]),
     ]);
-    await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
+    await _pumpWidgetWithProviders(tester, appsService, settingsService);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.select);
     await tester.pump();
@@ -216,12 +169,9 @@ void main() {
   });
 
   testWidgets("Long pressing on app opens ApplicationInfoPanel", (tester) async {
-    final wallpaperService = MockWallpaperService();
     final appsService = MockAppsService();
     final settingsService = MockSettingsService();
     when(appsService.initialized).thenReturn(true);
-    when(wallpaperService.wallpaperBytes).thenReturn(null);
-    when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
     final applicationsCategory = fakeCategory(name: "Applications", order: 1);
     when(appsService.categoriesWithApps).thenReturn([
@@ -236,7 +186,7 @@ void main() {
         )
       ]),
     ]);
-    await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
+    await _pumpWidgetWithProviders(tester, appsService, settingsService);
 
     await tester.longPress(find.byKey(Key("${applicationsCategory.id}-me.efesser.flauncher")));
     await tester.pump();
@@ -245,12 +195,9 @@ void main() {
   });
 
   testWidgets("AppCard moves in grid", (tester) async {
-    final wallpaperService = MockWallpaperService();
     final appsService = MockAppsService();
     final settingsService = MockSettingsService();
     when(appsService.initialized).thenReturn(true);
-    when(wallpaperService.wallpaperBytes).thenReturn(null);
-    when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
     final applicationsCategory = fakeCategory(name: "Applications", order: 1, type: CategoryType.grid);
     when(appsService.categoriesWithApps).thenReturn([
@@ -272,7 +219,7 @@ void main() {
         )
       ]),
     ]);
-    await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
+    await _pumpWidgetWithProviders(tester, appsService, settingsService);
 
     await tester.longPress(find.byKey(Key("${applicationsCategory.id}-me.efesser.flauncher")));
     await tester.pump();
@@ -289,12 +236,9 @@ void main() {
   });
 
   testWidgets("AppCard moves in row", (tester) async {
-    final wallpaperService = MockWallpaperService();
     final appsService = MockAppsService();
     final settingsService = MockSettingsService();
     when(appsService.initialized).thenReturn(true);
-    when(wallpaperService.wallpaperBytes).thenReturn(null);
-    when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
     final applicationsCategory = fakeCategory(name: "Applications", order: 1, type: CategoryType.row);
     when(appsService.categoriesWithApps).thenReturn([
@@ -316,7 +260,7 @@ void main() {
         )
       ]),
     ]);
-    await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
+    await _pumpWidgetWithProviders(tester, appsService, settingsService);
 
     await tester.longPress(find.byKey(Key("${applicationsCategory.id}-me.efesser.flauncher")));
     await tester.pump();
@@ -335,12 +279,9 @@ void main() {
   testWidgets("Moving down does not skip row", (tester) async {
     // given
     final appsService = MockAppsService();
-    final wallpaperService = MockWallpaperService();
     final settingsService = MockSettingsService();
 
     when(appsService.initialized).thenReturn(true);
-    when(wallpaperService.wallpaperBytes).thenReturn(null);
-    when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
 
     /*
@@ -414,7 +355,7 @@ void main() {
       ]),
     ]);
 
-    await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
+    await _pumpWidgetWithProviders(tester, appsService, settingsService);
 
     // when
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
@@ -449,12 +390,9 @@ void main() {
   testWidgets("Moving left or right stays on the same row", (tester) async {
     // given
     final appsService = MockAppsService();
-    final wallpaperService = MockWallpaperService();
     final settingsService = MockSettingsService();
 
     when(appsService.initialized).thenReturn(true);
-    when(wallpaperService.wallpaperBytes).thenReturn(null);
-    when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
 
     /*
@@ -518,7 +456,7 @@ void main() {
       ]),
     ]);
 
-    await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
+    await _pumpWidgetWithProviders(tester, appsService, settingsService);
 
     // then
     Element? tv1 = findAppCardByPackageName(tester, "me.efesser.tv1");
@@ -571,18 +509,14 @@ void main() {
 
   group("Initial focus", () {
     late MockAppsService appsService;
-    late MockWallpaperService wallpaperService;
     late MockSettingsService settingsService;
     final nowPlaying = NowPlaying(packageName: "com.spotify.tv.android", title: "Lonely Soldier");
 
     setUp(() {
       appsService = MockAppsService();
-      wallpaperService = MockWallpaperService();
       settingsService = MockSettingsService();
       when(appsService.initialized).thenReturn(true);
       when(appsService.applications).thenReturn([]);
-      when(wallpaperService.wallpaperBytes).thenReturn(null);
-      when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
       when(settingsService.use24HourTimeFormat).thenReturn(false);
       when(appsService.categoriesWithApps).thenReturn([
         CategoryWithApps(fakeCategory(name: "tv", order: 0, type: CategoryType.row), [
@@ -595,10 +529,10 @@ void main() {
     bool panelHasFocus(WidgetTester tester) => Focus.of(tester.element(find.text("Lonely Soldier"))).hasFocus;
 
     testWidgets("goes to the top of the page, even when it appears after the launch", (tester) async {
-      await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
+      await _pumpWidgetWithProviders(tester, appsService, settingsService);
       expect(Focus.of(findAppCardByPackageName(tester, "me.efesser.tv1")!).hasFocus, isTrue);
 
-      await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService, nowPlaying: nowPlaying);
+      await _pumpWidgetWithProviders(tester, appsService, settingsService, nowPlaying: nowPlaying);
       await tester.pump();
       expect(panelHasFocus(tester), isTrue);
     });
@@ -625,8 +559,7 @@ void main() {
                   icon: kTransparentImage),
           ]),
         ]);
-        await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService,
-            homeService: homeService);
+        await _pumpWidgetWithProviders(tester, appsService, settingsService, homeService: homeService);
         final start = tester.getTopLeft(find.byWidget(findAppCardByPackageName(tester, "me.efesser.tv1")!.widget));
 
         // the first row scrolled, and the focus in the second one
@@ -655,13 +588,13 @@ void main() {
     }
 
     testWidgets("stays where the user moved when a section appears above", (tester) async {
-      await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
+      await _pumpWidgetWithProviders(tester, appsService, settingsService);
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
       await tester.pump();
       final tv2 = findAppCardByPackageName(tester, "me.efesser.tv2")!;
       expect(Focus.of(tv2).hasFocus, isTrue);
 
-      await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService, nowPlaying: nowPlaying);
+      await _pumpWidgetWithProviders(tester, appsService, settingsService, nowPlaying: nowPlaying);
       await tester.pump();
       expect(Focus.of(tv2).hasFocus, isTrue);
       expect(panelHasFocus(tester), isFalse);
@@ -670,11 +603,8 @@ void main() {
 
   testWidgets("Moving down brings every row at the same height", (tester) async {
     final appsService = MockAppsService();
-    final wallpaperService = MockWallpaperService();
     final settingsService = MockSettingsService();
     when(appsService.initialized).thenReturn(true);
-    when(wallpaperService.wallpaperBytes).thenReturn(null);
-    when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
     when(appsService.categoriesWithApps).thenReturn([
       for (var row = 0; row < 10; ++row)
@@ -689,7 +619,7 @@ void main() {
         ]),
     ]);
 
-    await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
+    await _pumpWidgetWithProviders(tester, appsService, settingsService);
 
     double focusedRowTop(int row) {
       final card = findAppCardByPackageName(tester, "me.efesser.app$row.0")!;
@@ -710,12 +640,9 @@ void main() {
   testWidgets("Moving up can go the settings icon, moving right stays on the row", (tester) async {
     // given
     final appsService = MockAppsService();
-    final wallpaperService = MockWallpaperService();
     final settingsService = MockSettingsService();
 
     when(appsService.initialized).thenReturn(true);
-    when(wallpaperService.wallpaperBytes).thenReturn(null);
-    when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
 
     /*
@@ -765,7 +692,7 @@ void main() {
       ]),
     ]);
 
-    await _pumpWidgetWithProviders(tester, wallpaperService, appsService, settingsService);
+    await _pumpWidgetWithProviders(tester, appsService, settingsService);
 
     // then
     Element? tv1 = findAppCardByPackageName(tester, "me.efesser.tv1");
@@ -803,7 +730,6 @@ void main() {
 
 Future<void> _pumpWidgetWithProviders(
   WidgetTester tester,
-  WallpaperService wallpaperService,
   AppsService appsService,
   SettingsService settingsService, {
   NowPlaying? nowPlaying,
@@ -819,7 +745,6 @@ Future<void> _pumpWidgetWithProviders(
   await tester.pumpWidget(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider<WallpaperService>.value(value: wallpaperService),
         ChangeNotifierProvider<AppsService>.value(value: appsService),
         ChangeNotifierProvider<MediaService>.value(value: mediaService),
         ChangeNotifierProvider<WatchNextService>.value(value: watchNextService),

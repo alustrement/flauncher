@@ -41,9 +41,6 @@ class FLauncherChannel {
 
   Future<bool> isDefaultLauncher() async => await _methodChannel.invokeMethod('isDefaultLauncher');
 
-  Future<bool> checkForGetContentAvailability() async =>
-      await _methodChannel.invokeMethod("checkForGetContentAvailability");
-
   Future<void> startAmbientMode() async => await _methodChannel.invokeMethod("startAmbientMode");
 
   Future<void> openMediaSession(String packageName) async =>

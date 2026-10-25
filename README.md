@@ -11,7 +11,6 @@ The project is still at an early development stage and may be unstable. It curre
 - [x] No ads
 - [x] Customizable categories
 - [x] Manually reorder apps within categories
-- [x] Wallpaper support
 - [x] Open "Android Settings"
 - [x] Open "App info"
 - [x] Uninstall app
@@ -57,10 +56,5 @@ $ adb shell pm enable com.google.android.tungsten.setupwraith
 
 #### Known issues
 On Chromecast with Google TV (maybe others), the "YouTube" remote button will stop working if the default launcher is disabled. As a workaround, you can use [Button Mapper](https://play.google.com/store/apps/details?id=flar2.homebutton) to remap it correctly.
-
-## Wallpaper
-Because Android's `WallpaperManager` is not available on some Android TV devices, FLauncher implements its own wallpaper management method.
-
-Please note that changing wallpaper requires a file explorer to be installed on the device in order to pick a file.
 
 <a href="https://www.buymeacoffee.com/etienn01" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" width="200"></a>
