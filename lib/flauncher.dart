@@ -47,7 +47,9 @@ class FLauncher extends StatelessWidget {
               backgroundColor: Colors.transparent,
               appBar: _appBar(context),
               body: Padding(
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+                // no horizontal margin: the horizontal lists reach the edges of the screen, and the other sections have
+                // their own margins
+                padding: EdgeInsets.only(top: 16),
                 child: Consumer<AppsService>(
                   builder: (context, appsService, _) => appsService.initialized
                       ? SingleChildScrollView(child: _categories(appsService.categoriesWithApps))

@@ -41,7 +41,7 @@ class CategoryRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: EdgeInsets.only(left: 16, bottom: 8),
+            padding: EdgeInsets.only(left: 32, bottom: 8),
             child: Text(category.name,
                 style: Theme.of(context).textTheme.titleLarge!.copyWith(
                     color: ZenPalette.lavender,
@@ -51,7 +51,7 @@ class CategoryRow extends StatelessWidget {
               ? SizedBox(
                   height: category.rowHeight.toDouble(),
                   child: ListView.custom(
-                    padding: EdgeInsets.all(8),
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                     scrollDirection: Axis.horizontal,
                     childrenDelegate: SliverChildBuilderDelegate(
                       (context, index) => EnsureVisible(
@@ -85,7 +85,7 @@ class CategoryRow extends StatelessWidget {
         child: EnsureVisible(
           alignment: 0.1,
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8),
+            padding: EdgeInsets.symmetric(horizontal: 24),
             child: Align(
               alignment: Alignment.centerLeft,
               child: AspectRatio(

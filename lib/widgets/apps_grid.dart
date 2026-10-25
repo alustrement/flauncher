@@ -43,7 +43,7 @@ class AppsGrid extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: EdgeInsets.only(left: 16),
+            padding: EdgeInsets.only(left: 32),
             child: Text(
               category.name,
               style: Theme.of(context).textTheme.titleLarge!.copyWith(
@@ -56,7 +56,7 @@ class AppsGrid extends StatelessWidget {
                   shrinkWrap: true,
                   primary: false,
                   gridDelegate: _buildSliverGridDelegate(),
-                  padding: EdgeInsets.all(16),
+                  padding: EdgeInsets.fromLTRB(32, 16, 32, 16),
                   childrenDelegate: SliverChildBuilderDelegate(
                     (context, index) => EnsureVisible(
                       key: Key("${category.id}-${applications[index].packageName}"),
@@ -132,7 +132,7 @@ class AppsGrid extends StatelessWidget {
           child: EnsureVisible(
             alignment: 0.1,
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8),
+              padding: EdgeInsets.symmetric(horizontal: 24),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: AspectRatio(

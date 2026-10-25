@@ -44,7 +44,7 @@ class WatchNextRow extends StatelessWidget {
             SizedBox(
               height: _rowHeight,
               child: ListView.builder(
-                padding: EdgeInsets.all(8),
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                 scrollDirection: Axis.horizontal,
                 itemCount: programs.length,
                 itemBuilder: (context, index) => _EnsureVisibleInRow(
@@ -71,7 +71,7 @@ class WatchNextRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: EdgeInsets.only(left: 16, bottom: 8),
+                padding: EdgeInsets.only(left: 32, bottom: 8),
                 child: Text("Continue watching",
                     style: Theme.of(context)
                         .textTheme
@@ -262,7 +262,7 @@ class _PermissionHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: 32, vertical: 8),
         child: Card(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(

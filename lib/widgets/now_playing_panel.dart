@@ -57,14 +57,14 @@ class NowPlayingPanel extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: EdgeInsets.only(left: 16, bottom: 8),
+                padding: EdgeInsets.only(left: 32, bottom: 8),
                 child: Text("Now playing",
                     style: Theme.of(context)
                         .textTheme
                         .titleLarge!
                         .copyWith(color: ZenPalette.lavender, shadows: _textShadows)),
               ),
-              Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: child),
+              Padding(padding: EdgeInsets.symmetric(horizontal: 32, vertical: 8), child: child),
             ],
           ),
         ),
