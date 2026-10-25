@@ -25,6 +25,7 @@ import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/wallpaper_service.dart';
 import 'package:flauncher/widgets/apps_grid.dart';
 import 'package:flauncher/widgets/category_row.dart';
+import 'package:flauncher/widgets/now_playing_panel.dart';
 import 'package:flauncher/widgets/settings/settings_panel.dart';
 import 'package:flauncher/widgets/time_widget.dart';
 import 'package:flutter/material.dart';
@@ -56,26 +57,29 @@ class FLauncher extends StatelessWidget {
       );
 
   Widget _categories(List<CategoryWithApps> categoriesWithApps) => Column(
-        children: categoriesWithApps.map((categoryWithApps) {
-          switch (categoryWithApps.category.type) {
-            case CategoryType.row:
-              return Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: CategoryRow(
-                    key: Key(categoryWithApps.category.id.toString()),
-                    category: categoryWithApps.category,
-                    applications: categoryWithApps.applications),
-              );
-            case CategoryType.grid:
-              return Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: AppsGrid(
-                    key: Key(categoryWithApps.category.id.toString()),
-                    category: categoryWithApps.category,
-                    applications: categoryWithApps.applications),
-              );
-          }
-        }).toList(),
+        children: [
+          NowPlayingPanel(),
+          ...categoriesWithApps.map((categoryWithApps) {
+            switch (categoryWithApps.category.type) {
+              case CategoryType.row:
+                return Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: CategoryRow(
+                      key: Key(categoryWithApps.category.id.toString()),
+                      category: categoryWithApps.category,
+                      applications: categoryWithApps.applications),
+                );
+              case CategoryType.grid:
+                return Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: AppsGrid(
+                      key: Key(categoryWithApps.category.id.toString()),
+                      category: categoryWithApps.category,
+                      applications: categoryWithApps.applications),
+                );
+            }
+          }),
+        ],
       );
 
   AppBar _appBar(BuildContext context) => AppBar(

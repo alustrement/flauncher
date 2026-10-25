@@ -23,6 +23,7 @@ import 'package:flutter/services.dart';
 class FLauncherChannel {
   static const _methodChannel = MethodChannel('me.efesser.flauncher/method');
   static const _eventChannel = EventChannel('me.efesser.flauncher/event');
+  static const _mediaEventChannel = EventChannel('me.efesser.flauncher/media');
 
   Future<List<dynamic>> getApplications() async => (await _methodChannel.invokeListMethod('getApplications'))!;
 
@@ -44,6 +45,18 @@ class FLauncherChannel {
 
   Future<void> startAmbientMode() async => await _methodChannel.invokeMethod("startAmbientMode");
 
+  Future<void> mediaPlayPause() async => await _methodChannel.invokeMethod("mediaPlayPause");
+
+  Future<void> mediaSkipToNext() async => await _methodChannel.invokeMethod("mediaSkipToNext");
+
+  Future<void> mediaSkipToPrevious() async => await _methodChannel.invokeMethod("mediaSkipToPrevious");
+
+  Future<void> openMediaSession(String packageName) async =>
+      await _methodChannel.invokeMethod("openMediaSession", packageName);
+
   void addAppsChangedListener(void Function(Map<dynamic, dynamic>) listener) =>
       _eventChannel.receiveBroadcastStream().listen((event) => listener(event));
+
+  void addMediaSessionListener(void Function(Map<dynamic, dynamic>) listener) =>
+      _mediaEventChannel.receiveBroadcastStream().listen((event) => listener(event));
 }

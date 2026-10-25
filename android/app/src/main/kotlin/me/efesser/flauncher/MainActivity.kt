@@ -40,9 +40,11 @@ import java.io.Serializable
 
 private const val METHOD_CHANNEL = "me.efesser.flauncher/method"
 private const val EVENT_CHANNEL = "me.efesser.flauncher/event"
+private const val MEDIA_EVENT_CHANNEL = "me.efesser.flauncher/media"
 
 class MainActivity : FlutterActivity() {
     val launcherAppsCallbacks = ArrayList<LauncherApps.Callback>()
+    private lateinit var mediaSessionStreamHandler: MediaSessionStreamHandler
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -57,6 +59,11 @@ class MainActivity : FlutterActivity() {
                 "isDefaultLauncher" -> result.success(isDefaultLauncher())
                 "checkForGetContentAvailability" -> result.success(checkForGetContentAvailability())
                 "startAmbientMode" -> result.success(startAmbientMode())
+                "mediaPlayPause" -> result.success(mediaSessionStreamHandler.playPause())
+                "mediaSkipToNext" -> result.success(mediaSessionStreamHandler.skipToNext())
+                "mediaSkipToPrevious" -> result.success(mediaSessionStreamHandler.skipToPrevious())
+                "openMediaSession" -> result.success(
+                    mediaSessionStreamHandler.openSessionActivity() || launchApp(call.arguments as String))
                 else -> throw IllegalArgumentException()
             }
         }
@@ -99,11 +106,25 @@ class MainActivity : FlutterActivity() {
                 launcherAppsCallbacks.remove(launcherAppsCallback)
             }
         })
+
+        mediaSessionStreamHandler = MediaSessionStreamHandler(this)
+        EventChannel(flutterEngine.dartExecutor.binaryMessenger, MEDIA_EVENT_CHANNEL)
+            .setStreamHandler(mediaSessionStreamHandler)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::mediaSessionStreamHandler.isInitialized) {
+            mediaSessionStreamHandler.refresh()
+        }
     }
 
     override fun onDestroy() {
         val launcherApps = getSystemService(LAUNCHER_APPS_SERVICE) as LauncherApps
         launcherAppsCallbacks.forEach(launcherApps::unregisterCallback)
+        if (::mediaSessionStreamHandler.isInitialized) {
+            mediaSessionStreamHandler.dispose()
+        }
         super.onDestroy()
     }
 
