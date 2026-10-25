@@ -23,6 +23,7 @@ import 'package:flauncher/providers/home_service.dart';
 import 'package:flauncher/providers/media_service.dart';
 import 'package:flauncher/providers/settings_service.dart';
 import 'package:flauncher/providers/watch_next_service.dart';
+import 'package:flauncher/widgets/startup_splash.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -117,7 +118,9 @@ class FLauncherApp extends StatelessWidget {
               context.read<AppsService>().startAmbientMode();
             }
           },
-          child: Actions(actions: {BackIntent: BackAction(context, systemNavigator: true)}, child: FLauncher()),
+          child: StartupSplash(
+            child: Actions(actions: {BackIntent: BackAction(context, systemNavigator: true)}, child: FLauncher()),
+          ),
         ),
       ),
     ),

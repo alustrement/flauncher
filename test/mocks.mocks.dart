@@ -242,6 +242,9 @@ class MockAppsService extends _i1.Mock implements _i8.AppsService {
   bool get initialized => (super.noSuchMethod(Invocation.getter(#initialized), returnValue: false) as bool);
 
   @override
+  bool get refreshed => (super.noSuchMethod(Invocation.getter(#refreshed), returnValue: false) as bool);
+
+  @override
   List<_i3.App> get applications =>
       (super.noSuchMethod(Invocation.getter(#applications), returnValue: <_i3.App>[]) as List<_i3.App>);
 

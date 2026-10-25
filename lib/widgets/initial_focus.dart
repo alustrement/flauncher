@@ -30,7 +30,8 @@ const _directionKeys = [
 
 /// Focuses the element at the top of the page (the leftmost one of the top row) once it is displayed, and again
 /// whenever sections appear or disappear above it, e.g. the media playing which is known a bit after the launch, until
-/// the user moves.
+/// the user moves in the page: the keys which don't reach it, e.g. those ignored while the startup splash is shown,
+/// don't count.
 ///
 /// Pressing Home ([homeService]) brings the page back to its top, every row back to its start, and the focus to the
 /// top again: smoothly when the launcher is already displayed, right away when it comes back from another app.
@@ -51,7 +52,6 @@ class _InitialFocusState extends State<InitialFocus> {
   @override
   void initState() {
     super.initState();
-    HardwareKeyboard.instance.addHandler(_onKey);
     widget.homeService?.addListener(_backToTop);
     WidgetsBinding.instance.addPostFrameCallback((_) => _focusTop());
   }
@@ -68,16 +68,15 @@ class _InitialFocusState extends State<InitialFocus> {
   @override
   void dispose() {
     widget.homeService?.removeListener(_backToTop);
-    HardwareKeyboard.instance.removeHandler(_onKey);
     _focusNode.dispose();
     super.dispose();
   }
 
-  bool _onKey(KeyEvent event) {
+  KeyEventResult _onKey(FocusNode _, KeyEvent event) {
     if (event is KeyDownEvent && _directionKeys.contains(event.logicalKey)) {
       _moved = true;
     }
-    return false;
+    return KeyEventResult.ignored;
   }
 
   @override
@@ -88,6 +87,7 @@ class _InitialFocusState extends State<InitialFocus> {
     },
     child: Focus(
       focusNode: _focusNode,
+      onKeyEvent: _onKey,
       child: SizeChangedLayoutNotifier(child: widget.child),
     ),
   );

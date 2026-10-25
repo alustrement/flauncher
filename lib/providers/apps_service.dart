@@ -28,6 +28,7 @@ class AppsService extends ChangeNotifier {
   final FLauncherChannel _fLauncherChannel;
   final FLauncherDatabase _database;
   bool _initialized = false;
+  bool _refreshed = false;
 
   List<App> _applications = [];
   List<CategoryWithApps> _categoriesWithApps = [];
@@ -36,6 +37,9 @@ class AppsService extends ChangeNotifier {
   Map<String, App> _knownApplications = {};
 
   bool get initialized => _initialized;
+
+  /// Whether the applications have been compared with the system's since the launch.
+  bool get refreshed => _refreshed;
 
   List<App> get applications => UnmodifiableListView(_applications);
 
@@ -78,6 +82,7 @@ class AppsService extends ChangeNotifier {
       notifyListeners();
     });
     _initialized = true;
+    _refreshed = true;
     notifyListeners();
   }
 

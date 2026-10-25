@@ -58,7 +58,8 @@ class FLauncher extends StatelessWidget {
                       ),
                     ),
                   )
-                : _emptyState(context),
+                // the startup splash covers the page meanwhile
+                : SizedBox.shrink(),
           ),
         ),
       ],
@@ -141,19 +142,6 @@ class FLauncher extends StatelessWidget {
     color: ZenPalette.night,
     child: RepaintBoundary(
       child: CustomPaint(painter: ZenWavesPainter(), child: SizedBox.expand()),
-    ),
-  );
-
-  /// In the middle of the upper half of the screen, where the splash screen shows FLauncher's name.
-  Widget _emptyState(BuildContext context) => Align(
-    alignment: Alignment(0, -0.5),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(ZenPalette.accent)),
-        SizedBox(height: 16),
-        Text("Chargement…", style: Theme.of(context).textTheme.titleLarge!.copyWith(color: ZenPalette.lavender)),
-      ],
     ),
   );
 }
