@@ -78,7 +78,10 @@ class _Panel extends StatelessWidget {
     });
     final artImage = _artImage(nowPlaying);
     final textTheme = Theme.of(context).textTheme;
-    final subtitle = [nowPlaying.artist, nowPlaying.album].where((text) => text?.isNotEmpty ?? false).join(" · ");
+    final title = nowPlaying.title ?? application?.name ?? nowPlaying.packageName;
+    // some apps repeat the title as artist
+    final subtitle =
+        [nowPlaying.artist, nowPlaying.album].where((text) => (text?.isNotEmpty ?? false) && text != title).join(" · ");
 
     return SizedBox(
       height: _panelHeight,
@@ -111,7 +114,7 @@ class _Panel extends StatelessWidget {
                         _AppLabel(application: application),
                         SizedBox(height: 4),
                         Text(
-                          nowPlaying.title ?? application?.name ?? nowPlaying.packageName,
+                          title,
                           style: textTheme.headlineSmall!.copyWith(fontWeight: FontWeight.bold, shadows: _textShadows),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

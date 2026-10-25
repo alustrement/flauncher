@@ -74,6 +74,22 @@ void main() {
     expect(find.byIcon(Icons.play_arrow), findsOneWidget);
   });
 
+  testWidgets("does not repeat the title as subtitle", (tester) async {
+    final mediaService = MockMediaService();
+    final appsService = MockAppsService();
+    when(mediaService.permissionGranted).thenReturn(true);
+    when(mediaService.nowPlaying).thenReturn(NowPlaying(
+      packageName: "fr.francetv.pluzz",
+      title: "C dans l'air",
+      artist: "C dans l'air",
+    ));
+    when(appsService.applications).thenReturn([]);
+
+    await _pumpWidgetWithProviders(tester, mediaService, appsService);
+
+    expect(find.text("C dans l'air"), findsOneWidget);
+  });
+
   testWidgets("controls call MediaService", (tester) async {
     final mediaService = MockMediaService();
     final appsService = MockAppsService();
