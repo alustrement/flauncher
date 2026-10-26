@@ -37,8 +37,8 @@ const _textShadows = [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRa
 /// The same as the moves of the "now playing" panels, that the program left out comes back at the same time.
 const _appearDuration = Duration(milliseconds: 400);
 
-/// The media offered in "Reprendre la lecture" are left out. When one isn't offered anymore, e.g. because Spotify's
-/// media is resumed instead, its program comes back growing from nothing.
+/// The media offered in "Reprendre la lecture" are left out. When one isn't offered anymore, e.g. because the other one
+/// is resumed instead, its program comes back growing from nothing.
 class WatchNextRow extends StatefulWidget {
   @override
   State<WatchNextRow> createState() => _WatchNextRowState();
@@ -56,11 +56,7 @@ class _WatchNextRowState extends State<WatchNextRow> {
           SkipInitialFocus(child: _PermissionHint(onPressed: watchNextService.requestPermission)),
         );
       }
-      final nowPlaying = mediaService.nowPlaying;
-      final resumable = [
-        if (nowPlaying != null && nowPlaying.resumable) nowPlaying,
-        if (mediaService.spotify != null) mediaService.spotify!,
-      ];
+      final resumable = mediaService.medias.where((media) => !media.playing);
       final leftOut = {
         for (final program in watchNextService.programs)
           if (resumable.any(program.isSameMediaAs)) program.id,

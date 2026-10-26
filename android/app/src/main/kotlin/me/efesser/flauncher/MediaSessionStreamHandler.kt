@@ -21,17 +21,13 @@ package me.efesser.flauncher
 import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.media.AudioAttributes
 import android.media.MediaMetadata
 import android.media.session.MediaController
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import android.net.Uri
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
@@ -41,10 +37,13 @@ import io.flutter.plugin.common.EventChannel.StreamHandler
 import java.io.ByteArrayOutputStream
 import java.util.WeakHashMap
 
-const val SPOTIFY_PACKAGE = "com.spotify.tv.android"
-
 private const val ART_MAX_SIZE = 512
-private const val LAST_PLAYED_PREFERENCES_NAME = "last_played"
+
+/** How long after the launcher came back in front of an app it is checked whether that app still plays. */
+private const val OBSERVATION_DELAY_MS = 3000L
+
+/** Apps may pause as they leave the foreground, just before the launcher is resumed. */
+private const val OBSERVATION_MARGIN_MS = 2000L
 
 private val ACTIVE_STATES = setOf(
     PlaybackState.STATE_PLAYING,
@@ -67,10 +66,8 @@ private val MEDIA_KEYS = setOf(
 
 private val PLAY_KEYS = setOf(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_MEDIA_PLAY)
 
-private val AUDIO_CONTENT_TYPES = setOf(AudioAttributes.CONTENT_TYPE_MUSIC, AudioAttributes.CONTENT_TYPE_SPEECH)
-
 /**
- * Streams the "now playing" media session to Flutter and forwards media keys to it.
+ * Streams the media to show on the home screen to Flutter and forwards media keys to them.
  *
  * Reading other apps' media sessions requires notification access to be granted to [MediaNotificationListener]:
  * `adb shell cmd notification allow_listener me.efesser.flauncher/me.efesser.flauncher.MediaNotificationListener`
@@ -85,21 +82,19 @@ class MediaSessionStreamHandler(
     private var events: EventSink? = null
     private var sessionsListenerRegistered = false
     private var controllers: List<MediaController> = emptyList()
-    private var currentController: MediaController? = null
-    // the artworks of the media and of Spotify's, which are sent together
+    // the artworks of the media shown, which are sent together
     private val artBytes = WeakHashMap<Bitmap, ByteArray>()
     private var lastEngagements: Map<String, Long> = emptyMap()
-    private val lastPlayedPreferences = context.getSharedPreferences(LAST_PLAYED_PREFERENCES_NAME, Context.MODE_PRIVATE)
-    private val lastPlayed: MutableMap<String, Long> =
-        lastPlayedPreferences.all.mapNotNull { (packageName, time) -> (time as? Long)?.let { packageName to it } }
-            .toMap(HashMap())
+    private val backgroundPlayback = BackgroundPlayback(context)
+    private val foreground = Slot("foreground", background = false)
+    private val background = Slot("background", background = true)
     private var playingPackages: Set<String> = emptySet()
-    private var currentSession: Map<String, Any?>? = null
-    private var goneSession: Map<String, Any?>? = null
-    private var goneAt = 0L
-    private val lastSpotifyMedia = LastSpotifyMedia(context)
-    private var spotifySession: Map<String, Any?>? = null
-    private var spotifyShown = false
+    // when each app was last seen stopping to play, in SystemClock.elapsedRealtime()
+    private val stoppedAt = HashMap<String, Long>()
+    private var resumedAt: Long? = null
+    private var mediaKeyAt = Long.MIN_VALUE
+    private var playingPackage: String? = null
+    private var shownPackages: List<String> = emptyList()
     private var focusedMedia: String? = null
 
     private val sessionsChangedListener = MediaSessionManager.OnActiveSessionsChangedListener {
@@ -110,6 +105,21 @@ class MediaSessionStreamHandler(
         override fun onPlaybackStateChanged(state: PlaybackState?) = selectController()
         override fun onMetadataChanged(metadata: MediaMetadata?) = selectController()
         override fun onSessionDestroyed() = selectController()
+    }
+
+    private val observeBackgroundPlayback = Runnable {
+        val since = (resumedAt ?: return@Runnable) - OBSERVATION_MARGIN_MS
+        // a media key may have paused the media meanwhile
+        if (mediaKeyAt >= since) {
+            return@Runnable
+        }
+        playingPackages.forEach { backgroundPlayback.observe(it, true) }
+        stoppedAt.forEach { (packageName, at) ->
+            if (at >= since && packageName !in playingPackages) {
+                backgroundPlayback.observe(packageName, false)
+            }
+        }
+        selectController()
     }
 
     override fun onListen(arguments: Any?, events: EventSink) {
@@ -132,8 +142,18 @@ class MediaSessionStreamHandler(
     fun dispose() = stop()
 
     /**
-     * Some apps don't publish a media session while they play (e.g. arte), which would leave an older paused session
-     * shown while another app has been watched since: the "Continue watching" programs these apps publish tell it.
+     * The app which was in front stops playing, or releases its session, as the launcher comes back in front of it when
+     * it doesn't play in the background, and keeps playing otherwise: it is checked a moment later.
+     */
+    fun onLauncherResumed() {
+        resumedAt = SystemClock.elapsedRealtime()
+        handler.removeCallbacks(observeBackgroundPlayback)
+        handler.postDelayed(observeBackgroundPlayback, OBSERVATION_DELAY_MS)
+    }
+
+    /**
+     * Some apps don't publish a media session while they play (e.g. arte), which would leave an older paused video
+     * offered while another app has been watched since: the "Continue watching" programs these apps publish tell it.
      *
      * [engagements] is the last time a program of each app was watched, in milliseconds since the epoch.
      */
@@ -148,100 +168,53 @@ class MediaSessionStreamHandler(
     }
 
     /**
-     * Forwards media keys to the session shown on the home screen, as the system would otherwise send them to its
-     * own pick (the last session which received one).
+     * Forwards media keys to the media focused on the home screen, otherwise to the media playing or to the only one
+     * offered, as the system would otherwise send them to its own pick (the last session which received one). They are
+     * ignored when several media are offered and none is focused.
      *
-     * Videos must not play behind the launcher though: for anything that isn't known to be audio, play keys open the
-     * app instead and other keys are ignored.
-     *
-     * When the media of a session which is gone is shown instead, play keys open its app.
-     *
-     * When Spotify's paused media is shown next to a video, media keys go to the one focused, and are ignored when
-     * neither is. When it is shown alone, they go to Spotify.
+     * Videos must not play behind the launcher though: for an app which doesn't play in the background, or whose session
+     * is gone, play keys open the app instead and other keys are ignored.
      */
     fun dispatchMediaKey(event: KeyEvent): Boolean {
         if (event.keyCode !in MEDIA_KEYS) {
             return false
         }
-        if (spotifyShown) {
-            when {
-                currentSession == null || focusedMedia == SPOTIFY_PACKAGE -> {
-                    dispatchSpotifyMediaKey(event)
-                    return true
-                }
-                focusedMedia == null -> return true
-            }
-        }
-        val controller = currentController
-        val gone = goneSession
-        if (controller == null && gone != null) {
-            if (isPlayPress(event)) {
-                launchApp(gone["packageName"] as String)
-            }
-            return true
-        }
-        if (controller == null) {
-            return false
-        }
-        if (isAudio(controller)) {
+        mediaKeyAt = SystemClock.elapsedRealtime()
+        val packageName = focusedMedia ?: playingPackage ?: shownPackages.singleOrNull()
+            ?: return shownPackages.isNotEmpty()
+        val controller = liveController(packageName)
+        if (controller != null && backgroundPlayback.canPlayInBackground(packageName)) {
             return controller.dispatchMediaButtonEvent(event)
         }
         if (isPlayPress(event)) {
-            openPlayer()
+            openPlayer(packageName)
         }
         return true
-    }
-
-    /** When only the last media of Spotify is remembered, play keys open Spotify. */
-    private fun dispatchSpotifyMediaKey(event: KeyEvent) {
-        val controller = spotifyController()
-        if (controller != null) {
-            controller.dispatchMediaButtonEvent(event)
-        } else if (isPlayPress(event)) {
-            launchApp(SPOTIFY_PACKAGE)
-        }
     }
 
     private fun isPlayPress(event: KeyEvent) =
         event.keyCode in PLAY_KEYS && event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0
 
-    /** Opens the player of the current session, or its app if it doesn't provide one. */
-    fun openPlayer(): Boolean {
-        val controller = currentController ?: return false
+    /** Opens the player of the session of [packageName], or the app if its session is gone or provides none. */
+    fun openPlayer(packageName: String): Boolean {
+        val controller = controllers.firstOrNull { it.packageName == packageName }
         return try {
-            controller.sessionActivity?.send() != null
+            controller?.sessionActivity?.send() != null
         } catch (e: PendingIntent.CanceledException) {
             false
-        } || launchApp(controller.packageName)
+        } || launchApp(packageName)
     }
 
-    /** Resumes Spotify's paused media in Spotify, or opens Spotify when its session is gone or has no media. */
-    fun resumeSpotify(): Boolean {
-        val controller = spotifyController() ?: return launchApp(SPOTIFY_PACKAGE)
+    /** Resumes the paused media of [packageName] without leaving the launcher, or opens the app if its session is gone. */
+    fun playMedia(packageName: String): Boolean {
+        val controller = liveController(packageName) ?: return launchApp(packageName)
         controller.transportControls.play()
-        return try {
-            controller.sessionActivity?.send() != null
-        } catch (e: PendingIntent.CanceledException) {
-            false
-        } || launchApp(SPOTIFY_PACKAGE)
+        return true
     }
 
     /** A destroyed session still gives its metadata until it is removed, but no playback state. */
-    private fun spotifyController() = controllers.firstOrNull {
-        it.packageName == SPOTIFY_PACKAGE && it.metadata != null && it.playbackState != null
-    }
-
-    /** Audio attributes are often left unknown by video apps, so only an explicit audio declaration is trusted. */
-    private fun isAudio(controller: MediaController): Boolean {
-        if (controller.playbackInfo?.audioAttributes?.contentType in AUDIO_CONTENT_TYPES) {
-            return true
-        }
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && try {
-            context.packageManager.getApplicationInfo(controller.packageName, 0).category ==
-                ApplicationInfo.CATEGORY_AUDIO
-        } catch (e: PackageManager.NameNotFoundException) {
-            false
-        }
+    private fun liveController(packageName: String) = controllers.firstOrNull {
+        it.packageName == packageName && it.metadata != null && it.playbackState != null
     }
 
     private fun start() {
@@ -255,13 +228,13 @@ class MediaSessionStreamHandler(
     }
 
     private fun stop() {
+        handler.removeCallbacks(observeBackgroundPlayback)
         if (sessionsListenerRegistered) {
             mediaSessionManager.removeOnActiveSessionsChangedListener(sessionsChangedListener)
             sessionsListenerRegistered = false
         }
         controllers.forEach { it.unregisterCallback(controllerCallback) }
         controllers = emptyList()
-        currentController = null
     }
 
     private fun updateControllers(newControllers: List<MediaController>) {
@@ -272,86 +245,74 @@ class MediaSessionStreamHandler(
     }
 
     /**
-     * Picks the playing session first, otherwise a paused one which still has something to show, unless another app
-     * has been watched or played since it was paused.
-     *
-     * Some apps release their session as soon as they leave the foreground (e.g. SmartTube): the media of the session
-     * shown is then kept, paused, until another media is paused or another app is watched or played.
-     *
-     * Next to a paused media of another app, a video which doesn't play in the background, Spotify's paused media is
-     * sent too, to be resumed, and alone when there is no other media to show. The last one remembered is sent once
-     * Spotify's session is gone.
+     * Sends the media playing alone. Otherwise, the last media of an app which doesn't play in the background, a video,
+     * is offered to be resumed next to the last one of an app which does.
      */
     private fun selectController() {
-        rememberPlayed()
-        rememberGoneSession()
-        val liveSpotify = spotifyController()?.let(::buildSessionMap)
-        rememberSpotify(liveSpotify)
-        val controller = controllers.firstOrNull(::isPlaying)
-            ?: controllers.firstOrNull {
-                isShowable(it) && !isOutdated(it) && (goneSession == null || (pausedAt(it) ?: 0) > goneAt)
-            }
-        if (controller != null || goneSession?.let { isOutdated(it["packageName"] as String, goneAt) } == true) {
-            goneSession = null
+        val stopped = trackPlaying()
+        val foregroundMedia = foreground.select(stopped)
+        val backgroundMedia = background.select(stopped)
+        val playing = controllers.firstOrNull(::isPlaying)
+        val medias = if (playing != null) {
+            listOf(buildSessionMap(playing))
+        } else {
+            listOfNotNull(foregroundMedia, backgroundMedia)
         }
-        currentController = controller
-        val session = controller?.let(::buildSessionMap) ?: goneSession
-        currentSession = session
-        val resumable = session == null ||
-            (session["playing"] != true && session["packageName"] != SPOTIFY_PACKAGE)
-        val spotify = if (resumable) liveSpotify ?: lastSpotifyMedia.media else null
-        spotifyShown = spotify != null
+        playingPackage = playing?.packageName
+        shownPackages = medias.map { it["packageName"] as String }
         events?.success(mapOf(
             "permissionGranted" to true,
-            "session" to session,
-            "spotify" to spotify,
+            "medias" to medias,
         ))
     }
 
-    /**
-     * Remembers Spotify's media while its session is there, and where it was left when its session goes, e.g. when
-     * Android kills Spotify while it isn't playing.
-     */
-    private fun rememberSpotify(liveSpotify: Map<String, Any?>?) {
-        (liveSpotify ?: spotifySession)?.let { lastSpotifyMedia.remember(it, currentPosition(it)) }
-        spotifySession = liveSpotify
-    }
-
-    /**
-     * Some apps release their session as soon as they leave the foreground (e.g. SmartTube), which would bring back
-     * an older paused session: the time each app was last seen playing is remembered, when it starts and stops, and
-     * kept across restarts of the launcher.
-     */
-    private fun rememberPlayed() {
+    /** Remembers when each app stopped playing, and returns the ones which just did. */
+    private fun trackPlaying(): Set<String> {
         val playing = controllers.filter(::isPlaying).map { it.packageName }.toSet()
-        val changed = (playing - playingPackages) + (playingPackages - playing)
+        val stopped = playingPackages - playing
+        val now = SystemClock.elapsedRealtime()
+        stopped.forEach { stoppedAt[it] = now }
         playingPackages = playing
-        if (changed.isEmpty()) {
-            return
-        }
-        val now = System.currentTimeMillis()
-        val editor = lastPlayedPreferences.edit()
-        for (packageName in changed) {
-            lastPlayed[packageName] = now
-            editor.putLong(packageName, now)
-        }
-        editor.apply()
+        return stopped
     }
 
     /**
-     * Keeps the media shown, paused, when its app has no session to show anymore. Spotify's last media is offered
-     * instead.
+     * The last media of the apps which play in the background, or of those which don't, is the last one seen playing, or
+     * a paused one until then. Once its session is gone, it is kept where it was left. A video is given up once another
+     * app is watched without session.
      */
-    private fun rememberGoneSession() {
-        val session = currentSession ?: return
-        val packageName = session["packageName"] as String
-        if (packageName == SPOTIFY_PACKAGE || session === goneSession ||
-            controllers.any { it.packageName == packageName && (isPlaying(it) || isShowable(it)) }
-        ) {
-            return
+    private inner class Slot(name: String, private val background: Boolean) {
+        private val lastMedia = LastMedia(context, name, background)
+        // the media of its session, while it is there
+        private var session: Map<String, Any?>? = null
+
+        fun select(stopped: Set<String>): Map<String, Any?>? {
+            val rememberedPackage = lastMedia.media?.get("packageName") as String?
+            if (rememberedPackage != null && (backgroundPlayback.canPlayInBackground(rememberedPackage) != background ||
+                    !background && isOutdated(rememberedPackage, lastMedia.seenAt))
+            ) {
+                lastMedia.forget()
+                session = null
+            }
+            val remembered = lastMedia.media?.get("packageName") as String?
+            val candidates = controllers.filter { backgroundPlayback.canPlayInBackground(it.packageName) == background }
+            val controller = candidates.firstOrNull(::isPlaying)
+                ?: candidates.firstOrNull { isShowable(it) && it.packageName == remembered }
+                ?: candidates.takeIf { remembered == null }
+                    ?.firstOrNull { isShowable(it) && (background || !isOutdated(it)) }
+            val session = controller?.let(::buildSessionMap)
+            val media = session ?: this.session ?: return lastMedia.media
+            val packageName = media["packageName"] as String
+            val seenAt = when {
+                packageName in playingPackages || packageName in stopped -> System.currentTimeMillis()
+                packageName == remembered -> lastMedia.seenAt
+                else -> controller?.let(::pausedAt) ?: System.currentTimeMillis()
+            }
+            // once its session is gone, the media is remembered where it was left
+            lastMedia.remember(media, currentPosition(media), seenAt)
+            this.session = session
+            return session ?: lastMedia.media
         }
-        goneSession = session + mapOf("playing" to false, "position" to currentPosition(session))
-        goneAt = System.currentTimeMillis()
     }
 
     private fun isPlaying(controller: MediaController) = controller.playbackState?.state in ACTIVE_STATES
@@ -372,11 +333,11 @@ class MediaSessionStreamHandler(
         return isOutdated(controller.packageName, pausedAt)
     }
 
-    /** Whether another app has been watched or played since [pausedAt]. */
-    private fun isOutdated(packageName: String, pausedAt: Long) =
-        (lastEngagements.entries + lastPlayed.entries).any { (otherPackageName, lastTime) ->
-            otherPackageName != packageName && lastTime > pausedAt
-        }
+    /** Whether another app which doesn't play in the background has been watched since [seenAt]. */
+    private fun isOutdated(packageName: String, seenAt: Long) = lastEngagements.any { (otherPackageName, lastTime) ->
+        otherPackageName != packageName && lastTime > seenAt &&
+            !backgroundPlayback.canPlayInBackground(otherPackageName)
+    }
 
     private fun buildSessionMap(controller: MediaController): Map<String, Any?> {
         val metadata = controller.metadata
@@ -408,6 +369,7 @@ class MediaSessionStreamHandler(
                 System.currentTimeMillis() - (SystemClock.elapsedRealtime() - it.lastPositionUpdateTime)
             },
             "speed" to state?.playbackSpeed?.toDouble(),
+            "background" to backgroundPlayback.canPlayInBackground(controller.packageName),
         )
     }
 

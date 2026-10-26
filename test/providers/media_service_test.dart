@@ -26,29 +26,33 @@ import '../mocks.mocks.dart';
 
 void main() {
   group("MediaService", () {
-    test("exposes the current media session", () {
+    test("exposes the media to show", () {
       final channel = MockFLauncherChannel();
       final mediaService = MediaService(channel);
       final listener = verify(channel.addMediaSessionListener(captureAny)).captured.single;
 
       listener({
         "permissionGranted": true,
-        "session": {
-          "packageName": "com.spotify.tv.android",
-          "title": "Bittersweet",
-          "artist": "Lianne La Havas",
-          "album": "Bittersweet (Radio Edit)",
-          "duration": 236640,
-          "art": Uint8List.fromList([1, 2, 3]),
-          "playing": true,
-          "position": 1000,
-          "positionUpdatedAt": 1700000000000,
-          "speed": 1.0,
-        },
+        "medias": [
+          {
+            "packageName": "com.spotify.tv.android",
+            "title": "Bittersweet",
+            "artist": "Lianne La Havas",
+            "album": "Bittersweet (Radio Edit)",
+            "duration": 236640,
+            "art": Uint8List.fromList([1, 2, 3]),
+            "playing": true,
+            "position": 1000,
+            "positionUpdatedAt": 1700000000000,
+            "speed": 1.0,
+            "background": true,
+          },
+        ],
       });
 
-      final nowPlaying = mediaService.nowPlaying!;
+      final nowPlaying = mediaService.medias.single;
       expect(mediaService.permissionGranted, isTrue);
+      expect(mediaService.playing, isTrue);
       expect(nowPlaying.packageName, "com.spotify.tv.android");
       expect(nowPlaying.title, "Bittersweet");
       expect(nowPlaying.artist, "Lianne La Havas");
@@ -58,115 +62,77 @@ void main() {
       expect(nowPlaying.playing, isTrue);
       expect(nowPlaying.position, Duration(seconds: 1));
       expect(nowPlaying.positionUpdatedAt, DateTime.fromMillisecondsSinceEpoch(1700000000000));
+      expect(nowPlaying.background, isTrue);
     });
 
-    test("reuses unchanged artwork", () {
+    test("exposes the last video next to the last media of an app which plays in the background", () {
       final channel = MockFLauncherChannel();
       final mediaService = MediaService(channel);
       final listener = verify(channel.addMediaSessionListener(captureAny)).captured.single;
-      final session = {
+
+      listener({
+        "permissionGranted": true,
+        "medias": [
+          {"packageName": "app.smarttube.fdroid", "title": "Une vidéo"},
+          {"packageName": "com.spotify.tv.android", "title": "Bittersweet", "background": true},
+        ],
+      });
+
+      expect(mediaService.medias.map((media) => media.title), ["Une vidéo", "Bittersweet"]);
+      expect(mediaService.medias.map((media) => media.background), [false, true]);
+      expect(mediaService.playing, isFalse);
+
+      listener({"permissionGranted": true, "medias": []});
+
+      expect(mediaService.medias, isEmpty);
+    });
+
+    test("reuses unchanged artwork, also when the media moves beside the other one", () {
+      final channel = MockFLauncherChannel();
+      final mediaService = MediaService(channel);
+      final listener = verify(channel.addMediaSessionListener(captureAny)).captured.single;
+      Map<String, dynamic> song({bool playing = false}) => {
         "packageName": "com.spotify.tv.android",
         "art": Uint8List.fromList([1, 2, 3]),
+        "playing": playing,
       };
 
-      listener({"permissionGranted": true, "session": session});
-      final firstArt = mediaService.nowPlaying!.art;
       listener({
         "permissionGranted": true,
-        "session": {
-          ...session,
-          "art": Uint8List.fromList([1, 2, 3]),
-        },
+        "medias": [
+          {"packageName": "app.smarttube.fdroid"},
+          song(),
+        ],
+      });
+      final art = mediaService.medias.last.art;
+      listener({
+        "permissionGranted": true,
+        "medias": [song(playing: true)],
       });
 
-      expect(identical(mediaService.nowPlaying!.art, firstArt), isTrue);
+      expect(identical(mediaService.medias.single.art, art), isTrue);
     });
 
-    test("clears the session when nothing is playing", () {
+    test("resumes a paused media of an app which plays in the background in place", () async {
       final channel = MockFLauncherChannel();
       final mediaService = MediaService(channel);
-      final listener = verify(channel.addMediaSessionListener(captureAny)).captured.single;
 
-      listener({
-        "permissionGranted": true,
-        "session": {"packageName": "com.spotify.tv.android"},
-      });
-      listener({"permissionGranted": true, "session": null});
+      await mediaService.open(NowPlaying(packageName: "com.spotify.tv.android", background: true));
 
-      expect(mediaService.nowPlaying, isNull);
+      verify(channel.playMedia("com.spotify.tv.android"));
+      verifyNever(channel.openMediaSession(any));
     });
 
-    test("exposes Spotify's paused media next to a video", () {
+    test("opens the player of a video, or of a media playing", () async {
       final channel = MockFLauncherChannel();
       final mediaService = MediaService(channel);
-      final listener = verify(channel.addMediaSessionListener(captureAny)).captured.single;
 
-      listener({
-        "permissionGranted": true,
-        "session": {"packageName": "app.smarttube.fdroid", "title": "Une vidéo"},
-        "spotify": {
-          "packageName": "com.spotify.tv.android",
-          "title": "Bittersweet",
-          "artist": "Lianne La Havas",
-          "playing": false,
-        },
-      });
+      await mediaService.open(NowPlaying(packageName: "app.smarttube.fdroid"));
+      await mediaService.open(NowPlaying(packageName: "com.spotify.tv.android", background: true, playing: true));
 
-      expect(mediaService.nowPlaying!.resumable, isTrue);
-      final spotify = mediaService.spotify!;
-      expect(spotify.title, "Bittersweet");
-      expect(spotify.artist, "Lianne La Havas");
-      expect(spotify.resumable, isFalse);
-
-      listener({
-        "permissionGranted": true,
-        "session": {"packageName": "com.spotify.tv.android"},
-      });
-
-      expect(mediaService.spotify, isNull);
-    });
-
-    test("exposes Spotify's last media alone without media session", () {
-      final channel = MockFLauncherChannel();
-      final mediaService = MediaService(channel);
-      final listener = verify(channel.addMediaSessionListener(captureAny)).captured.single;
-
-      listener({
-        "permissionGranted": true,
-        "session": null,
-        "spotify": {"packageName": "com.spotify.tv.android", "title": "Bittersweet", "playing": false},
-      });
-
-      expect(mediaService.nowPlaying, isNull);
-      expect(mediaService.spotify!.title, "Bittersweet");
-    });
-
-    test("keeps the artwork of Spotify's media when it is resumed", () {
-      final channel = MockFLauncherChannel();
-      final mediaService = MediaService(channel);
-      final listener = verify(channel.addMediaSessionListener(captureAny)).captured.single;
-      final media = {"packageName": "com.spotify.tv.android", "title": "Bittersweet"};
-
-      listener({
-        "permissionGranted": true,
-        "session": {"packageName": "app.smarttube.fdroid"},
-        "spotify": {
-          ...media,
-          "art": Uint8List.fromList([1, 2, 3]),
-        },
-      });
-      final art = mediaService.spotify!.art;
-      listener({
-        "permissionGranted": true,
-        "session": {
-          ...media,
-          "art": Uint8List.fromList([1, 2, 3]),
-          "playing": true,
-        },
-      });
-
-      expect(mediaService.spotify, isNull);
-      expect(identical(mediaService.nowPlaying!.art, art), isTrue);
+      verify(channel.openMediaSession("app.smarttube.fdroid"));
+      verify(channel.openMediaSession("com.spotify.tv.android"));
+      verifyNever(channel.playMedia(any));
     });
 
     test("tells the channel which media is focused, whatever the order of the focus changes", () async {
@@ -186,15 +152,6 @@ void main() {
       verifyNever(channel.setFocusedMedia(any));
     });
 
-    test("resumeSpotify calls channel", () async {
-      final channel = MockFLauncherChannel();
-      final mediaService = MediaService(channel);
-
-      await mediaService.resumeSpotify();
-
-      verify(channel.resumeSpotify());
-    });
-
     test("reports missing permission", () {
       final channel = MockFLauncherChannel();
       final mediaService = MediaService(channel);
@@ -203,35 +160,7 @@ void main() {
       listener({"permissionGranted": false});
 
       expect(mediaService.permissionGranted, isFalse);
-      expect(mediaService.nowPlaying, isNull);
-    });
-
-    test("openPlayer calls channel", () async {
-      final channel = MockFLauncherChannel();
-      final mediaService = MediaService(channel);
-      final listener = verify(channel.addMediaSessionListener(captureAny)).captured.single;
-      listener({
-        "permissionGranted": true,
-        "session": {"packageName": "com.spotify.tv.android"},
-      });
-
-      await mediaService.openPlayer();
-
-      verify(channel.openMediaSession("com.spotify.tv.android"));
-    });
-  });
-
-  group("NowPlaying.resumable", () {
-    test("a paused media of another app than Spotify is resumable", () {
-      expect(NowPlaying(packageName: "app.smarttube.fdroid").resumable, isTrue);
-    });
-
-    test("a media playing is not resumable", () {
-      expect(NowPlaying(packageName: "app.smarttube.fdroid", playing: true).resumable, isFalse);
-    });
-
-    test("Spotify's media is not resumable", () {
-      expect(NowPlaying(packageName: "com.spotify.tv.android").resumable, isFalse);
+      expect(mediaService.medias, isEmpty);
     });
   });
 

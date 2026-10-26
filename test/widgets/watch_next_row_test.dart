@@ -169,10 +169,9 @@ void main() {
   });
 }
 
-MediaService _mediaService(NowPlaying? nowPlaying, NowPlaying? spotify) {
+MediaService _mediaService(NowPlaying? nowPlaying) {
   final mediaService = MockMediaService();
-  when(mediaService.nowPlaying).thenReturn(nowPlaying);
-  when(mediaService.spotify).thenReturn(spotify);
+  when(mediaService.medias).thenReturn([?nowPlaying]);
   return mediaService;
 }
 
@@ -181,14 +180,13 @@ Future<void> _pumpWidgetWithProviders(
   WatchNextService watchNextService,
   AppsService appsService, {
   NowPlaying? nowPlaying,
-  NowPlaying? spotify,
   bool settle = true,
 }) async {
   await tester.pumpWidget(
     MultiProvider(
       providers: [
         ChangeNotifierProvider<WatchNextService>.value(value: watchNextService),
-        ChangeNotifierProvider<MediaService>.value(value: _mediaService(nowPlaying, spotify)),
+        ChangeNotifierProvider<MediaService>.value(value: _mediaService(nowPlaying)),
         ChangeNotifierProvider<AppsService>.value(value: appsService),
       ],
       builder: (_, _) => MaterialApp(

@@ -46,7 +46,7 @@ class FLauncherChannel {
   Future<void> openMediaSession(String packageName) async =>
       await _methodChannel.invokeMethod("openMediaSession", packageName);
 
-  Future<void> resumeSpotify() async => await _methodChannel.invokeMethod("resumeSpotify");
+  Future<void> playMedia(String packageName) async => await _methodChannel.invokeMethod("playMedia", packageName);
 
   Future<void> setFocusedMedia(String? packageName) async =>
       await _methodChannel.invokeMethod("setFocusedMedia", packageName);

@@ -739,9 +739,8 @@ Future<void> _pumpWidgetWithProviders(
 }) async {
   final mediaService = MockMediaService();
   when(mediaService.permissionGranted).thenReturn(true);
-  when(mediaService.nowPlaying).thenReturn(nowPlaying);
-  when(mediaService.spotify).thenReturn(null);
-  // without media session, Spotify is offered alone when it is installed
+  when(mediaService.medias).thenReturn([?nowPlaying]);
+  when(mediaService.playing).thenReturn(nowPlaying?.playing ?? false);
   when(appsService.applications).thenReturn([]);
   final watchNextService = MockWatchNextService();
   when(watchNextService.permissionGranted).thenReturn(true);

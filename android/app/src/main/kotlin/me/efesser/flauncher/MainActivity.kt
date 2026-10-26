@@ -89,9 +89,8 @@ class MainActivity : FlutterActivity() {
                 "uninstallApp" -> result.success(uninstallApp(call.arguments as String))
                 "isDefaultLauncher" -> result.success(isDefaultLauncher())
                 "startAmbientMode" -> result.success(startAmbientMode())
-                "openMediaSession" -> result.success(
-                    mediaSessionStreamHandler.openPlayer() || launchApp(call.arguments as String))
-                "resumeSpotify" -> result.success(mediaSessionStreamHandler.resumeSpotify())
+                "openMediaSession" -> result.success(mediaSessionStreamHandler.openPlayer(call.arguments as String))
+                "playMedia" -> result.success(mediaSessionStreamHandler.playMedia(call.arguments as String))
                 "setFocusedMedia" -> {
                     mediaSessionStreamHandler.setFocusedMedia(call.arguments as String?)
                     result.success(null)
@@ -208,6 +207,7 @@ class MainActivity : FlutterActivity() {
         super.onResume()
         if (::mediaSessionStreamHandler.isInitialized) {
             mediaSessionStreamHandler.refresh()
+            mediaSessionStreamHandler.onLauncherResumed()
         }
         if (::watchNextStreamHandler.isInitialized) {
             watchNextStreamHandler.refresh()

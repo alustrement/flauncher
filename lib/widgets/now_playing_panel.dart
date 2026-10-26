@@ -34,24 +34,21 @@ const _panelHeight = 150.0;
 const _artSize = 126.0;
 const _radius = 16.0;
 const _columnSpacing = 24.0;
-const _spotifyCardWidth = _panelHeight * 16 / 9;
 
-/// Duration of the panels' moves, e.g. when Spotify's panel takes the whole width once resumed.
+/// Duration of the panels' moves, e.g. when a panel takes the whole width once its media is resumed.
 const _transitionDuration = Duration(milliseconds: 400);
 const _transitionCurve = Curves.easeInOutCubic;
 const _textShadows = [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 8)];
 
-/// The media playing, or Spotify's paused one offered to be resumed, full width. A video doesn't play in the background
-/// though: once it has been watched, it is offered to be resumed next to Spotify's paused media, or next to Spotify
-/// itself when it has none. Without any media, Spotify's last one is offered alone, or Spotify itself when none is
-/// remembered.
+/// The media playing, full width. Otherwise, the last media of an app which doesn't play in the background, a video, is
+/// offered to be resumed next to the last one of an app which does.
 class NowPlayingPanel extends StatefulWidget {
   @override
   State<NowPlayingPanel> createState() => _NowPlayingPanelState();
 }
 
 class _NowPlayingPanelState extends State<NowPlayingPanel> {
-  /// Spotify's panel keeps its focus when it moves from beside the video to full width, once its media is resumed.
+  /// A panel keeps its focus when it moves from beside the other one to full width, once its media is resumed.
   final _panelKeys = <String, GlobalKey>{};
 
   @override
@@ -60,49 +57,24 @@ class _NowPlayingPanelState extends State<NowPlayingPanel> {
       if (!mediaService.permissionGranted) {
         return _section(context, "En cours de lecture", SkipInitialFocus(child: _PermissionHint()));
       }
-      final nowPlaying = mediaService.nowPlaying;
-      if (nowPlaying != null && !nowPlaying.resumable) {
-        return _section(
-          context,
-          nowPlaying.playing ? "En cours de lecture" : "Reprendre la lecture",
-          _AnimatedPanels(slots: [_panel(mediaService, nowPlaying, mediaService.openPlayer)]),
-        );
-      }
-      final spotify = mediaService.spotify;
-      final spotifyApplication = context.select<AppsService, App?>((appsService) {
-        final matches = appsService.applications.where((app) => app.packageName == spotifyPackage);
-        return matches.isNotEmpty ? matches.first : null;
-      });
-      if (nowPlaying == null && spotify == null && spotifyApplication == null) {
+      if (mediaService.medias.isEmpty) {
         return SizedBox.shrink();
       }
       return _section(
         context,
-        "Reprendre la lecture",
-        _AnimatedPanels(
-          slots: [
-            if (nowPlaying != null) _panel(mediaService, nowPlaying, mediaService.openPlayer),
-            if (spotify != null)
-              _panel(mediaService, spotify, mediaService.resumeSpotify)
-            else if (spotifyApplication != null)
-              _Slot(
-                key: ValueKey("spotify-card"),
-                width: _spotifyCardWidth,
-                child: _SpotifyCard(application: spotifyApplication),
-              ),
-          ],
-        ),
+        mediaService.playing ? "En cours de lecture" : "Reprendre la lecture",
+        _AnimatedPanels(slots: [for (final media in mediaService.medias) _panel(mediaService, media)]),
       );
     },
   );
 
-  _Slot _panel(MediaService mediaService, NowPlaying nowPlaying, VoidCallback onPressed) => _Slot(
-    key: ValueKey(nowPlaying.packageName),
+  _Slot _panel(MediaService mediaService, NowPlaying media) => _Slot(
+    key: ValueKey(media.packageName),
     child: _Panel(
-      key: _panelKeys.putIfAbsent(nowPlaying.packageName, () => GlobalKey()),
-      nowPlaying: nowPlaying,
-      onPressed: onPressed,
-      onFocusChange: (focused) => mediaService.setMediaFocused(nowPlaying.packageName, focused),
+      key: _panelKeys.putIfAbsent(media.packageName, () => GlobalKey()),
+      nowPlaying: media,
+      onPressed: () => mediaService.open(media),
+      onFocusChange: (focused) => mediaService.setMediaFocused(media.packageName, focused),
     ),
   );
 
@@ -134,17 +106,16 @@ class _NowPlayingPanelState extends State<NowPlayingPanel> {
   );
 }
 
-/// A panel of [_AnimatedPanels], which shares the width with the other panels unless it has its own [width].
+/// A panel of [_AnimatedPanels], which shares the width with the other panels.
 class _Slot {
   final Key key;
-  final double? width;
   final Widget child;
 
-  _Slot({required this.key, this.width, required this.child});
+  _Slot({required this.key, required this.child});
 }
 
 /// Panels side by side, which grow from nothing when they come and shrink to nothing when they go, while the other
-/// panels take the room left: Spotify's panel grows to the whole width once resumed, while the video goes.
+/// panels take the room left: a panel grows to the whole width once its media is resumed, while the other one goes.
 class _AnimatedPanels extends StatefulWidget {
   final List<_Slot> slots;
 
@@ -172,15 +143,17 @@ class _AnimatedPanelsState extends State<_AnimatedPanels> with TickerProviderSta
       entry.controller.animateTo(1, duration: duration, curve: _transitionCurve);
       entries.add(entry);
     }
-    // the panels which go stay where they were while they shrink
+    // the panels which go stay where they were while they shrink, and are removed once, whatever the updates meanwhile
     for (final entry in previous.values) {
-      entry.leaving = true;
-      entry.controller.animateBack(0, duration: duration, curve: _transitionCurve).whenCompleteOrCancel(() {
-        if (mounted && entry.leaving) {
-          setState(() => _entries.remove(entry));
-          entry.controller.dispose();
-        }
-      });
+      if (!entry.leaving) {
+        entry.leaving = true;
+        entry.controller.animateBack(0, duration: duration, curve: _transitionCurve).whenCompleteOrCancel(() {
+          if (mounted && entry.leaving) {
+            setState(() => _entries.remove(entry));
+            entry.controller.dispose();
+          }
+        });
+      }
       entries.insert(min(_entries.indexOf(entry), entries.length), entry);
     }
     _entries = entries;
@@ -208,25 +181,13 @@ class _AnimatedPanelsState extends State<_AnimatedPanels> with TickerProviderSta
     final gaps = [
       for (var i = 0; i < _entries.length; ++i) i == 0 ? 0.0 : _columnSpacing * min(presences[i - 1], presences[i]),
     ];
-    var shared = width - gaps.fold(0.0, (sum, gap) => sum + gap);
-    var sharedPresence = 0.0;
-    for (var i = 0; i < _entries.length; ++i) {
-      final fixedWidth = _entries[i].slot.width;
-      if (fixedWidth != null) {
-        shared -= fixedWidth * presences[i];
-      } else {
-        sharedPresence += presences[i];
-      }
-    }
+    final shared = max(width - gaps.fold(0.0, (sum, gap) => sum + gap), 0.0);
+    final sharedPresence = presences.fold(0.0, (sum, presence) => sum + presence);
     return Row(
       children: [
         for (var i = 0; i < _entries.length; ++i) ...[
           SizedBox(width: gaps[i]),
-          _slot(
-            _entries[i],
-            presences[i],
-            _entries[i].slot.width ?? (sharedPresence > 0 ? max(shared, 0.0) / sharedPresence : 0.0),
-          ),
+          _slot(_entries[i], presences[i], sharedPresence > 0 ? shared / sharedPresence : 0.0),
         ],
       ],
     );
@@ -413,78 +374,6 @@ class _PanelState extends State<_Panel> {
   }
 }
 
-/// Opens Spotify when it has no media to resume.
-class _SpotifyCard extends StatefulWidget {
-  final App application;
-
-  _SpotifyCard({required this.application});
-
-  @override
-  State<_SpotifyCard> createState() => _SpotifyCardState();
-}
-
-class _SpotifyCardState extends State<_SpotifyCard> {
-  bool _focused = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final application = widget.application;
-    return AnimatedScale(
-      scale: _focused ? 1.04 : 1.0,
-      duration: Duration(milliseconds: 200),
-      curve: Curves.easeInOut,
-      child: AnimatedContainer(
-        duration: Duration(milliseconds: 200),
-        height: _panelHeight,
-        width: _spotifyCardWidth,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(_radius),
-          boxShadow: _focused ? ZenPalette.focusGlow : [],
-        ),
-        child: Material(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(_radius),
-            side: application.banner == null
-                ? BorderSide(color: ZenPalette.lavender.withValues(alpha: 0.18))
-                : BorderSide.none,
-          ),
-          clipBehavior: Clip.antiAlias,
-          elevation: _focused ? 16 : 8,
-          shadowColor: Colors.black,
-          color: ZenPalette.surface,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              InkWell(
-                focusColor: Colors.transparent,
-                onFocusChange: (focused) => setState(() => _focused = focused),
-                onTap: () => context.read<AppsService>().launchApp(application),
-                child: application.banner != null
-                    ? Ink.image(image: MemoryImage(application.banner!), fit: BoxFit.cover)
-                    : Padding(
-                        padding: EdgeInsets.all(32),
-                        child: application.icon != null
-                            ? Image.memory(application.icon!, gaplessPlayback: true)
-                            : Center(child: Text(application.name)),
-                      ),
-              ),
-              IgnorePointer(
-                child: AnimatedContainer(
-                  duration: Duration(milliseconds: 200),
-                  decoration: BoxDecoration(
-                    border: _focused ? Border.all(color: ZenPalette.accent, width: 2) : null,
-                    borderRadius: BorderRadius.circular(_radius),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// The blurred artwork seen through the waves of the background: the tint gets lighter below each wave, so that the
 /// artwork's colors show more and more towards the bottom. The waves swell while the media plays.
 class _ArtworkWaves extends StatefulWidget {
@@ -565,8 +454,9 @@ class _ArtworkWavesPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // same proportions as the background: the panel only shows the crests of the first waves
-    final scale = size.width / ZenWavesPainter.width;
+    // same proportions as the background: the panel only shows the crests of the first waves, unless it is too narrow
+    // for the waves to reach its bottom, e.g. beside another panel: it then shows less of their width
+    final scale = max(size.width / ZenWavesPainter.width, size.height / (ZenWavesPainter.height - _top));
     // in a layer, each wave replaces the tint of the ones behind instead of adding to it
     canvas.saveLayer(Offset.zero & size, Paint());
     canvas.scale(scale);

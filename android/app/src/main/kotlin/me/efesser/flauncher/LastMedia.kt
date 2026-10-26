@@ -21,36 +21,41 @@ package me.efesser.flauncher
 import android.content.Context
 import java.io.File
 
-private const val PREFERENCES_NAME = "last_spotify_media"
-private const val ART_FILE_NAME = "last_spotify_art"
-
 /**
- * Remembers the last media of Spotify, paused where it was left, so that it is still offered to be resumed once
- * Spotify's session is gone (e.g. its app has been killed), and after a restart until Spotify publishes it again.
+ * Remembers the last media of the apps which play in the background, or of those which don't, paused where it was left,
+ * so that it is still offered to be resumed once its session is gone (e.g. SmartTube releases it as soon as it leaves
+ * the foreground, Android kills Spotify while it doesn't play), and after a restart.
+ *
+ * [name] tells one from the other in the storage.
  */
-class LastSpotifyMedia(context: Context) {
-    private val preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
-    private val artFile = File(context.filesDir, ART_FILE_NAME)
+class LastMedia(context: Context, name: String, private val background: Boolean) {
+    private val preferences = context.getSharedPreferences("last_${name}_media", Context.MODE_PRIVATE)
+    private val artFile = File(context.filesDir, "last_${name}_art")
     private var savedArt: ByteArray? = null
     private var loaded = false
 
     /** The media as a session map of [MediaSessionStreamHandler], paused. */
     var media: Map<String, Any?>? = null
         get() {
-            if (!loaded) {
-                field = load()
-                loaded = true
-            }
+            load()
             return field
         }
         private set
 
-    /** [session] is the session map of Spotify's media, which was at [position] when it was last seen. */
-    fun remember(session: Map<String, Any?>, position: Long?) {
+    /** The last time the media was seen playing, in milliseconds since the epoch. */
+    var seenAt = 0L
+        get() {
+            load()
+            return field
+        }
+        private set
+
+    /** [session] is the session map of the media, which was at [position] when it was last seen at [seenAt]. */
+    fun remember(session: Map<String, Any?>, position: Long?, seenAt: Long) {
         val art = session["art"] as ByteArray?
-        val media = mediaMap(session["title"] as String?, session["artist"] as String?, session["album"] as String?,
-            session["duration"] as Long?, position, art)
-        if (media == this.media) {
+        val media = mediaMap(session["packageName"] as String, session["title"] as String?,
+            session["artist"] as String?, session["album"] as String?, session["duration"] as Long?, position, art)
+        if (media == this.media && seenAt == this.seenAt) {
             return
         }
         if (art !== savedArt) {
@@ -62,25 +67,42 @@ class LastSpotifyMedia(context: Context) {
             }
         }
         preferences.edit()
+            .putString("packageName", media["packageName"] as String)
             .putString("title", media["title"] as String?)
             .putString("artist", media["artist"] as String?)
             .putString("album", media["album"] as String?)
             .putLong("duration", media["duration"] as Long? ?: -1)
             .putLong("position", position ?: -1)
+            .putLong("seenAt", seenAt)
             .apply()
         this.media = media
+        this.seenAt = seenAt
     }
 
-    private fun load(): Map<String, Any?>? {
-        if (!preferences.contains("title")) {
-            return null
+    fun forget() {
+        if (media == null) {
+            return
         }
+        preferences.edit().clear().apply()
+        artFile.delete()
+        savedArt = null
+        media = null
+        seenAt = 0
+    }
+
+    private fun load() {
+        if (loaded) {
+            return
+        }
+        loaded = true
+        val packageName = preferences.getString("packageName", null) ?: return
         savedArt = try {
             artFile.takeIf { it.exists() }?.readBytes()
         } catch (e: Exception) {
             null
         }
-        return mediaMap(
+        media = mediaMap(
+            packageName,
             preferences.getString("title", null),
             preferences.getString("artist", null),
             preferences.getString("album", null),
@@ -88,11 +110,12 @@ class LastSpotifyMedia(context: Context) {
             preferences.getLong("position", -1).takeIf { it >= 0 },
             savedArt,
         )
+        seenAt = preferences.getLong("seenAt", 0)
     }
 
-    private fun mediaMap(title: String?, artist: String?, album: String?, duration: Long?, position: Long?,
-                         art: ByteArray?) = mapOf(
-        "packageName" to SPOTIFY_PACKAGE,
+    private fun mediaMap(packageName: String, title: String?, artist: String?, album: String?, duration: Long?,
+                         position: Long?, art: ByteArray?) = mapOf(
+        "packageName" to packageName,
         "title" to title,
         "artist" to artist,
         "album" to album,
@@ -100,5 +123,6 @@ class LastSpotifyMedia(context: Context) {
         "art" to art,
         "playing" to false,
         "position" to position,
+        "background" to background,
     )
 }
