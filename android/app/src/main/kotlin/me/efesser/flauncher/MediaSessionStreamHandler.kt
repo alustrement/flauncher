@@ -75,6 +75,8 @@ private val PLAY_KEYS = setOf(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCOD
 class MediaSessionStreamHandler(
     private val context: Context,
     private val launchApp: (String) -> Boolean,
+    /** Opens a "Continue watching" program of [WatchNextStreamHandler], returns false if it could not. */
+    private val openProgram: (Map<String, Any?>) -> Boolean,
 ) : StreamHandler {
     private val mediaSessionManager = context.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
     private val listenerComponent = ComponentName(context, MediaNotificationListener::class.java)
@@ -84,6 +86,9 @@ class MediaSessionStreamHandler(
     private var controllers: List<MediaController> = emptyList()
     // the artworks of the media shown, which are sent together
     private val artBytes = WeakHashMap<Bitmap, ByteArray>()
+    // the "Continue watching" programs, null when they can't be read
+    private var programs: List<Map<String, Any?>>? = null
+    private var programsRead = false
     private var lastEngagements: Map<String, Long> = emptyMap()
     private val backgroundPlayback = BackgroundPlayback(context)
     private val foreground = Slot("foreground", background = false)
@@ -152,13 +157,21 @@ class MediaSessionStreamHandler(
     }
 
     /**
-     * Some apps don't publish a media session while they play (e.g. arte), which would leave an older paused video
-     * offered while another app has been watched since: the "Continue watching" programs these apps publish tell it.
-     *
-     * [engagements] is the last time a program of each app was watched, in milliseconds since the epoch.
+     * The "Continue watching" programs tell which video can still be opened once its session is gone, as the intent of
+     * its session doesn't survive a restart of the device. Some apps don't publish a media session while they play
+     * (e.g. arte) either, which would leave an older paused video offered while another app has been watched since: the
+     * last time a program of each app was watched tells it.
      */
-    fun updateLastEngagements(engagements: Map<String, Long>) {
-        lastEngagements = engagements
+    fun updateWatchNextPrograms(programs: List<Map<String, Any?>>?) {
+        this.programs = programs
+        programsRead = true
+        lastEngagements = (programs ?: emptyList())
+            .groupBy { it["packageName"] as String? }
+            .mapNotNull { (packageName, programs) ->
+                val lastEngagement = programs.mapNotNull { it["lastEngagementTime"] as Long? }.maxOrNull()
+                if (packageName != null && lastEngagement != null) packageName to lastEngagement else null
+            }
+            .toMap()
         selectController()
     }
 
@@ -195,8 +208,14 @@ class MediaSessionStreamHandler(
     private fun isPlayPress(event: KeyEvent) =
         event.keyCode in PLAY_KEYS && event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0
 
-    /** Opens the player of the session of [packageName], or the app if its session is gone or provides none. */
+    /**
+     * Opens the player of the session of [packageName]. Once it is gone, the video opens its "Continue watching"
+     * program, otherwise the app is opened.
+     */
     fun openPlayer(packageName: String): Boolean {
+        if (liveController(packageName) == null && foreground.program(packageName)?.let(openProgram) == true) {
+            return true
+        }
         val controller = controllers.firstOrNull { it.packageName == packageName }
         return try {
             controller?.sessionActivity?.send() != null
@@ -279,7 +298,8 @@ class MediaSessionStreamHandler(
     /**
      * The last media of the apps which play in the background, or of those which don't, is the last one seen playing, or
      * a paused one until then. Once its session is gone, it is kept where it was left. A video is given up once another
-     * app is watched without session.
+     * app is watched without session, and once its session is gone unless a "Continue watching" program opens it: a
+     * live stream, without duration, is never resumed.
      */
     private inner class Slot(name: String, private val background: Boolean) {
         private val lastMedia = LastMedia(context, name, background)
@@ -289,7 +309,7 @@ class MediaSessionStreamHandler(
         fun select(stopped: Set<String>): Map<String, Any?>? {
             val rememberedPackage = lastMedia.media?.get("packageName") as String?
             if (rememberedPackage != null && (backgroundPlayback.canPlayInBackground(rememberedPackage) != background ||
-                    !background && isOutdated(rememberedPackage, lastMedia.seenAt))
+                    !background && (isOutdated(rememberedPackage, lastMedia.seenAt) || !isReplayable(lastMedia.media!!)))
             ) {
                 lastMedia.forget()
                 session = null
@@ -301,7 +321,7 @@ class MediaSessionStreamHandler(
                 ?: candidates.takeIf { remembered == null }
                     ?.firstOrNull { isShowable(it) && (background || !isOutdated(it)) }
             val session = controller?.let(::buildSessionMap)
-            val media = session ?: this.session ?: return lastMedia.media
+            val media = session ?: this.session ?: return lastMedia.media?.takeIf { background || programsRead }
             val packageName = media["packageName"] as String
             val seenAt = when {
                 packageName in playingPackages || packageName in stopped -> System.currentTimeMillis()
@@ -311,9 +331,32 @@ class MediaSessionStreamHandler(
             // once its session is gone, the media is remembered where it was left
             lastMedia.remember(media, currentPosition(media), seenAt)
             this.session = session
-            return session ?: lastMedia.media
+            // a video without session waits for its program rather than showing up and going right away
+            return session ?: lastMedia.media?.takeIf { background || programsRead }
+        }
+
+        /** The "Continue watching" program of the media of [packageName], if it is the one remembered. */
+        fun program(packageName: String) =
+            lastMedia.media?.takeIf { it["packageName"] == packageName }?.let(::programOf)
+
+        /** Whether the session of the video is there, or it still can be opened from its program, as far as is known. */
+        private fun isReplayable(media: Map<String, Any?>) = liveController(media["packageName"] as String) != null ||
+            !programsRead || programs == null || media["duration"] != null && programOf(media) != null
+    }
+
+    /** The "Continue watching" program of [media]: the session of some apps gives its title as subtitle. */
+    private fun programOf(media: Map<String, Any?>): Map<String, Any?>? {
+        val titles = listOfNotNull(media["title"] as String?, media["artist"] as String?).map(::normalizeTitle)
+            .filter { it.isNotEmpty() }
+        return programs?.firstOrNull { program ->
+            program["packageName"] == media["packageName"] && program["intentUri"] != null &&
+                listOfNotNull(program["title"] as String?, program["episodeTitle"] as String?)
+                    .any { normalizeTitle(it) in titles }
         }
     }
+
+    private fun normalizeTitle(title: String) =
+        title.replace("’", "'").replace(Regex("\\s+"), " ").trim().lowercase()
 
     private fun isPlaying(controller: MediaController) = controller.playbackState?.state in ACTIVE_STATES
 

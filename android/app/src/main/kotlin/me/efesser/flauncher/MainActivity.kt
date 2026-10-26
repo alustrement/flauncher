@@ -149,11 +149,13 @@ class MainActivity : FlutterActivity() {
             }
         })
 
-        mediaSessionStreamHandler = MediaSessionStreamHandler(this, ::launchApp)
+        mediaSessionStreamHandler = MediaSessionStreamHandler(this, ::launchApp) { program ->
+            watchNextStreamHandler.open(program["intentUri"] as String?, program["packageName"] as String)
+        }
         EventChannel(flutterEngine.dartExecutor.binaryMessenger, MEDIA_EVENT_CHANNEL)
             .setStreamHandler(mediaSessionStreamHandler)
 
-        watchNextStreamHandler = WatchNextStreamHandler(this, mediaSessionStreamHandler::updateLastEngagements)
+        watchNextStreamHandler = WatchNextStreamHandler(this, mediaSessionStreamHandler::updateWatchNextPrograms)
         EventChannel(flutterEngine.dartExecutor.binaryMessenger, WATCH_NEXT_EVENT_CHANNEL)
             .setStreamHandler(watchNextStreamHandler)
     }

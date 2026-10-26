@@ -117,8 +117,8 @@ class MediaService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// A paused media of an app which plays in the background is resumed in place, any other media opens its player. A
-  /// media whose session is gone opens its app.
+  /// A paused media of an app which plays in the background is resumed in place, any other media opens its player. Once
+  /// its session is gone, a video opens its "Continue watching" program, and any other media its app.
   Future<void> open(NowPlaying media) async {
     if (media.background && !media.playing) {
       await _fLauncherChannel.playMedia(media.packageName);

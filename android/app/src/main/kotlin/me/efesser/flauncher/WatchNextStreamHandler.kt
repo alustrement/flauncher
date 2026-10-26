@@ -63,8 +63,8 @@ private val PROJECTION = arrayOf(
  */
 class WatchNextStreamHandler(
     private val context: Context,
-    /** Called with the last time a program of each app was watched, in milliseconds since the epoch. */
-    private val onLastEngagements: (Map<String, Long>) -> Unit,
+    /** Called with the programs each time they are read, or with null when they can't be. */
+    private val onPrograms: (List<Map<String, Any?>>?) -> Unit,
 ) : StreamHandler {
     private val handler = Handler(Looper.getMainLooper())
     private val executor = Executors.newSingleThreadExecutor()
@@ -82,6 +82,7 @@ class WatchNextStreamHandler(
     override fun onListen(arguments: Any?, events: EventSink) {
         this.events = events
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            onPrograms(null)
             events.success(mapOf("permissionGranted" to true, "programs" to emptyList<Any>()))
             return
         }
@@ -112,6 +113,7 @@ class WatchNextStreamHandler(
             return
         }
         if (!hasPermission()) {
+            onPrograms(null)
             events?.success(mapOf("permissionGranted" to false))
             return
         }
@@ -119,11 +121,11 @@ class WatchNextStreamHandler(
             val programs = try {
                 queryPrograms()
             } catch (e: Exception) {
-                emptyList()
+                null
             }
             handler.post {
-                onLastEngagements(lastEngagements(programs))
-                events?.success(mapOf("permissionGranted" to true, "programs" to programs))
+                onPrograms(programs)
+                events?.success(mapOf("permissionGranted" to true, "programs" to (programs ?: emptyList())))
             }
         }
     }
@@ -150,14 +152,6 @@ class WatchNextStreamHandler(
             false
         }
     }
-
-    private fun lastEngagements(programs: List<Map<String, Any?>>): Map<String, Long> = programs
-        .groupBy { it["packageName"] as String? }
-        .mapNotNull { (packageName, programs) ->
-            val lastEngagement = programs.mapNotNull { it["lastEngagementTime"] as Long? }.maxOrNull()
-            if (packageName != null && lastEngagement != null) packageName to lastEngagement else null
-        }
-        .toMap()
 
     private fun queryPrograms(): List<Map<String, Any?>> {
         // the TV provider rejects selections from apps which don't have full access, hence filtering here
