@@ -279,6 +279,8 @@ class MediaSessionStreamHandler(
      */
     private fun selectController() {
         val stopped = trackPlaying()
+        foreground.handOver(background)
+        background.handOver(foreground)
         val foregroundMedia = foreground.select(stopped)
         val backgroundMedia = background.select(stopped)
         // a media playing on another device leaves the video to be resumed beside it
@@ -321,8 +323,8 @@ class MediaSessionStreamHandler(
 
         fun select(stopped: Set<String>): Map<String, Any?>? {
             val rememberedPackage = lastMedia.media?.get("packageName") as String?
-            if (rememberedPackage != null && (backgroundPlayback.canPlayInBackground(rememberedPackage) != background ||
-                    !background && (isOutdated(rememberedPackage, lastMedia.seenAt) || !isReplayable(lastMedia.media!!)))
+            if (rememberedPackage != null && !background &&
+                (isOutdated(rememberedPackage, lastMedia.seenAt) || !isReplayable(lastMedia.media!!))
             ) {
                 lastMedia.forget()
                 session = null
@@ -346,6 +348,24 @@ class MediaSessionStreamHandler(
             this.session = session
             // after a restart, a video without session waits for its program rather than showing up and going right away
             return session ?: lastMedia.media?.takeUnless { waitsForPrograms() }
+        }
+
+        /**
+         * Gives the media to [other] once its app turns out to play in the background, or not, as its session may be gone
+         * meanwhile (e.g. it stopped as the launcher came back in front of it). It replaces the media of [other] unless
+         * that one was seen since.
+         */
+        fun handOver(other: Slot) {
+            val media = lastMedia.media ?: return
+            if (backgroundPlayback.canPlayInBackground(media["packageName"] as String) == background) {
+                return
+            }
+            if (other.lastMedia.media == null || other.lastMedia.seenAt <= lastMedia.seenAt) {
+                other.lastMedia.remember(media, media["position"] as Long?, lastMedia.seenAt)
+                other.session = null
+            }
+            lastMedia.forget()
+            session = null
         }
 
         /** The "Continue watching" program of the media of [packageName], if it is the one remembered. */
