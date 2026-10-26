@@ -685,6 +685,18 @@ class MockSettingsService extends _i1.Mock implements _i12.SettingsService {
   ) as bool);
 
   @override
+  bool get showAllApplications => (super.noSuchMethod(
+    Invocation.getter(#showAllApplications),
+    returnValue: false,
+  ) as bool);
+
+  @override
+  bool get showRecentPlays => (super.noSuchMethod(
+    Invocation.getter(#showRecentPlays),
+    returnValue: false,
+  ) as bool);
+
+  @override
   bool get hasListeners =>
       (super.noSuchMethod(Invocation.getter(#hasListeners), returnValue: false)
           as bool);
@@ -692,6 +704,20 @@ class MockSettingsService extends _i1.Mock implements _i12.SettingsService {
   @override
   _i6.Future<void> setUse24HourTimeFormat(bool? value) => (super.noSuchMethod(
     Invocation.method(#setUse24HourTimeFormat, [value]),
+    returnValue: _i6.Future<void>.value(),
+    returnValueForMissingStub: _i6.Future<void>.value(),
+  ) as _i6.Future<void>);
+
+  @override
+  _i6.Future<void> setShowAllApplications(bool? value) => (super.noSuchMethod(
+    Invocation.method(#setShowAllApplications, [value]),
+    returnValue: _i6.Future<void>.value(),
+    returnValueForMissingStub: _i6.Future<void>.value(),
+  ) as _i6.Future<void>);
+
+  @override
+  _i6.Future<void> setShowRecentPlays(bool? value) => (super.noSuchMethod(
+    Invocation.method(#setShowRecentPlays, [value]),
     returnValue: _i6.Future<void>.value(),
     returnValueForMissingStub: _i6.Future<void>.value(),
   ) as _i6.Future<void>);

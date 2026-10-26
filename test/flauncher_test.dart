@@ -30,6 +30,7 @@ import 'package:flauncher/widgets/apps_grid.dart';
 import 'package:flauncher/widgets/category_row.dart';
 import 'package:flauncher/widgets/settings/settings_panel_page.dart';
 import 'package:flauncher/widgets/reveal_on_focus.dart';
+import 'package:flauncher/widgets/watch_next_row.dart';
 import 'package:flauncher/widgets/zen_waves_painter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -171,6 +172,26 @@ void main() {
     expect(cards, ["Alpha", "beta"]);
     expect(FocusManager.instance.primaryFocus!.context!.findAncestorWidgetOfExactType<AppCard>()!.application.name,
         "Alpha");
+  });
+
+  testWidgets("The all apps icon and the recent plays can be hidden", (tester) async {
+    final appsService = MockAppsService();
+    final settingsService = MockSettingsService();
+    when(appsService.initialized).thenReturn(true);
+    when(appsService.categoriesWithApps).thenReturn([]);
+    when(settingsService.use24HourTimeFormat).thenReturn(false);
+
+    await _pumpWidgetWithProviders(
+      tester,
+      appsService,
+      settingsService,
+      showAllApplications: false,
+      showRecentPlays: false,
+    );
+
+    expect(find.byKey(Key("all-apps")), findsNothing);
+    expect(find.byIcon(Icons.view_module_outlined), findsNothing);
+    expect(find.byType(WatchNextRow), findsNothing);
   });
 
   testWidgets("Pressing select on app opens ApplicationInfoPanel", (tester) async {
@@ -769,7 +790,11 @@ Future<void> _pumpWidgetWithProviders(
   SettingsService settingsService, {
   NowPlaying? nowPlaying,
   HomeService? homeService,
+  bool showAllApplications = true,
+  bool showRecentPlays = true,
 }) async {
+  when(settingsService.showAllApplications).thenReturn(showAllApplications);
+  when(settingsService.showRecentPlays).thenReturn(showRecentPlays);
   final mediaService = MockMediaService();
   when(mediaService.permissionGranted).thenReturn(true);
   when(mediaService.medias).thenReturn([?nowPlaying]);

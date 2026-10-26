@@ -20,16 +20,34 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _use24HourTimeFormatKey = "use_24_hour_time_format";
+const _showAllApplicationsKey = "show_all_applications";
+const _showRecentPlaysKey = "show_recent_plays";
 
 class SettingsService extends ChangeNotifier {
   final SharedPreferences _sharedPreferences;
 
   bool get use24HourTimeFormat => _sharedPreferences.getBool(_use24HourTimeFormatKey) ?? true;
 
+  /// Whether the top bar offers the page with all the applications.
+  bool get showAllApplications => _sharedPreferences.getBool(_showAllApplicationsKey) ?? true;
+
+  /// Whether the home page shows the row of the recent plays.
+  bool get showRecentPlays => _sharedPreferences.getBool(_showRecentPlaysKey) ?? true;
+
   SettingsService(this._sharedPreferences);
 
   Future<void> setUse24HourTimeFormat(bool value) async {
     await _sharedPreferences.setBool(_use24HourTimeFormatKey, value);
+    notifyListeners();
+  }
+
+  Future<void> setShowAllApplications(bool value) async {
+    await _sharedPreferences.setBool(_showAllApplicationsKey, value);
+    notifyListeners();
+  }
+
+  Future<void> setShowRecentPlays(bool value) async {
+    await _sharedPreferences.setBool(_showRecentPlaysKey, value);
     notifyListeners();
   }
 }

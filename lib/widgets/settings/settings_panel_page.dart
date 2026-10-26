@@ -78,6 +78,20 @@ class SettingsPanelPage extends StatelessWidget {
             title: Text("Format 24 heures"),
             dense: true,
           ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.symmetric(horizontal: 8),
+            value: settingsService.showAllApplications,
+            onChanged: (value) => settingsService.setShowAllApplications(value),
+            title: Text("Afficher toutes les applications"),
+            dense: true,
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.symmetric(horizontal: 8),
+            value: settingsService.showRecentPlays,
+            onChanged: (value) => settingsService.setShowRecentPlays(value),
+            title: Text("Afficher les lectures récentes"),
+            dense: true,
+          ),
           Divider(),
           TextButton(
             child: Row(

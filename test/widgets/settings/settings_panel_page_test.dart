@@ -108,6 +108,45 @@ void main() {
     verify(settingsService.setUse24HourTimeFormat(true));
   });
 
+  testWidgets("'Afficher toutes les applications' toggle calls SettingsService", (tester) async {
+    final settingsService = MockSettingsService();
+    final appsService = MockAppsService();
+    when(appsService.categoriesWithApps).thenReturn([]);
+    when(appsService.applications).thenReturn([]);
+    when(settingsService.use24HourTimeFormat).thenReturn(false);
+
+    await _pumpWidgetWithProviders(tester, settingsService, appsService);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    verify(settingsService.setShowAllApplications(false));
+  });
+
+  testWidgets("'Afficher les lectures récentes' toggle calls SettingsService", (tester) async {
+    final settingsService = MockSettingsService();
+    final appsService = MockAppsService();
+    when(appsService.categoriesWithApps).thenReturn([]);
+    when(appsService.applications).thenReturn([]);
+    when(settingsService.use24HourTimeFormat).thenReturn(false);
+
+    await _pumpWidgetWithProviders(tester, settingsService, appsService);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    verify(settingsService.setShowRecentPlays(false));
+  });
+
   testWidgets("'About FLauncher' opens about dialog", (tester) async {
     final settingsService = MockSettingsService();
     final appsService = MockAppsService();
@@ -118,6 +157,8 @@ void main() {
 
     await _pumpWidgetWithProviders(tester, settingsService, appsService);
 
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
@@ -134,6 +175,8 @@ Future<void> _pumpWidgetWithProviders(
   SettingsService settingsService,
   AppsService appsService,
 ) async {
+  when(settingsService.showAllApplications).thenReturn(true);
+  when(settingsService.showRecentPlays).thenReturn(true);
   await tester.pumpWidget(
     MultiProvider(
       providers: [

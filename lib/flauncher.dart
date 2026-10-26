@@ -23,6 +23,7 @@ import 'package:flauncher/database.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/home_service.dart';
+import 'package:flauncher/providers/settings_service.dart';
 import 'package:flauncher/widgets/all_apps_page.dart';
 import 'package:flauncher/widgets/apps_grid.dart';
 import 'package:flauncher/widgets/category_row.dart';
@@ -71,7 +72,7 @@ class FLauncher extends StatelessWidget {
     children: [
       SkipInitialFocus(child: _topBar(context)),
       NowPlayingPanel(),
-      WatchNextRow(),
+      if (context.select((SettingsService settings) => settings.showRecentPlays)) WatchNextRow(),
       ...categoriesWithApps.map((categoryWithApps) {
         switch (categoryWithApps.category.type) {
           case CategoryType.row:
@@ -105,12 +106,14 @@ class FLauncher extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _topBarButton(
-          Icons.view_module_outlined,
-          () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => AllAppsPage())),
-          key: Key("all-apps"),
-        ),
-        SizedBox(width: 8),
+        if (context.select((SettingsService settings) => settings.showAllApplications)) ...[
+          _topBarButton(
+            Icons.view_module_outlined,
+            () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => AllAppsPage())),
+            key: Key("all-apps"),
+          ),
+          SizedBox(width: 8),
+        ],
         _topBarButton(Icons.settings_outlined, () => showDialog(context: context, builder: (_) => SettingsPanel())),
         Padding(
           padding: EdgeInsets.only(left: 16, right: 32),

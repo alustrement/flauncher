@@ -57,4 +57,60 @@ void main() {
       expect(use24HourTimeFormat, isFalse);
     });
   });
+
+  test("setShowAllApplications", () async {
+    final sharedPreferences = await SharedPreferences.getInstance();
+    final settingsService = SettingsService(sharedPreferences);
+
+    await settingsService.setShowAllApplications(false);
+
+    expect(sharedPreferences.getBool("show_all_applications"), isFalse);
+  });
+
+  group("showAllApplications", () {
+    test("without value from shared preferences", () async {
+      final sharedPreferences = await SharedPreferences.getInstance();
+      await sharedPreferences.clear();
+      final settingsService = SettingsService(sharedPreferences);
+
+      expect(settingsService.showAllApplications, isTrue);
+    });
+
+    test("with value from shared preferences", () async {
+      final sharedPreferences = await SharedPreferences.getInstance();
+      await sharedPreferences.clear();
+      sharedPreferences.setBool("show_all_applications", false);
+      final settingsService = SettingsService(sharedPreferences);
+
+      expect(settingsService.showAllApplications, isFalse);
+    });
+  });
+
+  test("setShowRecentPlays", () async {
+    final sharedPreferences = await SharedPreferences.getInstance();
+    final settingsService = SettingsService(sharedPreferences);
+
+    await settingsService.setShowRecentPlays(false);
+
+    expect(sharedPreferences.getBool("show_recent_plays"), isFalse);
+  });
+
+  group("showRecentPlays", () {
+    test("without value from shared preferences", () async {
+      final sharedPreferences = await SharedPreferences.getInstance();
+      await sharedPreferences.clear();
+      final settingsService = SettingsService(sharedPreferences);
+
+      expect(settingsService.showRecentPlays, isTrue);
+    });
+
+    test("with value from shared preferences", () async {
+      final sharedPreferences = await SharedPreferences.getInstance();
+      await sharedPreferences.clear();
+      sharedPreferences.setBool("show_recent_plays", false);
+      final settingsService = SettingsService(sharedPreferences);
+
+      expect(settingsService.showRecentPlays, isFalse);
+    });
+  });
 }
