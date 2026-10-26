@@ -166,10 +166,10 @@ class MediaSessionStreamHandler(
     }
 
     /**
-     * The "Continue watching" programs tell which video can still be opened once its session is gone, as the intent of
-     * its session doesn't survive a restart of the device. Some apps don't publish a media session while they play
-     * (e.g. arte) either, which would leave an older paused video offered while another app has been watched since: the
-     * last time a program of each app was watched tells it.
+     * The "Continue watching" programs tell which video can still be opened after a restart of the device, which the
+     * intent of its session doesn't survive. Some apps don't publish a media session while they play (e.g. arte) either,
+     * which would leave an older paused video offered while another app has been watched since: the last time a program
+     * of each app was watched tells it.
      */
     fun updateWatchNextPrograms(programs: List<Map<String, Any?>>?) {
         this.programs = programs
@@ -309,8 +309,10 @@ class MediaSessionStreamHandler(
     /**
      * The last media of the apps which play in the background, or of those which don't, is the last one seen playing, or
      * a paused one until then. Once its session is gone, it is kept where it was left. A video is given up once another
-     * app is watched without session, and once its session is gone unless a "Continue watching" program opens it: a
-     * live stream, without duration, is never resumed.
+     * app is watched without session. After a restart of the device, it is given up unless a "Continue watching" program
+     * opens it, as its app wouldn't (e.g. arte), while until then its app may (e.g. SmartTube, which releases its
+     * session as soon as it leaves the foreground and resumes the video when it is opened). A live stream, without
+     * duration, is given up with its session.
      */
     private inner class Slot(name: String, private val background: Boolean) {
         private val lastMedia = LastMedia(context, name, background)
@@ -332,7 +334,7 @@ class MediaSessionStreamHandler(
                 ?: candidates.takeIf { remembered == null }
                     ?.firstOrNull { isShowable(it) && (background || !isOutdated(it)) }
             val session = controller?.let(::buildSessionMap)
-            val media = session ?: this.session ?: return lastMedia.media?.takeIf { background || programsRead }
+            val media = session ?: this.session ?: return lastMedia.media?.takeUnless { waitsForPrograms() }
             val packageName = media["packageName"] as String
             val seenAt = when {
                 packageName in playingPackages || packageName in stopped -> System.currentTimeMillis()
@@ -342,17 +344,27 @@ class MediaSessionStreamHandler(
             // once its session is gone, the media is remembered where it was left
             lastMedia.remember(media, currentPosition(media), seenAt)
             this.session = session
-            // a video without session waits for its program rather than showing up and going right away
-            return session ?: lastMedia.media?.takeIf { background || programsRead }
+            // after a restart, a video without session waits for its program rather than showing up and going right away
+            return session ?: lastMedia.media?.takeUnless { waitsForPrograms() }
         }
 
         /** The "Continue watching" program of the media of [packageName], if it is the one remembered. */
         fun program(packageName: String) =
             lastMedia.media?.takeIf { it["packageName"] == packageName }?.let(::programOf)
 
-        /** Whether the session of the video is there, or it still can be opened from its program, as far as is known. */
-        private fun isReplayable(media: Map<String, Any?>) = liveController(media["packageName"] as String) != null ||
-            !programsRead || programs == null || media["duration"] != null && programOf(media) != null
+        /**
+         * Whether the session of the video is there, or it was seen since the device started, or it still can be opened
+         * from its program, as far as is known.
+         */
+        private fun isReplayable(media: Map<String, Any?>): Boolean {
+            if (liveController(media["packageName"] as String) != null) {
+                return true
+            }
+            return media["duration"] != null && (lastMedia.seenAt >= bootedAt() || !programsRead || programs == null ||
+                programOf(media) != null)
+        }
+
+        private fun waitsForPrograms() = !background && !programsRead && lastMedia.seenAt < bootedAt()
     }
 
     /** The "Continue watching" program of [media]: the session of some apps gives its title as subtitle. */
@@ -368,6 +380,9 @@ class MediaSessionStreamHandler(
 
     private fun normalizeTitle(title: String) =
         title.replace("’", "'").replace(Regex("\\s+"), " ").trim().lowercase()
+
+    /** When the device started, in milliseconds since the epoch. */
+    private fun bootedAt() = System.currentTimeMillis() - SystemClock.elapsedRealtime()
 
     private fun isPlaying(controller: MediaController) = controller.playbackState?.state in ACTIVE_STATES
 
