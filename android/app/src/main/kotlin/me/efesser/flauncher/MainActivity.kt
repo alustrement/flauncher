@@ -92,7 +92,10 @@ class MainActivity : FlutterActivity() {
                 "openMediaSession" -> result.success(
                     mediaSessionStreamHandler.openPlayer() || launchApp(call.arguments as String))
                 "resumeSpotify" -> result.success(mediaSessionStreamHandler.resumeSpotify())
-                "setFocusedMedia" -> result.success(mediaSessionStreamHandler.setFocusedMedia(call.arguments as String?))
+                "setFocusedMedia" -> {
+                    mediaSessionStreamHandler.setFocusedMedia(call.arguments as String?)
+                    result.success(null)
+                }
                 "requestWatchNextPermission" -> result.success(requestWatchNextPermission())
                 "openWatchNextProgram" -> {
                     val packageName = call.argument<String>("packageName")!!
