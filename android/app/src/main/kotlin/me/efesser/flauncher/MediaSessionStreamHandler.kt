@@ -195,7 +195,8 @@ class MediaSessionStreamHandler(
      * ignored when several media are offered and none is focused.
      *
      * Videos must not play behind the launcher though: for an app which doesn't play in the background, or whose session
-     * is gone, play keys open the app instead and other keys are ignored.
+     * is gone, play keys open the app instead and other keys are ignored. So do they for a media playing on another
+     * device (e.g. Spotify Connect), whose app ignores them.
      */
     fun dispatchMediaKey(event: KeyEvent): Boolean {
         if (event.keyCode !in MEDIA_KEYS) {
@@ -205,7 +206,7 @@ class MediaSessionStreamHandler(
         val packageName = focusedMedia ?: playingPackage ?: shownPackages.singleOrNull()
             ?: return shownPackages.isNotEmpty()
         val controller = liveController(packageName)
-        if (controller != null && backgroundPlayback.canPlayInBackground(packageName)) {
+        if (controller != null && !isRemote(controller) && backgroundPlayback.canPlayInBackground(packageName)) {
             return controller.dispatchMediaButtonEvent(event)
         }
         if (isPlayPress(event)) {
@@ -280,7 +281,8 @@ class MediaSessionStreamHandler(
         val stopped = trackPlaying()
         val foregroundMedia = foreground.select(stopped)
         val backgroundMedia = background.select(stopped)
-        val playing = controllers.firstOrNull(::isPlaying)
+        // a media playing on another device leaves the video to be resumed beside it
+        val playing = controllers.firstOrNull(::isPlayingHere)
         val medias = if (playing != null) {
             listOf(buildSessionMap(playing))
         } else {
@@ -296,7 +298,7 @@ class MediaSessionStreamHandler(
 
     /** Remembers when each app stopped playing, and returns the ones which just did. */
     private fun trackPlaying(): Set<String> {
-        val playing = controllers.filter(::isPlaying).map { it.packageName }.toSet()
+        val playing = controllers.filter(::isPlayingHere).map { it.packageName }.toSet()
         val stopped = playingPackages - playing
         val now = SystemClock.elapsedRealtime()
         stopped.forEach { stoppedAt[it] = now }
@@ -369,6 +371,12 @@ class MediaSessionStreamHandler(
 
     private fun isPlaying(controller: MediaController) = controller.playbackState?.state in ACTIVE_STATES
 
+    private fun isPlayingHere(controller: MediaController) = isPlaying(controller) && !isRemote(controller)
+
+    /** Whether the media plays on another device, e.g. through Spotify Connect. */
+    private fun isRemote(controller: MediaController) =
+        controller.playbackInfo?.playbackType == MediaController.PlaybackInfo.PLAYBACK_TYPE_REMOTE
+
     private fun isShowable(controller: MediaController) =
         controller.metadata != null && controller.playbackState?.state == PlaybackState.STATE_PAUSED
 
@@ -422,6 +430,7 @@ class MediaSessionStreamHandler(
             },
             "speed" to state?.playbackSpeed?.toDouble(),
             "background" to backgroundPlayback.canPlayInBackground(controller.packageName),
+            "remote" to isRemote(controller),
         )
     }
 

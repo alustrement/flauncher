@@ -35,6 +35,9 @@ class NowPlaying {
   /// Whether its app plays in the background: its paused media is then resumed without leaving the launcher.
   final bool background;
 
+  /// Whether it plays on another device, e.g. through Spotify Connect: its app ignores the controls of the launcher.
+  final bool remote;
+
   NowPlaying({
     required this.packageName,
     this.title,
@@ -48,6 +51,7 @@ class NowPlaying {
     this.positionUpdatedAt,
     this.speed = 1.0,
     this.background = false,
+    this.remote = false,
   });
 
   /// The one of [previousArts] equal to the artwork is reused, so that image widgets don't reload it.
@@ -69,6 +73,7 @@ class NowPlaying {
           : null,
       speed: map["speed"] ?? 1.0,
       background: map["background"] ?? false,
+      remote: map["remote"] ?? false,
     );
   }
 
@@ -100,7 +105,8 @@ class MediaService extends ChangeNotifier {
   /// the last one of an app which does, to be resumed.
   List<NowPlaying> get medias => _medias;
 
-  bool get playing => _medias.any((media) => media.playing);
+  /// Whether a media plays on this device.
+  bool get playing => _medias.any((media) => media.playing && !media.remote);
 
   MediaService(this._fLauncherChannel) {
     _fLauncherChannel.addMediaSessionListener(_onMediaSessionEvent);
@@ -117,10 +123,11 @@ class MediaService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// A paused media of an app which plays in the background is resumed in place, any other media opens its player. Once
-  /// its session is gone, a video opens its "Continue watching" program, and any other media its app.
+  /// A paused media of an app which plays in the background is resumed in place, any other media opens its player, as
+  /// does a media playing on another device. Once its session is gone, a video opens its "Continue watching" program,
+  /// and any other media its app.
   Future<void> open(NowPlaying media) async {
-    if (media.background && !media.playing) {
+    if (media.background && !media.playing && !media.remote) {
       await _fLauncherChannel.playMedia(media.packageName);
     } else {
       await _fLauncherChannel.openMediaSession(media.packageName);

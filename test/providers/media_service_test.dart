@@ -135,6 +135,27 @@ void main() {
       verifyNever(channel.playMedia(any));
     });
 
+    test("opens the player of a media playing on another device, which doesn't count as playing", () async {
+      final channel = MockFLauncherChannel();
+      final mediaService = MediaService(channel);
+      final listener = verify(channel.addMediaSessionListener(captureAny)).captured.single;
+
+      listener({
+        "permissionGranted": true,
+        "medias": [
+          {"packageName": "app.smarttube.fdroid", "title": "Une vidéo"},
+          {"packageName": "com.spotify.tv.android", "background": true, "playing": true, "remote": true},
+        ],
+      });
+      await mediaService.open(mediaService.medias.last);
+      await mediaService.open(NowPlaying(packageName: "com.spotify.tv.android", background: true, remote: true));
+
+      expect(mediaService.medias.last.remote, isTrue);
+      expect(mediaService.playing, isFalse);
+      verify(channel.openMediaSession("com.spotify.tv.android")).called(2);
+      verifyNever(channel.playMedia(any));
+    });
+
     test("tells the channel which media is focused, whatever the order of the focus changes", () async {
       final channel = MockFLauncherChannel();
       final mediaService = MediaService(channel);

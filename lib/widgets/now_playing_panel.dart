@@ -314,7 +314,7 @@ class _PanelState extends State<_Panel> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _AppLabel(application: application),
+                            _AppLabel(application: application, remote: nowPlaying.remote),
                             SizedBox(height: 4),
                             Text(
                               title,
@@ -481,22 +481,27 @@ class _ArtworkWavesPainter extends CustomPainter {
   bool shouldRepaint(_ArtworkWavesPainter oldDelegate) => swell != oldDelegate.swell;
 }
 
+/// The app, and whether the media plays on another device.
 class _AppLabel extends StatelessWidget {
   final App? application;
+  final bool remote;
 
-  _AppLabel({required this.application});
+  _AppLabel({required this.application, required this.remote});
 
   @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      if (application?.icon != null) ...[
-        Image.memory(application!.icon!, height: 18, gaplessPlayback: true),
-        SizedBox(width: 6),
+  Widget build(BuildContext context) {
+    final label = [?application?.name, if (remote) "Sur un autre appareil"].join(" · ");
+    return Row(
+      children: [
+        if (application?.icon != null) ...[
+          Image.memory(application!.icon!, height: 18, gaplessPlayback: true),
+          SizedBox(width: 6),
+        ],
+        if (label.isNotEmpty)
+          Text(label, style: Theme.of(context).textTheme.labelLarge!.copyWith(color: ZenPalette.lavender)),
       ],
-      if (application != null)
-        Text(application!.name, style: Theme.of(context).textTheme.labelLarge!.copyWith(color: ZenPalette.lavender)),
-    ],
-  );
+    );
+  }
 }
 
 /// The artwork keeps its own aspect ratio (e.g. square album covers, 16:9 video thumbnails) so that it isn't cropped.
