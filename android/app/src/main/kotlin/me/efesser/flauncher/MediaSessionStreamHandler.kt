@@ -157,6 +157,15 @@ class MediaSessionStreamHandler(
     }
 
     /**
+     * An app opened from the launcher before the check takes the audio focus from the one playing in the background,
+     * which must not be taken for an app stopping as it leaves the foreground.
+     */
+    fun onLauncherPaused() {
+        handler.removeCallbacks(observeBackgroundPlayback)
+        resumedAt = null
+    }
+
+    /**
      * The "Continue watching" programs tell which video can still be opened once its session is gone, as the intent of
      * its session doesn't survive a restart of the device. Some apps don't publish a media session while they play
      * (e.g. arte) either, which would leave an older paused video offered while another app has been watched since: the

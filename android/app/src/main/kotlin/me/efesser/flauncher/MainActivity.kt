@@ -216,6 +216,13 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+        if (::mediaSessionStreamHandler.isInitialized) {
+            mediaSessionStreamHandler.onLauncherPaused()
+        }
+    }
+
     /**
      * Flutter empties its image cache when the system asks to trim memory, which it does as soon as an app is opened
      * and hides the launcher: all the images would then be decoded again when coming back. They are only given up
