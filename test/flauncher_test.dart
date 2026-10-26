@@ -741,6 +741,8 @@ Future<void> _pumpWidgetWithProviders(
   when(mediaService.permissionGranted).thenReturn(true);
   when(mediaService.nowPlaying).thenReturn(nowPlaying);
   when(mediaService.spotify).thenReturn(null);
+  // without media session, Spotify is offered alone when it is installed
+  when(appsService.applications).thenReturn([]);
   final watchNextService = MockWatchNextService();
   when(watchNextService.permissionGranted).thenReturn(true);
   when(watchNextService.programs).thenReturn([]);

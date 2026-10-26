@@ -126,6 +126,21 @@ void main() {
       expect(mediaService.spotify, isNull);
     });
 
+    test("exposes Spotify's last media alone without media session", () {
+      final channel = MockFLauncherChannel();
+      final mediaService = MediaService(channel);
+      final listener = verify(channel.addMediaSessionListener(captureAny)).captured.single;
+
+      listener({
+        "permissionGranted": true,
+        "session": null,
+        "spotify": {"packageName": "com.spotify.tv.android", "title": "Bittersweet", "playing": false},
+      });
+
+      expect(mediaService.nowPlaying, isNull);
+      expect(mediaService.spotify!.title, "Bittersweet");
+    });
+
     test("keeps the artwork of Spotify's media when it is resumed", () {
       final channel = MockFLauncherChannel();
       final mediaService = MediaService(channel);

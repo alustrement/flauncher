@@ -100,7 +100,8 @@ class MediaService extends ChangeNotifier {
 
   NowPlaying? get nowPlaying => _nowPlaying;
 
-  /// Spotify's paused media, next to a [NowPlaying.resumable] media, to be resumed.
+  /// Spotify's paused media, next to a [NowPlaying.resumable] media or alone when there is no media, to be resumed.
+  /// Once Spotify's session is gone, it is the last media remembered.
   NowPlaying? get spotify => _spotify;
 
   MediaService(this._fLauncherChannel) {

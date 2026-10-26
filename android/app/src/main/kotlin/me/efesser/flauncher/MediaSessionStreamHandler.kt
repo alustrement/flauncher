@@ -97,7 +97,9 @@ class MediaSessionStreamHandler(
     private var currentSession: Map<String, Any?>? = null
     private var goneSession: Map<String, Any?>? = null
     private var goneAt = 0L
-    private var spotifyAside = false
+    private val lastSpotifyMedia = LastSpotifyMedia(context)
+    private var spotifySession: Map<String, Any?>? = null
+    private var spotifyShown = false
     private var focusedMedia: String? = null
 
     private val sessionsChangedListener = MediaSessionManager.OnActiveSessionsChangedListener {
@@ -155,25 +157,25 @@ class MediaSessionStreamHandler(
      * When the media of a session which is gone is shown instead, play keys open its app.
      *
      * When Spotify's paused media is shown next to a video, media keys go to the one focused, and are ignored when
-     * neither is.
+     * neither is. When it is shown alone, they go to Spotify.
      */
     fun dispatchMediaKey(event: KeyEvent): Boolean {
         if (event.keyCode !in MEDIA_KEYS) {
             return false
         }
-        if (spotifyAside) {
-            when (focusedMedia) {
-                null -> return true
-                SPOTIFY_PACKAGE -> {
-                    spotifyController()?.dispatchMediaButtonEvent(event)
+        if (spotifyShown) {
+            when {
+                currentSession == null || focusedMedia == SPOTIFY_PACKAGE -> {
+                    dispatchSpotifyMediaKey(event)
                     return true
                 }
+                focusedMedia == null -> return true
             }
         }
         val controller = currentController
         val gone = goneSession
         if (controller == null && gone != null) {
-            if (event.keyCode in PLAY_KEYS && event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+            if (isPlayPress(event)) {
                 launchApp(gone["packageName"] as String)
             }
             return true
@@ -184,11 +186,24 @@ class MediaSessionStreamHandler(
         if (isAudio(controller)) {
             return controller.dispatchMediaButtonEvent(event)
         }
-        if (event.keyCode in PLAY_KEYS && event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+        if (isPlayPress(event)) {
             openPlayer()
         }
         return true
     }
+
+    /** When only the last media of Spotify is remembered, play keys open Spotify. */
+    private fun dispatchSpotifyMediaKey(event: KeyEvent) {
+        val controller = spotifyController()
+        if (controller != null) {
+            controller.dispatchMediaButtonEvent(event)
+        } else if (isPlayPress(event)) {
+            launchApp(SPOTIFY_PACKAGE)
+        }
+    }
+
+    private fun isPlayPress(event: KeyEvent) =
+        event.keyCode in PLAY_KEYS && event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0
 
     /** Opens the player of the current session, or its app if it doesn't provide one. */
     fun openPlayer(): Boolean {
@@ -200,7 +215,7 @@ class MediaSessionStreamHandler(
         } || launchApp(controller.packageName)
     }
 
-    /** Resumes Spotify's paused media in Spotify, or opens Spotify when it has none. */
+    /** Resumes Spotify's paused media in Spotify, or opens Spotify when its session is gone or has no media. */
     fun resumeSpotify(): Boolean {
         val controller = spotifyController() ?: return launchApp(SPOTIFY_PACKAGE)
         controller.transportControls.play()
@@ -211,8 +226,10 @@ class MediaSessionStreamHandler(
         } || launchApp(SPOTIFY_PACKAGE)
     }
 
-    private fun spotifyController() =
-        controllers.firstOrNull { it.packageName == SPOTIFY_PACKAGE && it.metadata != null }
+    /** A destroyed session still gives its metadata until it is removed, but no playback state. */
+    private fun spotifyController() = controllers.firstOrNull {
+        it.packageName == SPOTIFY_PACKAGE && it.metadata != null && it.playbackState != null
+    }
 
     /** Audio attributes are often left unknown by video apps, so only an explicit audio declaration is trusted. */
     private fun isAudio(controller: MediaController): Boolean {
@@ -262,11 +279,14 @@ class MediaSessionStreamHandler(
      * shown is then kept, paused, until another media is paused or another app is watched or played.
      *
      * Next to a paused media of another app, a video which doesn't play in the background, Spotify's paused media is
-     * sent too, to be resumed.
+     * sent too, to be resumed, and alone when there is no other media to show. The last one remembered is sent once
+     * Spotify's session is gone.
      */
     private fun selectController() {
         rememberPlayed()
         rememberGoneSession()
+        val liveSpotify = spotifyController()?.let(::buildSessionMap)
+        rememberSpotify(liveSpotify)
         val controller = controllers.firstOrNull(::isPlaying)
             ?: controllers.firstOrNull {
                 isShowable(it) && !isOutdated(it) && (goneSession == null || (pausedAt(it) ?: 0) > goneAt)
@@ -277,14 +297,24 @@ class MediaSessionStreamHandler(
         currentController = controller
         val session = controller?.let(::buildSessionMap) ?: goneSession
         currentSession = session
-        val resumable = session != null && session["playing"] != true && session["packageName"] != SPOTIFY_PACKAGE
-        val spotify = if (resumable) spotifyController() else null
-        spotifyAside = spotify != null
+        val resumable = session == null ||
+            (session["playing"] != true && session["packageName"] != SPOTIFY_PACKAGE)
+        val spotify = if (resumable) liveSpotify ?: lastSpotifyMedia.media else null
+        spotifyShown = spotify != null
         events?.success(mapOf(
             "permissionGranted" to true,
             "session" to session,
-            "spotify" to spotify?.let(::buildSessionMap),
+            "spotify" to spotify,
         ))
+    }
+
+    /**
+     * Remembers Spotify's media while its session is there, and where it was left when its session goes, e.g. when
+     * Android kills Spotify while it isn't playing.
+     */
+    private fun rememberSpotify(liveSpotify: Map<String, Any?>?) {
+        (liveSpotify ?: spotifySession)?.let { lastSpotifyMedia.remember(it, currentPosition(it)) }
+        spotifySession = liveSpotify
     }
 
     /**
@@ -308,7 +338,10 @@ class MediaSessionStreamHandler(
         editor.apply()
     }
 
-    /** Keeps the media shown, paused, when its app has no session to show anymore. Spotify's is resumed instead. */
+    /**
+     * Keeps the media shown, paused, when its app has no session to show anymore. Spotify's last media is offered
+     * instead.
+     */
     private fun rememberGoneSession() {
         val session = currentSession ?: return
         val packageName = session["packageName"] as String

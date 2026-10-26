@@ -43,7 +43,8 @@ const _textShadows = [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRa
 
 /// The media playing, or Spotify's paused one offered to be resumed, full width. A video doesn't play in the background
 /// though: once it has been watched, it is offered to be resumed next to Spotify's paused media, or next to Spotify
-/// itself when it has none.
+/// itself when it has none. Without any media, Spotify's last one is offered alone, or Spotify itself when none is
+/// remembered.
 class NowPlayingPanel extends StatefulWidget {
   @override
   State<NowPlayingPanel> createState() => _NowPlayingPanelState();
@@ -60,15 +61,11 @@ class _NowPlayingPanelState extends State<NowPlayingPanel> {
         return _section(context, "En cours de lecture", SkipInitialFocus(child: _PermissionHint()));
       }
       final nowPlaying = mediaService.nowPlaying;
-      if (nowPlaying == null) {
-        return SizedBox.shrink();
-      }
-      final panel = _panel(mediaService, nowPlaying, mediaService.openPlayer);
-      if (!nowPlaying.resumable) {
+      if (nowPlaying != null && !nowPlaying.resumable) {
         return _section(
           context,
           nowPlaying.playing ? "En cours de lecture" : "Reprendre la lecture",
-          _AnimatedPanels(slots: [panel]),
+          _AnimatedPanels(slots: [_panel(mediaService, nowPlaying, mediaService.openPlayer)]),
         );
       }
       final spotify = mediaService.spotify;
@@ -76,12 +73,15 @@ class _NowPlayingPanelState extends State<NowPlayingPanel> {
         final matches = appsService.applications.where((app) => app.packageName == spotifyPackage);
         return matches.isNotEmpty ? matches.first : null;
       });
+      if (nowPlaying == null && spotify == null && spotifyApplication == null) {
+        return SizedBox.shrink();
+      }
       return _section(
         context,
         "Reprendre la lecture",
         _AnimatedPanels(
           slots: [
-            panel,
+            if (nowPlaying != null) _panel(mediaService, nowPlaying, mediaService.openPlayer),
             if (spotify != null)
               _panel(mediaService, spotify, mediaService.resumeSpotify)
             else if (spotifyApplication != null)

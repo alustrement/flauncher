@@ -31,16 +31,64 @@ import '../mocks.dart';
 import '../mocks.mocks.dart';
 
 void main() {
-  testWidgets("shows nothing without media session", (tester) async {
+  testWidgets("shows nothing without media session nor Spotify", (tester) async {
     final mediaService = MockMediaService();
+    final appsService = MockAppsService();
     when(mediaService.permissionGranted).thenReturn(true);
     when(mediaService.nowPlaying).thenReturn(null);
     when(mediaService.spotify).thenReturn(null);
+    when(appsService.applications).thenReturn([]);
 
-    await _pumpWidgetWithProviders(tester, mediaService, MockAppsService());
+    await _pumpWidgetWithProviders(tester, mediaService, appsService);
 
     expect(find.text("En cours de lecture"), findsNothing);
     expect(find.text("Reprendre la lecture"), findsNothing);
+  });
+
+  testWidgets("offers to resume Spotify's last media alone, full width, without media session", (tester) async {
+    final mediaService = MockMediaService();
+    final appsService = MockAppsService();
+    when(mediaService.permissionGranted).thenReturn(true);
+    when(mediaService.nowPlaying).thenReturn(null);
+    when(mediaService.spotify).thenReturn(NowPlaying(packageName: "com.spotify.tv.android", title: "Bittersweet"));
+    when(appsService.applications).thenReturn([fakeApp(packageName: "com.spotify.tv.android", name: "Spotify")]);
+
+    await _pumpWidgetWithProviders(tester, mediaService, appsService);
+
+    expect(find.text("Reprendre la lecture"), findsOneWidget);
+    expect(find.text("Bittersweet"), findsOneWidget);
+    expect(find.byType(InkWell), findsOneWidget);
+    final width = tester.getSize(find.byKey(ValueKey("com.spotify.tv.android"))).width;
+    expect(width, greaterThan(tester.getSize(find.byType(NowPlayingPanel)).width / 2));
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    verify(mediaService.resumeSpotify());
+    verifyNever(mediaService.openPlayer());
+  });
+
+  testWidgets("offers to open Spotify alone when no media is remembered", (tester) async {
+    final mediaService = MockMediaService();
+    final appsService = MockAppsService();
+    final spotify = fakeApp(packageName: "com.spotify.tv.android", name: "Spotify");
+    when(mediaService.permissionGranted).thenReturn(true);
+    when(mediaService.nowPlaying).thenReturn(null);
+    when(mediaService.spotify).thenReturn(null);
+    when(appsService.applications).thenReturn([spotify]);
+    when(appsService.launchApp(any)).thenAnswer((_) async {});
+
+    await _pumpWidgetWithProviders(tester, mediaService, appsService);
+
+    expect(find.text("Reprendre la lecture"), findsOneWidget);
+    expect(find.text("Spotify"), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    verify(appsService.launchApp(spotify));
   });
 
   testWidgets("shows permission hint when access is missing", (tester) async {
