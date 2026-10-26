@@ -31,18 +31,13 @@ const _validationKeys = [LogicalKeyboardKey.select, LogicalKeyboardKey.enter, Lo
 const _radius = 12.0;
 
 class AppCard extends StatefulWidget {
-  final Category category;
+  /// The category the card is shown in, if any: the applications outside of a category can't be moved.
+  final Category? category;
   final App application;
-  final void Function(AxisDirection) onMove;
-  final VoidCallback onMoveEnd;
+  final void Function(AxisDirection)? onMove;
+  final VoidCallback? onMoveEnd;
 
-  AppCard({
-    super.key,
-    required this.category,
-    required this.application,
-    required this.onMove,
-    required this.onMoveEnd,
-  });
+  AppCard({super.key, required this.category, required this.application, this.onMove, this.onMoveEnd});
 
   @override
   State<AppCard> createState() => _AppCardState();
@@ -173,16 +168,16 @@ class _AppCardState extends State<AppCard> {
         ),
       );
       if (key == LogicalKeyboardKey.arrowLeft) {
-        widget.onMove(AxisDirection.left);
+        widget.onMove?.call(AxisDirection.left);
       } else if (key == LogicalKeyboardKey.arrowUp) {
-        widget.onMove(AxisDirection.up);
+        widget.onMove?.call(AxisDirection.up);
       } else if (key == LogicalKeyboardKey.arrowRight) {
-        widget.onMove(AxisDirection.right);
+        widget.onMove?.call(AxisDirection.right);
       } else if (key == LogicalKeyboardKey.arrowDown) {
-        widget.onMove(AxisDirection.down);
+        widget.onMove?.call(AxisDirection.down);
       } else if (_validationKeys.contains(key)) {
         setState(() => _moving = false);
-        widget.onMoveEnd();
+        widget.onMoveEnd?.call();
       }
       return KeyEventResult.handled;
     } else if (_validationKeys.contains(key)) {

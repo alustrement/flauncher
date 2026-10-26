@@ -19,6 +19,20 @@
 import 'package:flauncher/palette.dart';
 import 'package:flutter/widgets.dart';
 
+/// The night blue of the Zen look, with its layers of violet waves, behind the launcher's pages.
+class ZenBackground extends StatelessWidget {
+  const ZenBackground({super.key});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: Key("background"),
+    color: ZenPalette.night,
+    child: RepaintBoundary(
+      child: CustomPaint(painter: ZenWavesPainter(), child: SizedBox.expand()),
+    ),
+  );
+}
+
 /// Layers of violet waves rising from the bottom.
 ///
 /// The shapes are drawn on a 1920x1080 canvas which is stretched to the painted size.

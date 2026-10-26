@@ -23,6 +23,8 @@ import 'package:flauncher/providers/home_service.dart';
 import 'package:flauncher/providers/media_service.dart';
 import 'package:flauncher/providers/settings_service.dart';
 import 'package:flauncher/providers/watch_next_service.dart';
+import 'package:flauncher/widgets/all_apps_page.dart';
+import 'package:flauncher/widgets/app_card.dart';
 import 'package:flauncher/widgets/application_info_panel.dart';
 import 'package:flauncher/widgets/apps_grid.dart';
 import 'package:flauncher/widgets/category_row.dart';
@@ -136,10 +138,39 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pump();
 
     expect(find.byType(SettingsPanelPage), findsOneWidget);
+  });
+
+  testWidgets("Pressing select on all apps icon opens AllAppsPage, sorted and without the hidden apps", (tester) async {
+    final appsService = MockAppsService();
+    final settingsService = MockSettingsService();
+    when(appsService.initialized).thenReturn(true);
+    when(appsService.categoriesWithApps).thenReturn([
+      CategoryWithApps(fakeCategory(name: "Favorites", order: 0), []),
+    ]);
+    when(settingsService.use24HourTimeFormat).thenReturn(false);
+    await _pumpWidgetWithProviders(tester, appsService, settingsService);
+    when(appsService.applications).thenReturn([
+      fakeApp(packageName: "me.efesser.b", name: "beta", icon: kTransparentImage),
+      fakeApp(packageName: "me.efesser.hidden", name: "Hidden", icon: kTransparentImage, hidden: true),
+      fakeApp(packageName: "me.efesser.a", name: "Alpha", icon: kTransparentImage),
+    ]);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AllAppsPage), findsOneWidget);
+    expect(find.text("Toutes les applications"), findsOneWidget);
+    final cards = tester.widgetList<AppCard>(find.byType(AppCard)).map((card) => card.application.name);
+    expect(cards, ["Alpha", "beta"]);
+    expect(FocusManager.instance.primaryFocus!.context!.findAncestorWidgetOfExactType<AppCard>()!.application.name,
+        "Alpha");
   });
 
   testWidgets("Pressing select on app opens ApplicationInfoPanel", (tester) async {
@@ -706,7 +737,9 @@ void main() {
     Element? tv2 = findAppCardByPackageName(tester, "me.efesser.tv2");
     expect(Focus.of(tv2!).hasFocus, isTrue);
 
+    // the leftmost entry of the top bar is all the applications, the settings are on its right
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     Element? settingsIcon = findSettingsIcon(tester);
     expect(settingsIcon, isNotNull);
     expect(Focus.of(settingsIcon!).hasFocus, isTrue);

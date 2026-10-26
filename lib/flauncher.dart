@@ -23,6 +23,7 @@ import 'package:flauncher/database.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/home_service.dart';
+import 'package:flauncher/widgets/all_apps_page.dart';
 import 'package:flauncher/widgets/apps_grid.dart';
 import 'package:flauncher/widgets/category_row.dart';
 import 'package:flauncher/widgets/initial_focus.dart';
@@ -41,7 +42,7 @@ class FLauncher extends StatelessWidget {
     policy: RowByRowTraversalPolicy(),
     child: Stack(
       children: [
-        _background(),
+        ZenBackground(),
         Scaffold(
           backgroundColor: Colors.transparent,
           body: Consumer<AppsService>(
@@ -96,7 +97,7 @@ class FLauncher extends StatelessWidget {
     ],
   );
 
-  /// The clock and the settings, which scroll with the page.
+  /// All the applications, the settings and the clock, which scroll with the page.
   Widget _topBar(BuildContext context) => Container(
     height: RevealOnFocus.topBarHeight,
     padding: EdgeInsets.only(bottom: RevealOnFocus.topBarHeight - kToolbarHeight),
@@ -104,30 +105,13 @@ class FLauncher extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        RevealOnFocus(
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Positioned(
-                left: 2.0,
-                top: 18.0,
-                child: ImageFiltered(
-                  imageFilter: ImageFilter.blur(sigmaX: 2, sigmaY: 2, tileMode: TileMode.decal),
-                  child: Icon(Icons.settings_outlined, color: Colors.black54),
-                ),
-              ),
-              IconButton(
-                padding: EdgeInsets.all(2),
-                constraints: BoxConstraints(),
-                splashRadius: 20,
-                color: ZenPalette.lavender,
-                focusColor: ZenPalette.waves.first.withValues(alpha: 0.4),
-                icon: Icon(Icons.settings_outlined),
-                onPressed: () => showDialog(context: context, builder: (_) => SettingsPanel()),
-              ),
-            ],
-          ),
+        _topBarButton(
+          Icons.view_module_outlined,
+          () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => AllAppsPage())),
+          key: Key("all-apps"),
         ),
+        SizedBox(width: 8),
+        _topBarButton(Icons.settings_outlined, () => showDialog(context: context, builder: (_) => SettingsPanel())),
         Padding(
           padding: EdgeInsets.only(left: 16, right: 32),
           child: Align(alignment: Alignment.center, child: TimeWidget()),
@@ -136,12 +120,29 @@ class FLauncher extends StatelessWidget {
     ),
   );
 
-  /// The night blue of the Zen look, with its layers of violet waves.
-  Widget _background() => Container(
-    key: Key("background"),
-    color: ZenPalette.night,
-    child: RepaintBoundary(
-      child: CustomPaint(painter: ZenWavesPainter(), child: SizedBox.expand()),
+  Widget _topBarButton(IconData icon, VoidCallback onPressed, {Key? key}) => RevealOnFocus(
+    child: Stack(
+      alignment: Alignment.center,
+      children: [
+        Positioned(
+          left: 2.0,
+          top: 18.0,
+          child: ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 2, sigmaY: 2, tileMode: TileMode.decal),
+            child: Icon(icon, color: Colors.black54),
+          ),
+        ),
+        IconButton(
+          key: key,
+          padding: EdgeInsets.all(2),
+          constraints: BoxConstraints(),
+          splashRadius: 20,
+          color: ZenPalette.lavender,
+          focusColor: ZenPalette.waves.first.withValues(alpha: 0.4),
+          icon: Icon(icon),
+          onPressed: onPressed,
+        ),
+      ],
     ),
   );
 }
