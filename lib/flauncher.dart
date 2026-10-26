@@ -35,6 +35,7 @@ import 'package:flauncher/widgets/time_widget.dart';
 import 'package:flauncher/widgets/watch_next_row.dart';
 import 'package:flauncher/widgets/zen_waves_painter.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 
 class FLauncher extends StatelessWidget {
@@ -108,15 +109,15 @@ class FLauncher extends StatelessWidget {
       children: [
         if (context.select((SettingsService settings) => settings.showAllApplications)) ...[
           _topBarButton(
-            Icons.view_module_outlined,
+            Symbols.apps,
             () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => AllAppsPage())),
             key: Key("all-apps"),
           ),
-          SizedBox(width: 8),
+          SizedBox(width: 20),
         ],
-        _topBarButton(Icons.settings_outlined, () => showDialog(context: context, builder: (_) => SettingsPanel())),
+        _topBarButton(Symbols.settings, () => showDialog(context: context, builder: (_) => SettingsPanel())),
         Padding(
-          padding: EdgeInsets.only(left: 16, right: 32),
+          padding: EdgeInsets.only(left: 24, right: 32),
           child: Align(alignment: Alignment.center, child: TimeWidget()),
         ),
       ],

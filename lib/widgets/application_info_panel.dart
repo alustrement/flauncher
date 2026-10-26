@@ -20,6 +20,7 @@ import 'package:flauncher/database.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/widgets/right_panel_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 
 class ApplicationInfoPanel extends StatelessWidget {
@@ -54,7 +55,7 @@ class ApplicationInfoPanel extends StatelessWidget {
         TextButton(
           child: Row(
             children: [
-              Icon(Icons.open_in_new),
+              Icon(Symbols.open_in_new),
               Container(width: 8),
               Flexible(
                 child: Text("Ouvrir", style: Theme.of(context).textTheme.bodyMedium, overflow: TextOverflow.ellipsis),
@@ -70,7 +71,7 @@ class ApplicationInfoPanel extends StatelessWidget {
           TextButton(
             child: Row(
               children: [
-                Icon(Icons.open_with),
+                Icon(Symbols.open_with),
                 Container(width: 8),
                 Flexible(
                   child: Text(
@@ -86,7 +87,7 @@ class ApplicationInfoPanel extends StatelessWidget {
         TextButton(
           child: Row(
             children: [
-              Icon(application.hidden ? Icons.visibility : Icons.visibility_off_outlined),
+              Icon(application.hidden ? Symbols.visibility : Symbols.visibility_off),
               Container(width: 8),
               Flexible(
                 child: Text(
@@ -110,7 +111,7 @@ class ApplicationInfoPanel extends StatelessWidget {
           TextButton(
             child: Row(
               children: [
-                Icon(Icons.delete_sweep_outlined),
+                Icon(Symbols.delete_sweep),
                 Container(width: 8),
                 Flexible(
                   child: Text(
@@ -131,7 +132,7 @@ class ApplicationInfoPanel extends StatelessWidget {
         TextButton(
           child: Row(
             children: [
-              Icon(Icons.info_outlined),
+              Icon(Symbols.info),
               Container(width: 8),
               Flexible(
                 child: Text(
@@ -147,7 +148,7 @@ class ApplicationInfoPanel extends StatelessWidget {
         TextButton(
           child: Row(
             children: [
-              Icon(Icons.delete_outlined),
+              Icon(Symbols.delete),
               Container(width: 8),
               Flexible(
                 child: Text(

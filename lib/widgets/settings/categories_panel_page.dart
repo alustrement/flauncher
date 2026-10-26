@@ -22,6 +22,7 @@ import 'package:flauncher/widgets/add_category_dialog.dart';
 import 'package:flauncher/widgets/ensure_visible.dart';
 import 'package:flauncher/widgets/settings/category_panel_page.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 
 class CategoriesPanelPage extends StatelessWidget {
@@ -43,7 +44,7 @@ class CategoriesPanelPage extends StatelessWidget {
         ),
       ),
       TextButton.icon(
-        icon: Icon(Icons.add),
+        icon: Icon(Symbols.add),
         label: Text("Ajouter une catégorie"),
         onPressed: () async {
           final categoryName = await showDialog<String>(context: context, builder: (_) => AddCategoryDialog());
@@ -71,19 +72,19 @@ class CategoriesPanelPage extends StatelessWidget {
               IconButton(
                 constraints: BoxConstraints(),
                 splashRadius: 20,
-                icon: Icon(Icons.arrow_upward),
+                icon: Icon(Symbols.arrow_upward),
                 onPressed: index > 0 ? () => _move(context, index, index - 1) : null,
               ),
               IconButton(
                 constraints: BoxConstraints(),
                 splashRadius: 20,
-                icon: Icon(Icons.arrow_downward),
+                icon: Icon(Symbols.arrow_downward),
                 onPressed: index < categories.length - 1 ? () => _move(context, index, index + 1) : null,
               ),
               IconButton(
                 constraints: BoxConstraints(),
                 splashRadius: 20,
-                icon: Icon(Icons.settings),
+                icon: Icon(Symbols.settings),
                 onPressed: () =>
                     Navigator.of(context)
                         .pushNamed(CategoryPanelPage.routeName, arguments: categories[index].category.id),

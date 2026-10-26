@@ -28,6 +28,7 @@ import 'package:flauncher/widgets/initial_focus.dart';
 import 'package:flauncher/widgets/reveal_on_focus.dart';
 import 'package:flauncher/widgets/zen_waves_painter.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 
 const _panelHeight = 150.0;
@@ -556,7 +557,7 @@ class _Art extends StatelessWidget {
     color: ZenPalette.night,
     child: application?.icon != null
         ? Padding(padding: EdgeInsets.all(24), child: Image.memory(application!.icon!))
-        : Icon(Icons.music_note, size: 64, color: ZenPalette.lavender),
+        : Icon(Symbols.music_note, size: 64, color: ZenPalette.lavender),
   );
 }
 
@@ -675,7 +676,7 @@ class _PermissionHint extends StatelessWidget {
       padding: EdgeInsets.all(16),
       child: Row(
         children: [
-          Icon(Icons.music_off, size: 32, color: Colors.white70),
+          Icon(Symbols.music_off, size: 32, color: Colors.white70),
           SizedBox(width: 16),
           Expanded(
             child: Column(

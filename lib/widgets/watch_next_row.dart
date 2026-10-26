@@ -24,6 +24,7 @@ import 'package:flauncher/providers/watch_next_service.dart';
 import 'package:flauncher/widgets/initial_focus.dart';
 import 'package:flauncher/widgets/reveal_on_focus.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 
 const _rowHeight = 170.0;
@@ -287,7 +288,7 @@ class _ProgramCardState extends State<_ProgramCard> {
 
   Widget _placeholder(App? application) => application?.banner != null
       ? Ink.image(image: MemoryImage(application!.banner!), fit: BoxFit.cover)
-      : Center(child: Icon(Icons.movie_outlined, size: 48, color: ZenPalette.lavender));
+      : Center(child: Icon(Symbols.movie, size: 48, color: ZenPalette.lavender));
 }
 
 class _PermissionHint extends StatelessWidget {
@@ -305,7 +306,7 @@ class _PermissionHint extends StatelessWidget {
           padding: EdgeInsets.all(16),
           child: Row(
             children: [
-              Icon(Icons.history, size: 32, color: Colors.white70),
+              Icon(Symbols.history, size: 32, color: Colors.white70),
               SizedBox(width: 16),
               Expanded(
                 child: Column(

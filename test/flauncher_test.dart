@@ -35,6 +35,7 @@ import 'package:flauncher/widgets/zen_waves_painter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:mockito/mockito.dart';
 import 'package:provider/provider.dart';
 import 'package:transparent_image/transparent_image.dart';
@@ -190,7 +191,7 @@ void main() {
     );
 
     expect(find.byKey(Key("all-apps")), findsNothing);
-    expect(find.byIcon(Icons.view_module_outlined), findsNothing);
+    expect(find.byIcon(Symbols.apps), findsNothing);
     expect(find.byType(WatchNextRow), findsNothing);
   });
 

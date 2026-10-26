@@ -25,6 +25,7 @@ import 'package:flauncher/widgets/application_info_panel.dart';
 import 'package:flauncher/widgets/focus_keyboard_listener.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 
 const _validationKeys = [LogicalKeyboardKey.select, LogicalKeyboardKey.enter, LogicalKeyboardKey.gameButtonA];
@@ -140,10 +141,10 @@ class _AppCardState extends State<AppCard> {
   }
 
   List<Widget> _arrows() => [
-    _arrow(Alignment.centerLeft, Icons.keyboard_arrow_left),
-    _arrow(Alignment.topCenter, Icons.keyboard_arrow_up),
-    _arrow(Alignment.bottomCenter, Icons.keyboard_arrow_down),
-    _arrow(Alignment.centerRight, Icons.keyboard_arrow_right),
+    _arrow(Alignment.centerLeft, Symbols.keyboard_arrow_left),
+    _arrow(Alignment.topCenter, Symbols.keyboard_arrow_up),
+    _arrow(Alignment.bottomCenter, Symbols.keyboard_arrow_down),
+    _arrow(Alignment.centerRight, Symbols.keyboard_arrow_right),
   ];
 
   Widget _arrow(Alignment alignment, IconData icon) => Align(

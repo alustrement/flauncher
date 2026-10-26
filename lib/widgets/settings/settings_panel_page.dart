@@ -23,6 +23,7 @@ import 'package:flauncher/widgets/settings/applications_panel_page.dart';
 import 'package:flauncher/widgets/settings/categories_panel_page.dart';
 import 'package:flauncher/widgets/settings/flauncher_about_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
@@ -41,7 +42,7 @@ class SettingsPanelPage extends StatelessWidget {
             child: TextButton(
               child: Row(
                 children: [
-                  Icon(Icons.apps),
+                  Icon(Symbols.apps),
                   Container(width: 8),
                   Text("Applications", style: Theme.of(context).textTheme.bodyMedium),
                 ],
@@ -52,7 +53,7 @@ class SettingsPanelPage extends StatelessWidget {
           TextButton(
             child: Row(
               children: [
-                Icon(Icons.category),
+                Icon(Symbols.category),
                 Container(width: 8),
                 Text("Catégories", style: Theme.of(context).textTheme.bodyMedium),
               ],
@@ -63,7 +64,7 @@ class SettingsPanelPage extends StatelessWidget {
           TextButton(
             child: Row(
               children: [
-                Icon(Icons.settings_outlined),
+                Icon(Symbols.settings),
                 Container(width: 8),
                 Text("Paramètres Android", style: Theme.of(context).textTheme.bodyMedium),
               ],
@@ -96,7 +97,7 @@ class SettingsPanelPage extends StatelessWidget {
           TextButton(
             child: Row(
               children: [
-                Icon(Icons.info_outline),
+                Icon(Symbols.info),
                 Container(width: 8),
                 Text("À propos de FLauncher", style: Theme.of(context).textTheme.bodyMedium),
               ],

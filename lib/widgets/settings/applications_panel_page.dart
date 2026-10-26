@@ -22,6 +22,7 @@ import 'package:flauncher/widgets/add_to_category_dialog.dart';
 import 'package:flauncher/widgets/application_info_panel.dart';
 import 'package:flauncher/widgets/ensure_visible.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 
 class ApplicationsPanelPage extends StatefulWidget {
@@ -66,9 +67,9 @@ class _ApplicationsPanelPageState extends State<ApplicationsPanelPage> {
               }
             },
             tabs: [
-              Tab(icon: Icon(Icons.tv)),
-              Tab(icon: Icon(Icons.android)),
-              Tab(icon: Icon(Icons.visibility_off_outlined)),
+              Tab(icon: Icon(Symbols.tv)),
+              Tab(icon: Icon(Symbols.android)),
+              Tab(icon: Icon(Symbols.visibility_off)),
             ],
           ),
         ),
@@ -133,13 +134,13 @@ Widget _appCard(BuildContext context, App application) => Card(
           IconButton(
             constraints: BoxConstraints(),
             splashRadius: 20,
-            icon: Icon(Icons.add_box_outlined),
+            icon: Icon(Symbols.add_box),
             onPressed: () => showDialog<Category>(context: context, builder: (_) => AddToCategoryDialog(application)),
           ),
         IconButton(
           constraints: BoxConstraints(),
           splashRadius: 20,
-          icon: Icon(Icons.info_outline),
+          icon: Icon(Symbols.info),
           onPressed: () => showDialog(
             context: context,
             builder: (context) => ApplicationInfoPanel(category: null, application: application),

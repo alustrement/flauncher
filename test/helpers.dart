@@ -1,5 +1,6 @@
 import 'package:flauncher/widgets/app_card.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Element? findAppCardByPackageName(WidgetTester tester, String packageName) {
@@ -13,7 +14,7 @@ Element? findAppCardByPackageName(WidgetTester tester, String packageName) {
 
 Element? findSettingsIcon(WidgetTester tester) {
   // this function seems strange, but this is the simplest way I had to find the settings icon button
-  for (var val in tester.elementList(find.byIcon(Icons.settings_outlined))) {
+  for (var val in tester.elementList(find.byIcon(Symbols.settings))) {
     if (((val as StatelessElement).widget as Icon).color == null) {
       return val;
     }
