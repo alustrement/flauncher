@@ -192,6 +192,26 @@ void main() {
     verifyNever(mediaService.setMediaFocused("com.spotify.tv.android", false));
   });
 
+  testWidgets("a panel which goes hands the focus over to the one which stays", (tester) async {
+    final mediaService = MockMediaService();
+    final appsService = MockAppsService();
+    _stubMedias(mediaService, [_video, _song]);
+    when(appsService.applications).thenReturn([]);
+
+    await _pumpWidgetWithProviders(tester, mediaService, appsService);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+    verify(mediaService.setMediaFocused("app.smarttube.fdroid", true));
+
+    _stubMedias(mediaService, [_song]);
+    await _pumpWidgetWithProviders(tester, mediaService, appsService);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    verify(mediaService.setMediaFocused("com.spotify.tv.android", true));
+    verify(mediaService.open(_song));
+  });
+
   testWidgets("a media alone is shown full width, playing or offered to be resumed", (tester) async {
     final mediaService = MockMediaService();
     final appsService = MockAppsService();

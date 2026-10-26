@@ -143,14 +143,23 @@ class _AnimatedPanelsState extends State<_AnimatedPanels> with TickerProviderSta
       entry.controller.animateTo(1, duration: duration, curve: _transitionCurve);
       entries.add(entry);
     }
+    final staying = List.of(entries);
     // the panels which go stay where they were while they shrink, and are removed once, whatever the updates meanwhile
     for (final entry in previous.values) {
       if (!entry.leaving) {
+        // a panel which goes hands the focus over to one which stays, rather than to the next row
+        if (entry.focusNode.hasFocus && staying.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              staying.first.focusNode.traversalDescendants.firstOrNull?.requestFocus();
+            }
+          });
+        }
         entry.leaving = true;
         entry.controller.animateBack(0, duration: duration, curve: _transitionCurve).whenCompleteOrCancel(() {
           if (mounted && entry.leaving) {
             setState(() => _entries.remove(entry));
-            entry.controller.dispose();
+            entry.dispose();
           }
         });
       }
@@ -162,7 +171,7 @@ class _AnimatedPanelsState extends State<_AnimatedPanels> with TickerProviderSta
   @override
   void dispose() {
     for (final entry in _entries) {
-      entry.controller.dispose();
+      entry.dispose();
     }
     super.dispose();
   }
@@ -209,9 +218,14 @@ class _AnimatedPanelsState extends State<_AnimatedPanels> with TickerProviderSta
           alignment: Alignment.centerLeft,
           minWidth: contentWidth,
           maxWidth: contentWidth,
-          child: ExcludeFocus(
-            excluding: entry.leaving,
-            child: Opacity(opacity: presence, child: entry.slot.child),
+          child: Focus(
+            focusNode: entry.focusNode,
+            canRequestFocus: false,
+            skipTraversal: true,
+            child: ExcludeFocus(
+              excluding: entry.leaving,
+              child: Opacity(opacity: presence, child: entry.slot.child),
+            ),
           ),
         ),
       ),
@@ -222,12 +236,20 @@ class _AnimatedPanelsState extends State<_AnimatedPanels> with TickerProviderSta
 class _SlotEntry {
   _Slot slot;
   final AnimationController controller;
+
+  /// Has the focus while the panel has it.
+  final focusNode = FocusNode(canRequestFocus: false, skipTraversal: true);
   bool leaving = false;
 
   /// The width of the panel when it is fully there, which it keeps while it goes.
   double? fullWidth;
 
   _SlotEntry(this.slot, this.controller);
+
+  void dispose() {
+    controller.dispose();
+    focusNode.dispose();
+  }
 }
 
 class _Panel extends StatefulWidget {
