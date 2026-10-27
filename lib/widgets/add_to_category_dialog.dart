@@ -18,6 +18,7 @@
  */
 
 import 'package:flauncher/database.dart';
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -34,7 +35,7 @@ class AddToCategoryDialog extends StatelessWidget {
         .map((categoryWithApps) => categoryWithApps.category)
         .toList(),
     builder: (context, categories, _) => SimpleDialog(
-      title: Text("Ajouter à…"),
+      title: Text(AppLocalizations.of(context).addTo),
       contentPadding: EdgeInsets.all(16),
       children: categories
           .map(

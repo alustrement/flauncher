@@ -18,5 +18,5 @@
   -->
 
 <resources>
-    <string name="recents_accessibility_service_description">Affiche les applis récentes quand on appuie deux fois sur Accueil, comme le launcher par défaut. Waves Launcher TV ne lit rien à l\'écran.</string>
+    <string name="recents_accessibility_service_description">Shows the recent apps when Home is pressed twice, like the stock launcher. Waves Launcher TV doesn\'t read anything on the screen.</string>
 </resources>

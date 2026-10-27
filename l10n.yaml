@@ -1,0 +1,6 @@
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+nullable-getter: false
+# the language of the devices whose own language isn't translated
+preferred-supported-locales: [en]

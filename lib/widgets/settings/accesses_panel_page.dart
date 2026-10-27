@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/media_service.dart';
@@ -79,54 +80,46 @@ class _AccessesPanelPageState extends State<AccessesPanelPage> with WidgetsBindi
     builder: (context, watchNextService, mediaService, _) => SingleChildScrollView(
       child: Column(
         children: [
-          Text("Autorisations et launcher par défaut", style: Theme.of(context).textTheme.titleLarge),
+          Text(AppLocalizations.of(context).accessesAndDefaultLauncher, style: Theme.of(context).textTheme.titleLarge),
           Divider(),
           EnsureVisible(
             alignment: 0.5,
             child: _access(
               context,
               icon: Symbols.home,
-              title: "Launcher par défaut",
-              feature: "Ouvert par le bouton Accueil",
+              title: AppLocalizations.of(context).defaultLauncher,
+              feature: AppLocalizations.of(context).defaultLauncherFeature,
               granted: _defaultLauncher,
               request: () => context.read<AppsService>().requestDefaultLauncher(),
-              hint:
-                  "Si aucune fenêtre ne s'est ouverte, appuyez sur Accueil et choisissez Waves Launcher TV, "
-                  "puis « Toujours ».",
+              hint: AppLocalizations.of(context).defaultLauncherHint,
             ),
           ),
           _access(
             context,
             icon: Symbols.live_tv,
-            title: "Programmes TV",
-            feature: "Lectures récentes",
+            title: AppLocalizations.of(context).tvPrograms,
+            feature: AppLocalizations.of(context).recentPlays,
             granted: watchNextService.permissionGranted,
             request: watchNextService.requestPermission,
-            hint:
-                "Si aucune fenêtre ne s'est ouverte, autorisez « Lire toutes les sources TV » dans "
-                "Paramètres > Applications > Waves Launcher TV > Autorisations.",
+            hint: AppLocalizations.of(context).tvProgramsHint,
           ),
           _access(
             context,
             icon: Symbols.notifications,
-            title: "Accès aux notifications",
-            feature: "Lecture en cours",
+            title: AppLocalizations.of(context).notificationAccess,
+            feature: AppLocalizations.of(context).nowPlayingFeature,
             granted: mediaService.permissionGranted,
             request: mediaService.openPermissionSettings,
-            hint:
-                "Si aucun écran ne s'est ouvert, les paramètres de cet appareil ne permettent pas de l'accorder : "
-                "voir le README de Waves Launcher TV.",
+            hint: AppLocalizations.of(context).notificationAccessHint,
           ),
           _access(
             context,
             icon: Symbols.accessibility_new,
-            title: "Accessibilité",
-            feature: "Applis récentes en appuyant deux fois sur Accueil",
+            title: AppLocalizations.of(context).accessibility,
+            feature: AppLocalizations.of(context).accessibilityFeature,
             granted: _accessibilityServiceEnabled,
             request: () => context.read<AppsService>().openAccessibilitySettings(),
-            hint:
-                "Si aucun écran ne s'est ouvert, activez Waves Launcher TV dans "
-                "Paramètres > Préférences de l'appareil > Accessibilité.",
+            hint: AppLocalizations.of(context).accessibilityHint,
           ),
         ],
       ),

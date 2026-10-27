@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 class AddCategoryDialog extends StatelessWidget {
@@ -28,13 +29,15 @@ class AddCategoryDialog extends StatelessWidget {
   Widget build(BuildContext context) => SimpleDialog(
     insetPadding: EdgeInsets.only(bottom: 120),
     contentPadding: EdgeInsets.all(24),
-    title: Text(initialValue != null ? "Renommer la catégorie" : "Ajouter une catégorie"),
+    title: Text(
+      initialValue != null ? AppLocalizations.of(context).renameCategory : AppLocalizations.of(context).addCategory,
+    ),
     children: [
       TextFormField(
         autofocus: true,
         initialValue: initialValue,
-        decoration: InputDecoration(labelText: "Nom"),
-        validator: (value) => value!.trim().isEmpty ? "Ne doit pas être vide" : null,
+        decoration: InputDecoration(labelText: AppLocalizations.of(context).name),
+        validator: (value) => value!.trim().isEmpty ? AppLocalizations.of(context).mustNotBeEmpty : null,
         autovalidateMode: AutovalidateMode.always,
         keyboardType: TextInputType.text,
         textCapitalization: TextCapitalization.sentences,

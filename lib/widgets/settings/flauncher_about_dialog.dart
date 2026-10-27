@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -40,12 +41,7 @@ class FLauncherAboutDialog extends StatelessWidget {
           text: TextSpan(
             style: textStyle,
             children: [
-              TextSpan(
-                text:
-                    "Waves Launcher TV est un launcher alternatif et open source pour Android TV, "
-                    "basé sur FLauncher et distribué sous licence GPLv3.\n"
-                    "Code source disponible sur ",
-              ),
+              TextSpan(text: AppLocalizations.of(context).aboutDescription),
               TextSpan(text: "https://github.com/alustrement/flauncher", style: underlined),
               TextSpan(text: "."),
             ],

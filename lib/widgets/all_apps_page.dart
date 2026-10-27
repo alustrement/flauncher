@@ -19,6 +19,7 @@
 import 'package:flauncher/actions.dart';
 import 'package:flauncher/custom_traversal_policy.dart';
 import 'package:flauncher/database.dart';
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/home_service.dart';
@@ -110,7 +111,7 @@ class _AllAppsPageState extends State<AllAppsPage> {
       Padding(
         padding: EdgeInsets.only(left: 32),
         child: Text(
-          "Toutes les applications",
+          AppLocalizations.of(context).allApplications,
           style: Theme.of(context).textTheme.titleLarge!.copyWith(
             color: ZenPalette.lavender,
             shadows: [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 8)],

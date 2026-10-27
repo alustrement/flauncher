@@ -18,6 +18,7 @@
 
 import 'dart:async';
 
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/widgets/zen_waves_painter.dart';
@@ -128,7 +129,10 @@ class _StartupSplashState extends State<StartupSplash> with SingleTickerProvider
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(_greeting(), style: Theme.of(context).textTheme.displayMedium!.copyWith(color: ZenPalette.lavender)),
+              Text(
+                _greeting(context),
+                style: Theme.of(context).textTheme.displayMedium!.copyWith(color: ZenPalette.lavender),
+              ),
               SizedBox(height: 24),
               CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(ZenPalette.accent)),
             ],
@@ -138,8 +142,8 @@ class _StartupSplashState extends State<StartupSplash> with SingleTickerProvider
     ),
   );
 
-  String _greeting() {
+  String _greeting(BuildContext context) {
     final hour = DateTime.now().hour;
-    return hour >= 18 || hour < 5 ? "Bonsoir" : "Bonjour";
+    return hour >= 18 || hour < 5 ? AppLocalizations.of(context).goodEvening : AppLocalizations.of(context).goodDay;
   }
 }

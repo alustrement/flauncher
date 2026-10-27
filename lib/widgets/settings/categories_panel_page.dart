@@ -18,6 +18,7 @@
  */
 
 import 'package:flauncher/database.dart';
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/widgets/add_category_dialog.dart';
 import 'package:flauncher/widgets/ensure_visible.dart';
@@ -32,7 +33,7 @@ class CategoriesPanelPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Column(
     children: [
-      Text("Catégories", style: Theme.of(context).textTheme.titleLarge),
+      Text(AppLocalizations.of(context).categories, style: Theme.of(context).textTheme.titleLarge),
       Divider(),
       Selector<AppsService, List<CategoryWithApps>>(
         selector: (_, appsService) => appsService.categoriesWithApps,
@@ -46,7 +47,7 @@ class CategoriesPanelPage extends StatelessWidget {
       ),
       TextButton.icon(
         icon: Icon(Symbols.add),
-        label: Text("Ajouter une catégorie"),
+        label: Text(AppLocalizations.of(context).addCategory),
         onPressed: () async {
           final categoryName = await showDialog<String>(context: context, builder: (_) => AddCategoryDialog());
           if (categoryName != null) {

@@ -18,6 +18,7 @@
  */
 
 import 'package:flauncher/database.dart';
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/widgets/right_panel_dialog.dart';
 import 'package:flutter/material.dart';
@@ -59,7 +60,11 @@ class ApplicationInfoPanel extends StatelessWidget {
               Icon(Symbols.open_in_new),
               Container(width: 8),
               Flexible(
-                child: Text("Ouvrir", style: Theme.of(context).textTheme.bodyMedium, overflow: TextOverflow.ellipsis),
+                child: Text(
+                  AppLocalizations.of(context).open,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
@@ -76,7 +81,7 @@ class ApplicationInfoPanel extends StatelessWidget {
                 Container(width: 8),
                 Flexible(
                   child: Text(
-                    "Déplacer",
+                    AppLocalizations.of(context).move,
                     style: Theme.of(context).textTheme.bodyMedium,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -92,7 +97,7 @@ class ApplicationInfoPanel extends StatelessWidget {
               Container(width: 8),
               Flexible(
                 child: Text(
-                  application.hidden ? "Afficher" : "Masquer",
+                  application.hidden ? AppLocalizations.of(context).show : AppLocalizations.of(context).hide,
                   style: Theme.of(context).textTheme.bodyMedium,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -116,7 +121,7 @@ class ApplicationInfoPanel extends StatelessWidget {
                 Container(width: 8),
                 Flexible(
                   child: Text(
-                    "Retirer de ${category!.name}",
+                    AppLocalizations.of(context).removeFrom(category!.name),
                     style: Theme.of(context).textTheme.bodyMedium,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -137,7 +142,7 @@ class ApplicationInfoPanel extends StatelessWidget {
               Container(width: 8),
               Flexible(
                 child: Text(
-                  "Infos sur l'appli",
+                  AppLocalizations.of(context).applicationInfo,
                   style: Theme.of(context).textTheme.bodyMedium,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -153,7 +158,7 @@ class ApplicationInfoPanel extends StatelessWidget {
               Container(width: 8),
               Flexible(
                 child: Text(
-                  "Désinstaller",
+                  AppLocalizations.of(context).uninstall,
                   style: Theme.of(context).textTheme.bodyMedium,
                   overflow: TextOverflow.ellipsis,
                 ),

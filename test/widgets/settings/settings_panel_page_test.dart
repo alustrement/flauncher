@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/settings_service.dart';
 import 'package:flauncher/widgets/settings/accesses_panel_page.dart';
@@ -208,6 +209,9 @@ Future<void> _pumpWidgetWithProviders(
         ChangeNotifierProvider<AppsService>.value(value: appsService),
       ],
       builder: (_, _) => MaterialApp(
+        locale: Locale("fr"),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         routes: {
           CategoriesPanelPage.routeName: (_) => Container(key: Key("CategoriesPanelPage")),
           ApplicationsPanelPage.routeName: (_) => Container(key: Key("ApplicationsPanelPage")),

@@ -21,6 +21,7 @@ import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flauncher/database.dart';
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/media_service.dart';
@@ -56,14 +57,14 @@ class _NowPlayingPanelState extends State<NowPlayingPanel> {
   Widget build(BuildContext context) => Consumer<MediaService>(
     builder: (context, mediaService, _) {
       if (!mediaService.permissionGranted) {
-        return _section(context, "En cours de lecture", SkipInitialFocus(child: _PermissionHint()));
+        return _section(context, AppLocalizations.of(context).nowPlaying, SkipInitialFocus(child: _PermissionHint()));
       }
       if (mediaService.medias.isEmpty) {
         return SizedBox.shrink();
       }
       return _section(
         context,
-        mediaService.playing ? "En cours de lecture" : "Reprendre la lecture",
+        mediaService.playing ? AppLocalizations.of(context).nowPlaying : AppLocalizations.of(context).resumePlayback,
         _AnimatedPanels(slots: [for (final media in mediaService.medias) _panel(mediaService, media)]),
       );
     },
@@ -513,7 +514,7 @@ class _AppLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = [?application?.name, if (remote) "Sur un autre appareil"].join(" · ");
+    final label = [?application?.name, if (remote) AppLocalizations.of(context).onAnotherDevice].join(" · ");
     return Row(
       children: [
         if (application?.icon != null) ...[
@@ -683,12 +684,12 @@ class _PermissionHint extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "L'accès aux notifications est nécessaire pour afficher la lecture en cours.",
+                  AppLocalizations.of(context).notificationAccessNeeded,
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 SizedBox(height: 4),
                 Text(
-                  "Accordez-le dans Paramètres > Autorisations et launcher par défaut.",
+                  AppLocalizations.of(context).notificationAccessGrantHint,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],

@@ -18,6 +18,7 @@
  */
 
 import 'package:flauncher/database.dart';
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/widgets/add_to_category_dialog.dart';
 import 'package:flauncher/widgets/application_info_panel.dart';
@@ -34,39 +35,19 @@ class ApplicationsPanelPage extends StatefulWidget {
 }
 
 class _ApplicationsPanelPageState extends State<ApplicationsPanelPage> {
-  String _title = "Applis TV";
+  int _tab = 0;
 
   @override
   Widget build(BuildContext context) => DefaultTabController(
     length: 3,
     child: Column(
       children: [
-        Text(_title, style: Theme.of(context).textTheme.titleLarge),
+        Text(_title(context), style: Theme.of(context).textTheme.titleLarge),
         Divider(),
         Material(
           type: MaterialType.transparency,
           child: TabBar(
-            onTap: (index) {
-              switch (index) {
-                case 0:
-                  setState(() {
-                    _title = "Applis TV";
-                  });
-                  break;
-                case 1:
-                  setState(() {
-                    _title = "Applis non TV";
-                  });
-                  break;
-                case 2:
-                  setState(() {
-                    _title = "Applis masquées";
-                  });
-                  break;
-                default:
-                  throw ArgumentError.value(index, "index");
-              }
-            },
+            onTap: (index) => setState(() => _tab = index),
             tabs: [
               Tab(icon: Icon(Symbols.tv)),
               Tab(icon: Icon(Symbols.android)),
@@ -79,6 +60,13 @@ class _ApplicationsPanelPageState extends State<ApplicationsPanelPage> {
       ],
     ),
   );
+
+  String _title(BuildContext context) => switch (_tab) {
+    0 => AppLocalizations.of(context).tvApplications,
+    1 => AppLocalizations.of(context).nonTvApplications,
+    2 => AppLocalizations.of(context).hiddenApplications,
+    _ => throw ArgumentError.value(_tab, "index"),
+  };
 }
 
 class _TVTab extends StatelessWidget {

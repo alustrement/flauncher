@@ -18,6 +18,7 @@
  */
 
 import 'package:flauncher/actions.dart';
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/home_service.dart';
@@ -27,7 +28,6 @@ import 'package:flauncher/providers/watch_next_service.dart';
 import 'package:flauncher/widgets/startup_splash.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -66,9 +66,8 @@ class FLauncherApp extends StatelessWidget {
       ChangeNotifierProvider(create: (_) => HomeService(_fLauncherChannel), lazy: false),
     ],
     child: MaterialApp(
-      locale: Locale("fr"),
-      supportedLocales: [Locale("fr")],
-      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       shortcuts: {
         ...WidgetsApp.defaultShortcuts,
         SingleActivator(LogicalKeyboardKey.select): ActivateIntent(),

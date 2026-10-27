@@ -18,6 +18,7 @@
 
 import 'dart:convert';
 
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/media_service.dart';
 import 'package:flauncher/widgets/now_playing_panel.dart';
@@ -32,7 +33,12 @@ import '../mocks.mocks.dart';
 
 final _video = NowPlaying(packageName: "app.smarttube.fdroid", title: "Une vidéo");
 final _song = NowPlaying(packageName: "com.spotify.tv.android", title: "Bittersweet", background: true);
-final _songPlaying = NowPlaying(packageName: "com.spotify.tv.android", title: "Bittersweet", background: true, playing: true);
+final _songPlaying = NowPlaying(
+  packageName: "com.spotify.tv.android",
+  title: "Bittersweet",
+  background: true,
+  playing: true,
+);
 
 void main() {
   testWidgets("shows nothing without media", (tester) async {
@@ -342,6 +348,9 @@ Future<void> _pumpWidgetWithProviders(
         ChangeNotifierProvider<AppsService>.value(value: appsService),
       ],
       builder: (_, _) => MaterialApp(
+        locale: Locale("fr"),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         shortcuts: {...WidgetsApp.defaultShortcuts, SingleActivator(LogicalKeyboardKey.enter): ActivateIntent()},
         home: Scaffold(body: SingleChildScrollView(child: NowPlayingPanel())),
       ),

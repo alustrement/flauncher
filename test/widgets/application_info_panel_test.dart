@@ -18,6 +18,7 @@
  */
 
 import 'package:flauncher/database.dart';
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/widgets/application_info_panel.dart';
 import 'package:flutter/material.dart';
@@ -166,6 +167,9 @@ Future<void> _pumpWidgetWithProviders(
     MultiProvider(
       providers: [ChangeNotifierProvider<AppsService>.value(value: appsService)],
       builder: (_, _) => MaterialApp(
+        locale: Locale("fr"),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: ApplicationInfoPanel(category: category, application: application),
       ),
     ),

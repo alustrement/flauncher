@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/widgets/startup_splash.dart';
 import 'package:flutter/material.dart';
@@ -85,6 +86,9 @@ Future<void> _pumpSplash(WidgetTester tester, AppsService appsService, List<Logi
       ChangeNotifierProvider<AppsService>.value(
         value: appsService,
         child: MaterialApp(
+          locale: Locale("fr"),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: StartupSplash(
             child: Focus(
               autofocus: true,

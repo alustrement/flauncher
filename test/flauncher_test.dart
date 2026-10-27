@@ -19,6 +19,7 @@
 
 import 'package:flauncher/database.dart';
 import 'package:flauncher/flauncher.dart';
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/home_service.dart';
 import 'package:flauncher/providers/media_service.dart';
@@ -152,9 +153,7 @@ void main() {
     final appsService = MockAppsService();
     final settingsService = MockSettingsService();
     when(appsService.initialized).thenReturn(true);
-    when(appsService.categoriesWithApps).thenReturn([
-      CategoryWithApps(fakeCategory(name: "Favorites", order: 0), []),
-    ]);
+    when(appsService.categoriesWithApps).thenReturn([CategoryWithApps(fakeCategory(name: "Favorites", order: 0), [])]);
     when(settingsService.use24HourTimeFormat).thenReturn(false);
     await _pumpWidgetWithProviders(tester, appsService, settingsService);
     when(appsService.applications).thenReturn([
@@ -172,8 +171,10 @@ void main() {
     expect(find.text("Toutes les applications"), findsOneWidget);
     final cards = tester.widgetList<AppCard>(find.byType(AppCard)).map((card) => card.application.name);
     expect(cards, ["Alpha", "beta"]);
-    expect(FocusManager.instance.primaryFocus!.context!.findAncestorWidgetOfExactType<AppCard>()!.application.name,
-        "Alpha");
+    expect(
+      FocusManager.instance.primaryFocus!.context!.findAncestorWidgetOfExactType<AppCard>()!.application.name,
+      "Alpha",
+    );
   });
 
   testWidgets("The all apps icon and the recent plays can be hidden", (tester) async {
@@ -814,7 +815,12 @@ Future<void> _pumpWidgetWithProviders(
         ChangeNotifierProvider<SettingsService>.value(value: settingsService),
         ChangeNotifierProvider<HomeService>.value(value: homeService ?? HomeService(MockFLauncherChannel())),
       ],
-      builder: (_, _) => MaterialApp(home: FLauncher()),
+      builder: (_, _) => MaterialApp(
+        locale: Locale("fr"),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: FLauncher(),
+      ),
     ),
   );
   await tester.pump(Duration(seconds: 30), EnginePhase.sendSemanticsUpdate);

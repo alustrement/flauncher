@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/media_service.dart';
 import 'package:flauncher/providers/watch_next_service.dart';
@@ -190,6 +191,9 @@ Future<void> _pumpWidgetWithProviders(
         ChangeNotifierProvider<AppsService>.value(value: appsService),
       ],
       builder: (_, _) => MaterialApp(
+        locale: Locale("fr"),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         shortcuts: {...WidgetsApp.defaultShortcuts, SingleActivator(LogicalKeyboardKey.enter): ActivateIntent()},
         home: Scaffold(body: SingleChildScrollView(child: WatchNextRow())),
       ),

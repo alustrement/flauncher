@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/settings_service.dart';
 import 'package:flauncher/widgets/ensure_visible.dart';
@@ -37,7 +38,7 @@ class SettingsPanelPage extends StatelessWidget {
     builder: (context, settingsService, _) => SingleChildScrollView(
       child: Column(
         children: [
-          Text("Paramètres", style: Theme.of(context).textTheme.titleLarge),
+          Text(AppLocalizations.of(context).settings, style: Theme.of(context).textTheme.titleLarge),
           Divider(),
           EnsureVisible(
             alignment: 0.5,
@@ -46,7 +47,7 @@ class SettingsPanelPage extends StatelessWidget {
                 children: [
                   Icon(Symbols.apps),
                   Container(width: 8),
-                  Text("Applications", style: Theme.of(context).textTheme.bodyMedium),
+                  Text(AppLocalizations.of(context).applications, style: Theme.of(context).textTheme.bodyMedium),
                 ],
               ),
               onPressed: () => Navigator.of(context).pushNamed(ApplicationsPanelPage.routeName),
@@ -57,7 +58,7 @@ class SettingsPanelPage extends StatelessWidget {
               children: [
                 Icon(Symbols.category),
                 Container(width: 8),
-                Text("Catégories", style: Theme.of(context).textTheme.bodyMedium),
+                Text(AppLocalizations.of(context).categories, style: Theme.of(context).textTheme.bodyMedium),
               ],
             ),
             onPressed: () => Navigator.of(context).pushNamed(CategoriesPanelPage.routeName),
@@ -68,7 +69,10 @@ class SettingsPanelPage extends StatelessWidget {
                 Icon(Symbols.verified_user),
                 Container(width: 8),
                 Flexible(
-                  child: Text("Autorisations et launcher par défaut", style: Theme.of(context).textTheme.bodyMedium),
+                  child: Text(
+                    AppLocalizations.of(context).accessesAndDefaultLauncher,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                 ),
               ],
             ),
@@ -79,21 +83,21 @@ class SettingsPanelPage extends StatelessWidget {
             contentPadding: EdgeInsets.symmetric(horizontal: 8),
             value: settingsService.use24HourTimeFormat,
             onChanged: (value) => settingsService.setUse24HourTimeFormat(value),
-            title: Text("Format 24 heures"),
+            title: Text(AppLocalizations.of(context).use24HourTimeFormat),
             dense: true,
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.symmetric(horizontal: 8),
             value: settingsService.showAllApplications,
             onChanged: (value) => settingsService.setShowAllApplications(value),
-            title: Text("Afficher toutes les applications"),
+            title: Text(AppLocalizations.of(context).showAllApplications),
             dense: true,
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.symmetric(horizontal: 8),
             value: settingsService.showRecentPlays,
             onChanged: (value) => settingsService.setShowRecentPlays(value),
-            title: Text("Afficher les lectures récentes"),
+            title: Text(AppLocalizations.of(context).showRecentPlays),
             dense: true,
           ),
           Divider(),
@@ -102,7 +106,7 @@ class SettingsPanelPage extends StatelessWidget {
               children: [
                 Icon(Symbols.settings),
                 Container(width: 8),
-                Text("Paramètres de l'appareil", style: Theme.of(context).textTheme.bodyMedium),
+                Text(AppLocalizations.of(context).deviceSettings, style: Theme.of(context).textTheme.bodyMedium),
               ],
             ),
             onPressed: () => context.read<AppsService>().openSettings(),
@@ -113,7 +117,7 @@ class SettingsPanelPage extends StatelessWidget {
               children: [
                 Icon(Symbols.info),
                 Container(width: 8),
-                Text("À propos de Waves Launcher TV", style: Theme.of(context).textTheme.bodyMedium),
+                Text(AppLocalizations.of(context).about, style: Theme.of(context).textTheme.bodyMedium),
               ],
             ),
             onPressed: () => showDialog(

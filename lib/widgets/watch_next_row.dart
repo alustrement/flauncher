@@ -17,6 +17,7 @@
  */
 
 import 'package:flauncher/database.dart';
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/media_service.dart';
@@ -105,7 +106,7 @@ class _WatchNextRowState extends State<WatchNextRow> {
         Padding(
           padding: EdgeInsets.only(left: 32, bottom: 8),
           child: Text(
-            "Lectures récentes",
+            AppLocalizations.of(context).recentPlays,
             style: Theme.of(context).textTheme.titleLarge!.copyWith(color: ZenPalette.lavender, shadows: _textShadows),
           ),
         ),
@@ -313,14 +314,14 @@ class _PermissionHint extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "L'accès aux programmes TV est nécessaire pour afficher ce que vous pouvez continuer à regarder.",
+                      AppLocalizations.of(context).tvProgramsAccessNeeded,
                       style: Theme.of(context).textTheme.titleSmall,
                     ),
                   ],
                 ),
               ),
               SizedBox(width: 16),
-              ElevatedButton(onPressed: onPressed, child: Text("Autoriser")),
+              ElevatedButton(onPressed: onPressed, child: Text(AppLocalizations.of(context).allow)),
             ],
           ),
         ),

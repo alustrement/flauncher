@@ -18,6 +18,7 @@
  */
 
 import 'package:flauncher/database.dart';
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flauncher/palette.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/widgets/app_card.dart';
@@ -99,7 +100,7 @@ class CategoryRow extends StatelessWidget {
                   ),
                   child: Padding(
                     padding: EdgeInsets.all(8),
-                    child: Center(child: Text("Cette catégorie est vide.", textAlign: TextAlign.center)),
+                    child: Center(child: Text(AppLocalizations.of(context).emptyCategory, textAlign: TextAlign.center)),
                   ),
                 ),
               ),

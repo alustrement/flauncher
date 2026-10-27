@@ -23,7 +23,9 @@ import 'dart:collection';
 import 'package:drift/drift.dart';
 import 'package:flauncher/database.dart';
 import 'package:flauncher/flauncher_channel.dart';
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flutter/foundation.dart' hide Category;
+import 'package:flutter/widgets.dart' show basicLocaleListResolution;
 
 class AppsService extends ChangeNotifier {
   final FLauncherChannel _fLauncherChannel;
@@ -98,23 +100,27 @@ class AppsService extends ChangeNotifier {
   );
 
   Future<void> _initDefaultCategories() => _database.transaction(() async {
+    // named in the language of the device, as they are kept once created
+    final localizations = lookupAppLocalizations(
+      basicLocaleListResolution(PlatformDispatcher.instance.locales, AppLocalizations.supportedLocales),
+    );
     final tvApplications = _applications.where((element) => element.sideloaded == false);
     final nonTvApplications = _applications.where((element) => element.sideloaded == true);
     if (tvApplications.isNotEmpty) {
-      await addCategory("Applis TV", shouldNotifyListeners: false);
+      await addCategory(localizations.tvApplications, shouldNotifyListeners: false);
       final tvAppsCategory = _categoriesWithApps
           .map((e) => e.category)
-          .firstWhere((element) => element.name == "Applis TV");
+          .firstWhere((element) => element.name == localizations.tvApplications);
       await setCategoryType(tvAppsCategory, CategoryType.grid, shouldNotifyListeners: false);
       for (final app in tvApplications) {
         await addToCategory(app, tvAppsCategory, shouldNotifyListeners: false);
       }
     }
     if (nonTvApplications.isNotEmpty) {
-      await addCategory("Applis non TV", shouldNotifyListeners: false);
+      await addCategory(localizations.nonTvApplications, shouldNotifyListeners: false);
       final nonTvAppsCategory = _categoriesWithApps
           .map((e) => e.category)
-          .firstWhere((element) => element.name == "Applis non TV");
+          .firstWhere((element) => element.name == localizations.nonTvApplications);
       for (final app in nonTvApplications) {
         await addToCategory(app, nonTvAppsCategory, shouldNotifyListeners: false);
       }

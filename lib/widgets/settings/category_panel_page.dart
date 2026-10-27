@@ -18,6 +18,7 @@
  */
 
 import 'package:flauncher/database.dart';
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/widgets/add_category_dialog.dart';
 import 'package:flutter/material.dart';
@@ -43,7 +44,7 @@ class CategoryPanelPage extends StatelessWidget {
                 Divider(),
                 _listTile(
                   context,
-                  Text("Nom"),
+                  Text(AppLocalizations.of(context).name),
                   Text(category.name),
                   trailing: IconButton(
                     constraints: BoxConstraints(),
@@ -54,7 +55,7 @@ class CategoryPanelPage extends StatelessWidget {
                 ),
                 _listTile(
                   context,
-                  Text("Tri"),
+                  Text(AppLocalizations.of(context).sort),
                   Column(
                     children: [
                       SizedBox(height: 4),
@@ -66,11 +67,17 @@ class CategoryPanelPage extends StatelessWidget {
                         items: [
                           DropdownMenuItem(
                             value: CategorySort.alphabetical,
-                            child: Text("Alphabétique", style: Theme.of(context).textTheme.bodySmall),
+                            child: Text(
+                              AppLocalizations.of(context).alphabetical,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
                           ),
                           DropdownMenuItem(
                             value: CategorySort.manual,
-                            child: Text("Manuel", style: Theme.of(context).textTheme.bodySmall),
+                            child: Text(
+                              AppLocalizations.of(context).manual,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
                           ),
                         ],
                       ),
@@ -79,7 +86,7 @@ class CategoryPanelPage extends StatelessWidget {
                 ),
                 _listTile(
                   context,
-                  Text("Type"),
+                  Text(AppLocalizations.of(context).type),
                   Column(
                     children: [
                       SizedBox(height: 4),
@@ -91,11 +98,14 @@ class CategoryPanelPage extends StatelessWidget {
                         items: [
                           DropdownMenuItem(
                             value: CategoryType.row,
-                            child: Text("Ligne", style: Theme.of(context).textTheme.bodySmall),
+                            child: Text(AppLocalizations.of(context).row, style: Theme.of(context).textTheme.bodySmall),
                           ),
                           DropdownMenuItem(
                             value: CategoryType.grid,
-                            child: Text("Grille", style: Theme.of(context).textTheme.bodySmall),
+                            child: Text(
+                              AppLocalizations.of(context).grid,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
                           ),
                         ],
                       ),
@@ -105,7 +115,7 @@ class CategoryPanelPage extends StatelessWidget {
                 if (category.type == CategoryType.grid)
                   _listTile(
                     context,
-                    Text("Nombre de colonnes"),
+                    Text(AppLocalizations.of(context).columnCount),
                     Column(
                       children: [
                         SizedBox(height: 4),
@@ -129,7 +139,7 @@ class CategoryPanelPage extends StatelessWidget {
                 if (category.type == CategoryType.row)
                   _listTile(
                     context,
-                    Text("Hauteur de ligne"),
+                    Text(AppLocalizations.of(context).rowHeight),
                     Column(
                       children: [
                         SizedBox(height: 4),
@@ -155,7 +165,7 @@ class CategoryPanelPage extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: 16),
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.red[400]),
-                    child: Text("Supprimer"),
+                    child: Text(AppLocalizations.of(context).delete),
                     onPressed: () async {
                       await context.read<AppsService>().deleteCategory(category);
                       Navigator.of(context).pop();
