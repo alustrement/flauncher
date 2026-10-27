@@ -281,6 +281,10 @@ class MediaSessionStreamHandler(
      * is offered to be resumed next to the last one of an app which does.
      */
     private fun selectController() {
+        // without notification access, the remembered medias would be sent as if the sessions could be read
+        if (!sessionsListenerRegistered) {
+            return
+        }
         val stopped = trackPlaying()
         foreground.handOver(background)
         background.handOver(foreground)
