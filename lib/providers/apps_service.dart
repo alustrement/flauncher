@@ -181,6 +181,13 @@ class AppsService extends ChangeNotifier {
 
   Future<bool> isDefaultLauncher() => _fLauncherChannel.isDefaultLauncher();
 
+  Future<void> requestDefaultLauncher() => _fLauncherChannel.requestDefaultLauncher();
+
+  /// Whether the service which shows the recent apps on a double Home press is enabled.
+  Future<bool> isAccessibilityServiceEnabled() => _fLauncherChannel.isAccessibilityServiceEnabled();
+
+  Future<void> openAccessibilitySettings() => _fLauncherChannel.openAccessibilitySettings();
+
   Future<void> startAmbientMode() => _fLauncherChannel.startAmbientMode();
 
   Future<void> addToCategory(App app, Category category, {bool shouldNotifyListeners = true}) async {

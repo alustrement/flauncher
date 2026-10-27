@@ -42,6 +42,19 @@ class FLauncherChannel {
 
   Future<bool> isDefaultLauncher() async => await _methodChannel.invokeMethod('isDefaultLauncher');
 
+  /// Asks to become the home app, else opens the settings where it is chosen.
+  Future<void> requestDefaultLauncher() async => await _methodChannel.invokeMethod('requestDefaultLauncher');
+
+  Future<bool> isAccessibilityServiceEnabled() async =>
+      await _methodChannel.invokeMethod('isAccessibilityServiceEnabled');
+
+  /// Does nothing on devices without such settings screen, like the Shield.
+  Future<void> openNotificationAccessSettings() async =>
+      await _methodChannel.invokeMethod('openNotificationAccessSettings');
+
+  /// Does nothing on devices without such settings screen, like the Shield.
+  Future<void> openAccessibilitySettings() async => await _methodChannel.invokeMethod('openAccessibilitySettings');
+
   Future<void> startAmbientMode() async => await _methodChannel.invokeMethod("startAmbientMode");
 
   Future<void> openMediaSession(String packageName) async =>

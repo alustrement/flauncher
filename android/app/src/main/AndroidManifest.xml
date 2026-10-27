@@ -48,6 +48,19 @@
         <intent>
             <action android:name="androidx.media3.session.MediaLibraryService" />
         </intent>
+        <!-- the settings screens where the accesses of the launcher are granted -->
+        <intent>
+            <action android:name="android.settings.HOME_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.NOTIFICATION_LISTENER_DETAIL_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.ACCESSIBILITY_SETTINGS" />
+        </intent>
     </queries>
 
     <application

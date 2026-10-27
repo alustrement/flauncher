@@ -220,6 +220,33 @@ class MockFLauncherChannel extends _i1.Mock implements _i7.FLauncherChannel {
   ) as _i6.Future<bool>);
 
   @override
+  _i6.Future<void> requestDefaultLauncher() => (super.noSuchMethod(
+    Invocation.method(#requestDefaultLauncher, []),
+    returnValue: _i6.Future<void>.value(),
+    returnValueForMissingStub: _i6.Future<void>.value(),
+  ) as _i6.Future<void>);
+
+  @override
+  _i6.Future<bool> isAccessibilityServiceEnabled() => (super.noSuchMethod(
+    Invocation.method(#isAccessibilityServiceEnabled, []),
+    returnValue: _i6.Future<bool>.value(false),
+  ) as _i6.Future<bool>);
+
+  @override
+  _i6.Future<void> openNotificationAccessSettings() => (super.noSuchMethod(
+    Invocation.method(#openNotificationAccessSettings, []),
+    returnValue: _i6.Future<void>.value(),
+    returnValueForMissingStub: _i6.Future<void>.value(),
+  ) as _i6.Future<void>);
+
+  @override
+  _i6.Future<void> openAccessibilitySettings() => (super.noSuchMethod(
+    Invocation.method(#openAccessibilitySettings, []),
+    returnValue: _i6.Future<void>.value(),
+    returnValueForMissingStub: _i6.Future<void>.value(),
+  ) as _i6.Future<void>);
+
+  @override
   _i6.Future<void> startAmbientMode() => (super.noSuchMethod(
     Invocation.method(#startAmbientMode, []),
     returnValue: _i6.Future<void>.value(),
@@ -362,6 +389,26 @@ class MockAppsService extends _i1.Mock implements _i8.AppsService {
     Invocation.method(#isDefaultLauncher, []),
     returnValue: _i6.Future<bool>.value(false),
   ) as _i6.Future<bool>);
+
+  @override
+  _i6.Future<void> requestDefaultLauncher() => (super.noSuchMethod(
+    Invocation.method(#requestDefaultLauncher, []),
+    returnValue: _i6.Future<void>.value(),
+    returnValueForMissingStub: _i6.Future<void>.value(),
+  ) as _i6.Future<void>);
+
+  @override
+  _i6.Future<bool> isAccessibilityServiceEnabled() => (super.noSuchMethod(
+    Invocation.method(#isAccessibilityServiceEnabled, []),
+    returnValue: _i6.Future<bool>.value(false),
+  ) as _i6.Future<bool>);
+
+  @override
+  _i6.Future<void> openAccessibilitySettings() => (super.noSuchMethod(
+    Invocation.method(#openAccessibilitySettings, []),
+    returnValue: _i6.Future<void>.value(),
+    returnValueForMissingStub: _i6.Future<void>.value(),
+  ) as _i6.Future<void>);
 
   @override
   _i6.Future<void> startAmbientMode() => (super.noSuchMethod(
@@ -565,6 +612,13 @@ class MockMediaService extends _i1.Mock implements _i10.MediaService {
   bool get hasListeners =>
       (super.noSuchMethod(Invocation.getter(#hasListeners), returnValue: false)
           as bool);
+
+  @override
+  _i6.Future<void> openPermissionSettings() => (super.noSuchMethod(
+    Invocation.method(#openPermissionSettings, []),
+    returnValue: _i6.Future<void>.value(),
+    returnValueForMissingStub: _i6.Future<void>.value(),
+  ) as _i6.Future<void>);
 
   @override
   _i6.Future<void> open(_i10.NowPlaying? media) => (super.noSuchMethod(

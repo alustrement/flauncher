@@ -19,6 +19,8 @@
 
 package com.aurelienlustrement.waveslaunchertv
 
+import android.app.role.RoleManager
+import android.content.ComponentName
 import android.content.Intent
 import android.content.Intent.*
 import android.content.pm.*
@@ -50,6 +52,9 @@ private const val EVENT_CHANNEL = "com.aurelienlustrement.waveslaunchertv/event"
 private const val MEDIA_EVENT_CHANNEL = "com.aurelienlustrement.waveslaunchertv/media"
 private const val WATCH_NEXT_EVENT_CHANNEL = "com.aurelienlustrement.waveslaunchertv/watch_next"
 private const val WATCH_NEXT_PERMISSION_REQUEST_CODE = 1
+private const val HOME_ROLE_REQUEST_CODE = 2
+// Android TV answers the intents of the settings screens it lacks with stubs, which only tell they aren't available
+private const val SETTINGS_STUBS_PACKAGE = "com.google.android.tv.frameworkpackagestubs"
 private const val DOUBLE_HOME_PRESS_TIMEOUT_MS = 400L
 
 // twice the size they are shown at, larger images would only take longer to encode and decode
@@ -89,6 +94,10 @@ class MainActivity : FlutterActivity() {
                 "openAppInfo" -> result.success(openAppInfo(call.arguments as String))
                 "uninstallApp" -> result.success(uninstallApp(call.arguments as String))
                 "isDefaultLauncher" -> result.success(isDefaultLauncher())
+                "requestDefaultLauncher" -> result.success(requestDefaultLauncher())
+                "isAccessibilityServiceEnabled" -> result.success(RecentsAccessibilityService.enabled)
+                "openNotificationAccessSettings" -> result.success(openNotificationAccessSettings())
+                "openAccessibilitySettings" -> result.success(startSettingsActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)))
                 "startAmbientMode" -> result.success(startAmbientMode())
                 "openMediaSession" -> result.success(mediaSessionStreamHandler.openPlayer(call.arguments as String))
                 "playMedia" -> result.success(mediaSessionStreamHandler.playMedia(call.arguments as String))
@@ -242,6 +251,15 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        // the home role was declined, or couldn't be asked for: the home app can still be chosen in the settings
+        if (requestCode == HOME_ROLE_REQUEST_CODE && resultCode != RESULT_OK && !isDefaultLauncher()) {
+            startSettingsActivity(Intent(Settings.ACTION_HOME_SETTINGS))
+        }
+    }
+
     override fun onDestroy() {
         handler.removeCallbacks(backToTopInLauncher)
         val launcherApps = getSystemService(LAUNCHER_APPS_SERVICE) as LauncherApps
@@ -342,6 +360,48 @@ class MainActivity : FlutterActivity() {
         defaultLauncher?.activityInfo?.packageName == packageName
     } catch (e: Exception) {
         false
+    }
+
+    /** Asks to become the home app, else opens the settings where it is chosen. Returns false if neither can be shown. */
+    private fun requestDefaultLauncher(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val roleManager = getSystemService(RoleManager::class.java)
+            if (roleManager.isRoleAvailable(RoleManager.ROLE_HOME)) {
+                try {
+                    startActivityForResult(roleManager.createRequestRoleIntent(RoleManager.ROLE_HOME), HOME_ROLE_REQUEST_CODE)
+                    return true
+                } catch (e: Exception) {
+                    // the settings are opened instead
+                }
+            }
+        }
+        return startSettingsActivity(Intent(Settings.ACTION_HOME_SETTINGS))
+    }
+
+    private fun openNotificationAccessSettings(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val listener = ComponentName(this, MediaNotificationListener::class.java)
+            val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS)
+                .putExtra(Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME, listener.flattenToString())
+            if (startSettingsActivity(intent)) {
+                return true
+            }
+        }
+        return startSettingsActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+    }
+
+    /** Returns false if the device has no such settings screen, which Android TV often lacks. */
+    private fun startSettingsActivity(intent: Intent): Boolean {
+        val activity = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)?.activityInfo
+        if (activity == null || activity.packageName == SETTINGS_STUBS_PACKAGE) {
+            return false
+        }
+        return try {
+            startActivity(intent)
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 
     private fun startAmbientMode() = try {

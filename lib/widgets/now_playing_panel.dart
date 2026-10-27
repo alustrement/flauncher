@@ -687,10 +687,9 @@ class _PermissionHint extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 SizedBox(height: 4),
-                SelectableText(
-                  "adb shell cmd notification allow_listener "
-                  "com.aurelienlustrement.waveslaunchertv/com.aurelienlustrement.waveslaunchertv.MediaNotificationListener",
-                  style: Theme.of(context).textTheme.bodySmall!.copyWith(fontFamily: "monospace"),
+                Text(
+                  "Accordez-le dans Paramètres > Autorisations et launcher par défaut.",
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
             ),

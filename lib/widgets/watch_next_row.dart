@@ -316,11 +316,6 @@ class _PermissionHint extends StatelessWidget {
                       "L'accès aux programmes TV est nécessaire pour afficher ce que vous pouvez continuer à regarder.",
                       style: Theme.of(context).textTheme.titleSmall,
                     ),
-                    SizedBox(height: 4),
-                    SelectableText(
-                      "adb shell pm grant com.aurelienlustrement.waveslaunchertv android.permission.READ_TV_LISTINGS",
-                      style: Theme.of(context).textTheme.bodySmall!.copyWith(fontFamily: "monospace"),
-                    ),
                   ],
                 ),
               ),

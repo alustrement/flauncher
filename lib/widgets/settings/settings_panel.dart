@@ -18,6 +18,7 @@
  */
 
 import 'package:flauncher/widgets/right_panel_dialog.dart';
+import 'package:flauncher/widgets/settings/accesses_panel_page.dart';
 import 'package:flauncher/widgets/settings/applications_panel_page.dart';
 import 'package:flauncher/widgets/settings/categories_panel_page.dart';
 import 'package:flauncher/widgets/settings/category_panel_page.dart';
@@ -60,6 +61,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 return MaterialPageRoute(builder: (_) => ApplicationsPanelPage());
               case CategoriesPanelPage.routeName:
                 return MaterialPageRoute(builder: (_) => CategoriesPanelPage());
+              case AccessesPanelPage.routeName:
+                return MaterialPageRoute(builder: (_) => AccessesPanelPage());
               case CategoryPanelPage.routeName:
                 return MaterialPageRoute(builder: (_) => CategoryPanelPage(categoryId: settings.arguments! as int));
               default:

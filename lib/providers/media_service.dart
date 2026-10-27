@@ -123,6 +123,9 @@ class MediaService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Does nothing on devices without a screen to grant the notification access, like the Shield.
+  Future<void> openPermissionSettings() => _fLauncherChannel.openNotificationAccessSettings();
+
   /// A paused media of an app which plays in the background is resumed in place, any other media opens its player, as
   /// does a media playing on another device. Once its session is gone, a video opens its "Continue watching" program,
   /// and any other media its app.

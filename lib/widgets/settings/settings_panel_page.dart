@@ -20,6 +20,7 @@
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/settings_service.dart';
 import 'package:flauncher/widgets/ensure_visible.dart';
+import 'package:flauncher/widgets/settings/accesses_panel_page.dart';
 import 'package:flauncher/widgets/settings/applications_panel_page.dart';
 import 'package:flauncher/widgets/settings/categories_panel_page.dart';
 import 'package:flauncher/widgets/settings/flauncher_about_dialog.dart';
@@ -61,16 +62,17 @@ class SettingsPanelPage extends StatelessWidget {
             ),
             onPressed: () => Navigator.of(context).pushNamed(CategoriesPanelPage.routeName),
           ),
-          Divider(),
           TextButton(
             child: Row(
               children: [
-                Icon(Symbols.settings),
+                Icon(Symbols.verified_user),
                 Container(width: 8),
-                Text("Paramètres Android", style: Theme.of(context).textTheme.bodyMedium),
+                Flexible(
+                  child: Text("Autorisations et launcher par défaut", style: Theme.of(context).textTheme.bodyMedium),
+                ),
               ],
             ),
-            onPressed: () => context.read<AppsService>().openSettings(),
+            onPressed: () => Navigator.of(context).pushNamed(AccessesPanelPage.routeName),
           ),
           Divider(),
           SwitchListTile(
@@ -93,6 +95,17 @@ class SettingsPanelPage extends StatelessWidget {
             onChanged: (value) => settingsService.setShowRecentPlays(value),
             title: Text("Afficher les lectures récentes"),
             dense: true,
+          ),
+          Divider(),
+          TextButton(
+            child: Row(
+              children: [
+                Icon(Symbols.settings),
+                Container(width: 8),
+                Text("Paramètres de l'appareil", style: Theme.of(context).textTheme.bodyMedium),
+              ],
+            ),
+            onPressed: () => context.read<AppsService>().openSettings(),
           ),
           Divider(),
           TextButton(

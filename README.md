@@ -29,17 +29,17 @@ Its interface is in French.
 |--|--|--|
 | ![](screenshots/Screenshot_1624378896.png) | ![](screenshots/Screenshot_1624378921.png) | ![](screenshots/Screenshot_1624378938.png) |
 
-## Installation on NVIDIA Shield TV Pro
-These steps were followed on a Shield TV Pro (2019) running Android 11. Other Android TV devices use other package names for their stock launcher.
+## Installation
+These steps should work on any Android TV device, but they have only been tested on an NVIDIA Shield TV Pro (2019) running Android 11. The names of the settings and of the stock launcher differ from one device to another.
 
 **:warning: You are doing this at your own risk: disabling the stock launcher is done with `adb`, and you'll be responsible in any case of malfunction on your device.**
 
-### 1. Connect to the Shield with `adb`
-1. In *Settings > Device Preferences > About*, press *Build* 7 times to unlock the developer options.
-2. In *Settings > Device Preferences > Developer options*, enable *Network debugging*, which shows the address of the Shield.
+### 1. Connect to the device with `adb`
+1. In the *About* screen of the settings, press *Build* 7 times to unlock the developer options. On the Shield, it is in *Settings > Device Preferences > About*.
+2. In the developer options, enable the network debugging, which shows the address of the device. On the Shield, it is *Network debugging* in *Settings > Device Preferences > Developer options*.
 3. Connect to it, and accept the prompt shown on the TV:
 ```shell
-$ adb connect <address of the Shield>:5555
+$ adb connect <address of the device>:5555
 ```
 
 ### 2. Install Waves Launcher TV
@@ -48,30 +48,46 @@ $ adb install app-release.apk
 ```
 
 ### 3. Disable the stock launcher
-The stock launcher of the Shield is `com.google.android.tvlauncher`. Once disabled, Android TV's settings (`com.android.tv.settings`) only remain as a fallback home.
+While it is still the default one, the stock launcher is given by the last line of:
 ```shell
-$ adb shell pm disable-user --user 0 com.google.android.tvlauncher
+$ adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME
 ```
 
+| Device | Stock launcher |
+|--|--|
+| NVIDIA Shield TV | `com.google.android.tvlauncher` |
+| Chromecast with Google TV (untested) | `com.google.android.apps.tv.launcherx`, which `com.google.android.tungsten.setupwraith` re-enables unless it is disabled too |
+
+```shell
+$ adb shell pm disable-user --user 0 <stock launcher>
+```
+Once disabled, the settings of the device only remain as a fallback home, e.g. `com.android.tv.settings` on the Shield.
+
 ### 4. Set Waves Launcher TV as default launcher
+This can be done from the settings of the launcher, in *Paramètres > Autorisations et launcher par défaut*, or with `adb`:
 ```shell
 $ adb shell cmd package set-home-activity com.aurelienlustrement.waveslaunchertv/.MainActivity
 ```
-Without `adb`, press the Home button of the remote, and choose Waves Launcher TV, then *Always*.
 
 ### 5. Grant the accesses
-Some features need accesses that the Shield doesn't offer to grant from its settings:
+The accesses the features need can be granted from the settings of the launcher, in *Paramètres > Autorisations et launcher par défaut*. Android TV devices often lack the settings screens of some of them though, which are then granted with `adb`:
 
-| Feature | Access | How to grant it |
-|--|--|--|
-| Recent plays | TV listings | The "Autoriser" button of the row, or `adb shell pm grant com.aurelienlustrement.waveslaunchertv android.permission.READ_TV_LISTINGS` |
-| Now playing | Notification access | `adb shell cmd notification allow_listener com.aurelienlustrement.waveslaunchertv/com.aurelienlustrement.waveslaunchertv.MediaNotificationListener` |
-| Recent apps on a double Home press | Accessibility service | Enable Waves Launcher TV in *Settings > Device Preferences > Accessibility* |
+```shell
+# Recent plays: the TV listings
+$ adb shell pm grant com.aurelienlustrement.waveslaunchertv android.permission.READ_TV_LISTINGS
+# Now playing: the notification access
+$ adb shell cmd notification allow_listener com.aurelienlustrement.waveslaunchertv/com.aurelienlustrement.waveslaunchertv.MediaNotificationListener
+# Recent apps on a double Home press: the accessibility service, which replaces any other enabled one
+$ adb shell settings put secure enabled_accessibility_services com.aurelienlustrement.waveslaunchertv/com.aurelienlustrement.waveslaunchertv.RecentsAccessibilityService
+$ adb shell settings put secure accessibility_enabled 1
+```
 
 ### Re-enable the stock launcher
 ```shell
-$ adb shell pm enable com.google.android.tvlauncher
-$ adb shell cmd package set-home-activity com.google.android.tvlauncher/.MainActivity
+$ adb shell pm enable <stock launcher>
+# lists the home activities, among which the one of the stock launcher, e.g. com.google.android.tvlauncher/.MainActivity on the Shield
+$ adb shell cmd package query-activities --brief -a android.intent.action.MAIN -c android.intent.category.HOME
+$ adb shell cmd package set-home-activity <home activity of the stock launcher>
 ```
 
 ## License
