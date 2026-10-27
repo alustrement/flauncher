@@ -45,6 +45,9 @@ private const val OBSERVATION_DELAY_MS = 3000L
 /** Apps may pause as they leave the foreground, just before the launcher is resumed. */
 private const val OBSERVATION_MARGIN_MS = 2000L
 
+/** How close to its end a video is taken for watched. */
+private const val END_MARGIN_MS = 5000L
+
 private val ACTIVE_STATES = setOf(
     PlaybackState.STATE_PLAYING,
     PlaybackState.STATE_BUFFERING,
@@ -314,7 +317,7 @@ class MediaSessionStreamHandler(
      * app is watched without session. After a restart of the device, it is given up unless a "Continue watching" program
      * opens it, as its app wouldn't (e.g. arte), while until then its app may (e.g. SmartTube, which releases its
      * session as soon as it leaves the foreground and resumes the video when it is opened). A live stream, without
-     * duration, is given up with its session.
+     * duration, is given up with its session. So is a video watched to its end, which leaves nothing to resume.
      */
     private inner class Slot(name: String, private val background: Boolean) {
         private val lastMedia = LastMedia(context, name, background)
@@ -324,7 +327,8 @@ class MediaSessionStreamHandler(
         fun select(stopped: Set<String>): Map<String, Any?>? {
             val rememberedPackage = lastMedia.media?.get("packageName") as String?
             if (rememberedPackage != null && !background &&
-                (isOutdated(rememberedPackage, lastMedia.seenAt) || !isReplayable(lastMedia.media!!))
+                (isOutdated(rememberedPackage, lastMedia.seenAt) || !isReplayable(lastMedia.media!!) ||
+                    isWatched(lastMedia.media!!["duration"] as Long?, lastMedia.media!!["position"] as Long?))
             ) {
                 lastMedia.forget()
                 session = null
@@ -334,7 +338,7 @@ class MediaSessionStreamHandler(
             val controller = candidates.firstOrNull(::isPlaying)
                 ?: candidates.firstOrNull { isShowable(it) && it.packageName == remembered }
                 ?: candidates.takeIf { remembered == null }
-                    ?.firstOrNull { isShowable(it) && (background || !isOutdated(it)) }
+                    ?.firstOrNull { isShowable(it) && (background || !isOutdated(it) && !isWatched(it)) }
             val session = controller?.let(::buildSessionMap)
             val media = session ?: this.session ?: return lastMedia.media?.takeUnless { waitsForPrograms() }
             val packageName = media["packageName"] as String
@@ -343,8 +347,15 @@ class MediaSessionStreamHandler(
                 packageName == remembered -> lastMedia.seenAt
                 else -> controller?.let(::pausedAt) ?: System.currentTimeMillis()
             }
+            val position = currentPosition(media)
+            // the app may end the video and release its player rather than pause it
+            if (!background && controller?.let(::isPlaying) != true && isWatched(media["duration"] as Long?, position)) {
+                lastMedia.forget()
+                this.session = null
+                return null
+            }
             // once its session is gone, the media is remembered where it was left
-            lastMedia.remember(media, currentPosition(media), seenAt)
+            lastMedia.remember(media, position, seenAt)
             this.session = session
             // after a restart, a video without session waits for its program rather than showing up and going right away
             return session ?: lastMedia.media?.takeUnless { waitsForPrograms() }
@@ -414,6 +425,14 @@ class MediaSessionStreamHandler(
 
     private fun isShowable(controller: MediaController) =
         controller.metadata != null && controller.playbackState?.state == PlaybackState.STATE_PAUSED
+
+    private fun isWatched(controller: MediaController) = isWatched(
+        controller.metadata?.getLong(MediaMetadata.METADATA_KEY_DURATION)?.takeIf { it > 0 },
+        controller.playbackState?.position?.takeIf { it != PlaybackState.PLAYBACK_POSITION_UNKNOWN },
+    )
+
+    private fun isWatched(duration: Long?, position: Long?) =
+        duration != null && position != null && position >= duration - END_MARGIN_MS
 
     private fun pausedAt(controller: MediaController): Long? {
         val state = controller.playbackState ?: return null
