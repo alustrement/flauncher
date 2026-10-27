@@ -1,6 +1,7 @@
 /*
- * FLauncher
+ * Waves Launcher TV, based on FLauncher
  * Copyright (C) 2021  Étienne Fesser
+ * Copyright (C) 2026  Aurélien Lustrement
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -76,7 +77,7 @@ class FLauncherApp extends StatelessWidget {
         ),
       },
       actions: {...WidgetsApp.defaultActions, DirectionalFocusIntent: SoundFeedbackDirectionalFocusAction(context)},
-      title: 'FLauncher',
+      title: 'Waves Launcher TV',
       theme: ThemeData(
         // the Zen look is drawn on Material 2
         useMaterial3: false,

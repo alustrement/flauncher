@@ -1,6 +1,6 @@
 /*
- * FLauncher
- * Copyright (C) 2021  Étienne Fesser
+ * Waves Launcher TV
+ * Copyright (C) 2026  Aurélien Lustrement
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ import android.view.accessibility.AccessibilityEvent
 
 /**
  * Only opens the recent apps, which apps can't do by themselves: once it is enabled in the accessibility settings,
- * FLauncher shows them when Home is pressed twice, like the default launcher does.
+ * Waves Launcher TV shows them when Home is pressed twice, like the default launcher does.
  */
 class RecentsAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {

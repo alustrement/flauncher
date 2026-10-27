@@ -1,6 +1,7 @@
 <!--
-  ~ FLauncher
+  ~ Waves Launcher TV, based on FLauncher
   ~ Copyright (C) 2021  Étienne Fesser
+  ~ Copyright (C) 2026  Aurélien Lustrement
   ~
   ~ This program is free software: you can redistribute it and/or modify
   ~ it under the terms of the GNU General Public License as published by
@@ -54,7 +55,7 @@
         android:banner="@drawable/banner"
         android:fullBackupContent="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="FLauncher">
+        android:label="Waves Launcher TV">
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
@@ -81,7 +82,7 @@
         <service
             android:name=".MediaNotificationListener"
             android:exported="true"
-            android:label="FLauncher"
+            android:label="Waves Launcher TV"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
@@ -90,7 +91,7 @@
         <service
             android:name=".RecentsAccessibilityService"
             android:exported="true"
-            android:label="FLauncher"
+            android:label="Waves Launcher TV"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />

@@ -1,6 +1,6 @@
 /*
- * FLauncher
- * Copyright (C) 2021  Étienne Fesser
+ * Waves Launcher TV
+ * Copyright (C) 2026  Aurélien Lustrement
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ package me.efesser.flauncher
 import android.service.notification.NotificationListenerService
 
 /**
- * No-op listener: once notification access is granted to it, FLauncher is allowed to read the active media sessions
+ * No-op listener: once notification access is granted to it, Waves Launcher TV is allowed to read the active media sessions
  * through [android.media.session.MediaSessionManager.getActiveSessions].
  */
 class MediaNotificationListener : NotificationListenerService()
