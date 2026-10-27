@@ -33,7 +33,7 @@ class FLauncherAboutDialog extends StatelessWidget {
       applicationName: packageInfo.appName,
       applicationVersion: "${packageInfo.version} (${packageInfo.buildNumber})",
       applicationIcon: Image.asset("assets/logo.png", height: 72),
-      applicationLegalese: "© 2021 Étienne Fesser",
+      applicationLegalese: "© 2021 Étienne Fesser\n© 2026 Aurélien Lustrement",
       children: [
         SizedBox(height: 24),
         RichText(
@@ -42,16 +42,11 @@ class FLauncherAboutDialog extends StatelessWidget {
             children: [
               TextSpan(
                 text:
-                    "FLauncher est un launcher alternatif et open source pour Android TV.\n"
+                    "Waves Launcher TV est un launcher alternatif et open source pour Android TV, "
+                    "basé sur FLauncher et distribué sous licence GPLv3.\n"
                     "Code source disponible sur ",
               ),
-              TextSpan(text: "https://gitlab.com/etiennf01/flauncher", style: underlined),
-              TextSpan(text: ".\n\n"),
-              TextSpan(text: "Logo par Katie "),
-              TextSpan(text: "@fureturoe", style: underlined),
-              TextSpan(text: ", "),
-              TextSpan(text: "design par "),
-              TextSpan(text: "@FXCostanzo", style: underlined),
+              TextSpan(text: "https://github.com/alustrement/flauncher", style: underlined),
               TextSpan(text: "."),
             ],
           ),

@@ -100,7 +100,7 @@ class SettingsPanelPage extends StatelessWidget {
               children: [
                 Icon(Symbols.info),
                 Container(width: 8),
-                Text("À propos de FLauncher", style: Theme.of(context).textTheme.bodyMedium),
+                Text("À propos de Waves Launcher TV", style: Theme.of(context).textTheme.bodyMedium),
               ],
             ),
             onPressed: () => showDialog(

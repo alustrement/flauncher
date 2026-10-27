@@ -148,7 +148,7 @@ void main() {
     verify(settingsService.setShowRecentPlays(false));
   });
 
-  testWidgets("'About FLauncher' opens about dialog", (tester) async {
+  testWidgets("'About Waves Launcher TV' opens about dialog", (tester) async {
     final settingsService = MockSettingsService();
     final appsService = MockAppsService();
     when(appsService.categoriesWithApps).thenReturn([]);
