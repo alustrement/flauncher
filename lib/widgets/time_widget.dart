@@ -53,6 +53,8 @@ class _TimeWidgetState extends State<TimeWidget> {
         fontSize: 24,
         fontWeight: FontWeight.w300,
         letterSpacing: 0.5,
+        // the same width for every digit, so that the clock doesn't change width with the time
+        fontFeatures: [FontFeature.tabularFigures()],
         shadows: [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 8)],
       ),
       textAlign: TextAlign.end,
