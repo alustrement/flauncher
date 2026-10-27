@@ -97,7 +97,9 @@ class MainActivity : FlutterActivity() {
                 "requestDefaultLauncher" -> result.success(requestDefaultLauncher())
                 "isAccessibilityServiceEnabled" -> result.success(RecentsAccessibilityService.enabled)
                 "openNotificationAccessSettings" -> result.success(openNotificationAccessSettings())
-                "openAccessibilitySettings" -> result.success(startSettingsActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)))
+                // Android TV often lacks the screen, whereas its settings list the accessibility services elsewhere
+                "openAccessibilitySettings" -> result.success(
+                    startSettingsActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) || openSettings())
                 "startAmbientMode" -> result.success(startAmbientMode())
                 "openMediaSession" -> result.success(mediaSessionStreamHandler.openPlayer(call.arguments as String))
                 "playMedia" -> result.success(mediaSessionStreamHandler.playMedia(call.arguments as String))
@@ -362,8 +364,14 @@ class MainActivity : FlutterActivity() {
         false
     }
 
-    /** Asks to become the home app, else opens the settings where it is chosen. Returns false if neither can be shown. */
+    /**
+     * Asks to become the home app, else opens the settings where it is chosen. Returns false if neither can be shown,
+     * or if the stock launcher would still be opened by Home.
+     */
     private fun requestDefaultLauncher(): Boolean {
+        if (isOutrankedHomeActivity()) {
+            return false
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val roleManager = getSystemService(RoleManager::class.java)
             if (roleManager.isRoleAvailable(RoleManager.ROLE_HOME)) {
@@ -378,6 +386,19 @@ class MainActivity : FlutterActivity() {
         return startSettingsActivity(Intent(Settings.ACTION_HOME_SETTINGS))
     }
 
+    /**
+     * Whether a home activity of higher priority is enabled, like the stock launcher of Android TV: Home always opens
+     * it, whatever the home app chosen, so that it has to be disabled first.
+     */
+    private fun isOutrankedHomeActivity() = try {
+        val homeActivities = packageManager.queryIntentActivities(
+            Intent(ACTION_MAIN).addCategory(CATEGORY_HOME), PackageManager.MATCH_DEFAULT_ONLY)
+        val priority = homeActivities.find { it.activityInfo.packageName == packageName }?.priority
+        priority != null && homeActivities.any { it.priority > priority }
+    } catch (e: Exception) {
+        false
+    }
+
     private fun openNotificationAccessSettings(): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val listener = ComponentName(this, MediaNotificationListener::class.java)
@@ -387,7 +408,8 @@ class MainActivity : FlutterActivity() {
                 return true
             }
         }
-        return startSettingsActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+        // Android TV often lacks the screens, whereas its settings list the notification access among the special accesses
+        return startSettingsActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) || openSettings()
     }
 
     /** Returns false if the device has no such settings screen, which Android TV often lacks. */

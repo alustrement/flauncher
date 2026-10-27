@@ -48,13 +48,15 @@
   "delete": "Supprimer",
   "defaultLauncher": "Launcher par défaut",
   "defaultLauncherFeature": "Ouvert par le bouton Accueil",
-  "defaultLauncherHint": "Si aucune fenêtre ne s'est ouverte, appuyez sur Accueil et choisissez Waves Launcher TV, puis « Toujours ».",
+  "defaultLauncherHint": "Si aucune fenêtre ne s'est ouverte c'est que le launcher d'origine de l'appareil ne peut pas être remplacé ici, il faut le désactiver avec l'outil adb (voir le README de Waves Launcher TV).",
   "tvPrograms": "Programmes TV",
   "tvProgramsHint": "Si aucune fenêtre ne s'est ouverte, autorisez « Lire toutes les sources TV » dans Paramètres > Applications > Waves Launcher TV > Autorisations.",
   "notificationAccess": "Accès aux notifications",
-  "notificationAccessHint": "Si aucun écran ne s'est ouvert, les paramètres de cet appareil ne permettent pas de l'accorder : voir le README de Waves Launcher TV.",
+  "notificationAccessHint": "Activez Waves Launcher TV dans Paramètres > Applications > Accès spécifiques des applications > Accès aux notifications.",
   "nowPlayingFeature": "Lecture en cours",
   "accessibility": "Accessibilité",
   "accessibilityFeature": "Applis récentes en appuyant deux fois sur Accueil",
-  "accessibilityHint": "Si aucun écran ne s'est ouvert, activez Waves Launcher TV dans Paramètres > Préférences de l'appareil > Accessibilité."
+  "accessibilityHint": "Activez Waves Launcher TV dans Paramètres > Préférences relatives à l'appareil > Accessibilité.",
+  "openSettings": "Ouvrir les paramètres",
+  "cancel": "Annuler"
 }

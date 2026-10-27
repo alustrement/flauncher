@@ -160,7 +160,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get defaultLauncherHint =>
-      'Si no se ha abierto ninguna ventana, pulsa Inicio y elige Waves Launcher TV y, después, «Siempre».';
+      'Si no se ha abierto ninguna ventana, es porque el launcher original del dispositivo no se puede sustituir aquí, hay que desactivarlo con la herramienta adb (consulta el README de Waves Launcher TV).';
 
   @override
   String get tvPrograms => 'Programas de TV';
@@ -174,7 +174,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get notificationAccessHint =>
-      'Si no se ha abierto ninguna pantalla, los ajustes de este dispositivo no permiten concederlo: consulta el README de Waves Launcher TV.';
+      'Activa Waves Launcher TV en Ajustes > Aplicaciones > Acceso especial de aplicaciones > Acceso a notificaciones.';
 
   @override
   String get nowPlayingFeature => 'Reproducción en curso';
@@ -186,6 +186,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get accessibilityFeature => 'Apps recientes al pulsar Inicio dos veces';
 
   @override
-  String get accessibilityHint =>
-      'Si no se ha abierto ninguna pantalla, activa Waves Launcher TV en Ajustes > Preferencias del dispositivo > Accesibilidad.';
+  String get accessibilityHint => 'Activa Waves Launcher TV en Ajustes > Preferencias del dispositivo > Accesibilidad.';
+
+  @override
+  String get openSettings => 'Abrir ajustes';
+
+  @override
+  String get cancel => 'Cancelar';
 }

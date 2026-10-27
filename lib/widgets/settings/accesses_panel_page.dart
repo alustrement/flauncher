@@ -27,7 +27,8 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 
 /// The accesses the features of the launcher need. Pressing one which isn't granted asks for it, or opens the settings
-/// where it is granted; as Android TV often lacks them, how to grant it otherwise is then told below.
+/// where it is granted; as Android TV often lacks them, how to grant it otherwise is then told below. The accesses only
+/// granted in the settings tell where first, in a dialog which opens them.
 class AccessesPanelPage extends StatefulWidget {
   static const String routeName = "accesses_panel";
 
@@ -111,6 +112,7 @@ class _AccessesPanelPageState extends State<AccessesPanelPage> with WidgetsBindi
             granted: mediaService.permissionGranted,
             request: mediaService.openPermissionSettings,
             hint: AppLocalizations.of(context).notificationAccessHint,
+            inDialog: true,
           ),
           _access(
             context,
@@ -120,6 +122,7 @@ class _AccessesPanelPageState extends State<AccessesPanelPage> with WidgetsBindi
             granted: _accessibilityServiceEnabled,
             request: () => context.read<AppsService>().openAccessibilitySettings(),
             hint: AppLocalizations.of(context).accessibilityHint,
+            inDialog: true,
           ),
         ],
       ),
@@ -134,6 +137,7 @@ class _AccessesPanelPageState extends State<AccessesPanelPage> with WidgetsBindi
     required bool? granted,
     required Future<void> Function() request,
     required String hint,
+    bool inDialog = false,
   }) {
     final textTheme = Theme.of(context).textTheme;
     return Column(
@@ -141,7 +145,12 @@ class _AccessesPanelPageState extends State<AccessesPanelPage> with WidgetsBindi
       children: [
         TextButton(
           onPressed: () async {
-            if (granted == false) {
+            if (granted == false && inDialog) {
+              await showDialog(
+                context: context,
+                builder: (_) => _SettingsProcedureDialog(title: title, procedure: hint, openSettings: request),
+              );
+            } else if (granted == false) {
               setState(() => _asked.add(title));
               await request();
             }
@@ -176,4 +185,30 @@ class _AccessesPanelPageState extends State<AccessesPanelPage> with WidgetsBindi
       ],
     );
   }
+}
+
+/// Tells where an access is granted in the settings, which it opens.
+class _SettingsProcedureDialog extends StatelessWidget {
+  final String title;
+  final String procedure;
+  final Future<void> Function() openSettings;
+
+  _SettingsProcedureDialog({required this.title, required this.procedure, required this.openSettings});
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: Text(title),
+    content: Text(procedure),
+    actions: [
+      TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(AppLocalizations.of(context).cancel)),
+      TextButton(
+        autofocus: true,
+        onPressed: () {
+          Navigator.of(context).pop();
+          openSettings();
+        },
+        child: Text(AppLocalizations.of(context).openSettings),
+      ),
+    ],
+  );
 }

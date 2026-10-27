@@ -53,13 +53,15 @@
   "delete": "Delete",
   "defaultLauncher": "Default launcher",
   "defaultLauncherFeature": "Opened by the Home button",
-  "defaultLauncherHint": "If no window opened, press Home and choose Waves Launcher TV, then “Always”.",
+  "defaultLauncherHint": "If no window opened, it's because the stock launcher of the device can't be replaced here, it has to be disabled with the adb tool (see the README of Waves Launcher TV).",
   "tvPrograms": "TV programs",
   "tvProgramsHint": "If no window opened, allow “Read all TV sources” in Settings > Apps > Waves Launcher TV > Permissions.",
   "notificationAccess": "Notification access",
-  "notificationAccessHint": "If no screen opened, the settings of this device don't allow granting it: see the README of Waves Launcher TV.",
+  "notificationAccessHint": "Turn on Waves Launcher TV in Settings > Apps > Special app access > Notification access.",
   "nowPlayingFeature": "Now playing",
   "accessibility": "Accessibility",
   "accessibilityFeature": "Recent apps by pressing Home twice",
-  "accessibilityHint": "If no screen opened, turn on Waves Launcher TV in Settings > Device Preferences > Accessibility."
+  "accessibilityHint": "Turn on Waves Launcher TV in Settings > Device Preferences > Accessibility.",
+  "openSettings": "Open settings",
+  "cancel": "Cancel"
 }

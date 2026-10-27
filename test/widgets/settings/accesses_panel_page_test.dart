@@ -66,8 +66,20 @@ void main() {
   });
 
   testWidgets("pressing a missing access asks for it, and tells how to grant it otherwise", (tester) async {
+    when(appsService.isDefaultLauncher()).thenAnswer((_) async => false);
     await _pumpWidgetWithProviders(tester, appsService, mediaService, watchNextService);
-    expect(find.textContaining("README"), findsNothing);
+    expect(find.textContaining("adb"), findsNothing);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    verify(appsService.requestDefaultLauncher());
+    expect(find.textContaining("adb"), findsOneWidget);
+  });
+
+  testWidgets("pressing a missing access granted in the settings tells where, and opens them", (tester) async {
+    await _pumpWidgetWithProviders(tester, appsService, mediaService, watchNextService);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
@@ -75,8 +87,30 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
 
+    verifyNever(mediaService.openPermissionSettings());
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.textContaining("Accès spécifiques des applications"), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
     verify(mediaService.openPermissionSettings());
-    expect(find.textContaining("README"), findsOneWidget);
+    expect(find.byType(AlertDialog), findsNothing);
+  });
+
+  testWidgets("cancelling the dialog doesn't open the settings", (tester) async {
+    await _pumpWidgetWithProviders(tester, appsService, mediaService, watchNextService);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("Annuler"));
+    await tester.pumpAndSettle();
+
+    verifyNever(mediaService.openPermissionSettings());
+    expect(find.byType(AlertDialog), findsNothing);
   });
 
   testWidgets("pressing a granted access does nothing", (tester) async {
@@ -87,7 +121,7 @@ void main() {
     await tester.pumpAndSettle();
 
     verifyNever(appsService.requestDefaultLauncher());
-    expect(find.textContaining("appuyez sur Accueil"), findsNothing);
+    expect(find.textContaining("adb"), findsNothing);
   });
 
   testWidgets("reads the accesses again when coming back to the launcher", (tester) async {

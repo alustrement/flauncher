@@ -66,7 +66,7 @@ $ adb shell pm disable-user --user 0 <stock launcher>
 Once disabled, the settings of the device only remain as a fallback home, e.g. `com.android.tv.settings` on the Shield.
 
 ### 4. Set Waves Launcher TV as default launcher
-This can be done from the settings of the launcher, in *Settings > Permissions and default launcher*, or with `adb`:
+As long as the stock launcher is enabled, Home opens it whatever the default launcher. Once it is disabled, this can be done from the settings of the launcher, in *Settings > Permissions and default launcher*, or with `adb`:
 ```shell
 $ adb shell cmd package set-home-activity com.aurelienlustrement.waveslaunchertv/.MainActivity
 ```

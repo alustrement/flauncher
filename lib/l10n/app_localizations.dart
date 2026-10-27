@@ -394,7 +394,7 @@ abstract class AppLocalizations {
   /// No description provided for @defaultLauncherHint.
   ///
   /// In en, this message translates to:
-  /// **'If no window opened, press Home and choose Waves Launcher TV, then “Always”.'**
+  /// **'If no window opened, it\'s because the stock launcher of the device can\'t be replaced here, it has to be disabled with the adb tool (see the README of Waves Launcher TV).'**
   String get defaultLauncherHint;
 
   /// No description provided for @tvPrograms.
@@ -418,7 +418,7 @@ abstract class AppLocalizations {
   /// No description provided for @notificationAccessHint.
   ///
   /// In en, this message translates to:
-  /// **'If no screen opened, the settings of this device don\'t allow granting it: see the README of Waves Launcher TV.'**
+  /// **'Turn on Waves Launcher TV in Settings > Apps > Special app access > Notification access.'**
   String get notificationAccessHint;
 
   /// No description provided for @nowPlayingFeature.
@@ -442,8 +442,20 @@ abstract class AppLocalizations {
   /// No description provided for @accessibilityHint.
   ///
   /// In en, this message translates to:
-  /// **'If no screen opened, turn on Waves Launcher TV in Settings > Device Preferences > Accessibility.'**
+  /// **'Turn on Waves Launcher TV in Settings > Device Preferences > Accessibility.'**
   String get accessibilityHint;
+
+  /// No description provided for @openSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get openSettings;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
