@@ -27,7 +27,7 @@ void main() {
   });
 
   test("getApplications", () async {
-    final channel = MethodChannel('me.efesser.flauncher/method');
+    final channel = MethodChannel('com.aurelienlustrement.waveslaunchertv/method');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
       if (call.method == "getApplications") {
         return [
@@ -46,7 +46,7 @@ void main() {
   });
 
   test("launchApp", () async {
-    final channel = MethodChannel('me.efesser.flauncher/method');
+    final channel = MethodChannel('com.aurelienlustrement.waveslaunchertv/method');
     String? packageName;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
       if (call.method == "launchApp") {
@@ -63,7 +63,7 @@ void main() {
   });
 
   test("openSettings", () async {
-    final channel = MethodChannel('me.efesser.flauncher/method');
+    final channel = MethodChannel('com.aurelienlustrement.waveslaunchertv/method');
     bool called = false;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
       if (call.method == "openSettings") {
@@ -80,7 +80,7 @@ void main() {
   });
 
   test("openAppInfo", () async {
-    final channel = MethodChannel('me.efesser.flauncher/method');
+    final channel = MethodChannel('com.aurelienlustrement.waveslaunchertv/method');
     String? packageName;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
       if (call.method == "openAppInfo") {
@@ -97,7 +97,7 @@ void main() {
   });
 
   test("uninstallApp", () async {
-    final channel = MethodChannel('me.efesser.flauncher/method');
+    final channel = MethodChannel('com.aurelienlustrement.waveslaunchertv/method');
     String? packageName;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
       if (call.method == "uninstallApp") {
@@ -114,7 +114,7 @@ void main() {
   });
 
   test("isDefaultLauncher", () async {
-    final channel = MethodChannel('me.efesser.flauncher/method');
+    final channel = MethodChannel('com.aurelienlustrement.waveslaunchertv/method');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
       if (call.method == "isDefaultLauncher") {
         return true;
@@ -129,7 +129,7 @@ void main() {
   });
 
   test("startAmbientMode", () async {
-    final channel = MethodChannel('me.efesser.flauncher/method');
+    final channel = MethodChannel('com.aurelienlustrement.waveslaunchertv/method');
     bool called = false;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
       if (call.method == "startAmbientMode") {

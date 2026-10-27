@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package me.efesser.flauncher
+package com.aurelienlustrement.waveslaunchertv
 
 import android.app.PendingIntent
 import android.content.ComponentName
@@ -73,7 +73,7 @@ private val PLAY_KEYS = setOf(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCOD
  * Streams the media to show on the home screen to Flutter and forwards media keys to them.
  *
  * Reading other apps' media sessions requires notification access to be granted to [MediaNotificationListener]:
- * `adb shell cmd notification allow_listener me.efesser.flauncher/me.efesser.flauncher.MediaNotificationListener`
+ * `adb shell cmd notification allow_listener com.aurelienlustrement.waveslaunchertv/com.aurelienlustrement.waveslaunchertv.MediaNotificationListener`
  */
 class MediaSessionStreamHandler(
     private val context: Context,

@@ -17,7 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package me.efesser.flauncher
+package com.aurelienlustrement.waveslaunchertv
 
 import android.content.Intent
 import android.content.Intent.*
@@ -45,10 +45,10 @@ import java.io.Serializable
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 
-private const val METHOD_CHANNEL = "me.efesser.flauncher/method"
-private const val EVENT_CHANNEL = "me.efesser.flauncher/event"
-private const val MEDIA_EVENT_CHANNEL = "me.efesser.flauncher/media"
-private const val WATCH_NEXT_EVENT_CHANNEL = "me.efesser.flauncher/watch_next"
+private const val METHOD_CHANNEL = "com.aurelienlustrement.waveslaunchertv/method"
+private const val EVENT_CHANNEL = "com.aurelienlustrement.waveslaunchertv/event"
+private const val MEDIA_EVENT_CHANNEL = "com.aurelienlustrement.waveslaunchertv/media"
+private const val WATCH_NEXT_EVENT_CHANNEL = "com.aurelienlustrement.waveslaunchertv/watch_next"
 private const val WATCH_NEXT_PERMISSION_REQUEST_CODE = 1
 private const val DOUBLE_HOME_PRESS_TIMEOUT_MS = 400L
 

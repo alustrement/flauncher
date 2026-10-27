@@ -318,7 +318,7 @@ class _PermissionHint extends StatelessWidget {
                     ),
                     SizedBox(height: 4),
                     SelectableText(
-                      "adb shell pm grant me.efesser.flauncher android.permission.READ_TV_LISTINGS",
+                      "adb shell pm grant com.aurelienlustrement.waveslaunchertv android.permission.READ_TV_LISTINGS",
                       style: Theme.of(context).textTheme.bodySmall!.copyWith(fontFamily: "monospace"),
                     ),
                   ],

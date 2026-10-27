@@ -22,10 +22,10 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 
 class FLauncherChannel {
-  static const _methodChannel = MethodChannel('me.efesser.flauncher/method');
-  static const _eventChannel = EventChannel('me.efesser.flauncher/event');
-  static const _mediaEventChannel = EventChannel('me.efesser.flauncher/media');
-  static const _watchNextEventChannel = EventChannel('me.efesser.flauncher/watch_next');
+  static const _methodChannel = MethodChannel('com.aurelienlustrement.waveslaunchertv/method');
+  static const _eventChannel = EventChannel('com.aurelienlustrement.waveslaunchertv/event');
+  static const _mediaEventChannel = EventChannel('com.aurelienlustrement.waveslaunchertv/media');
+  static const _watchNextEventChannel = EventChannel('com.aurelienlustrement.waveslaunchertv/watch_next');
 
   Future<List<dynamic>> getApplications() async => (await _methodChannel.invokeListMethod('getApplications'))!;
 

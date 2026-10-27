@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package me.efesser.flauncher
+package com.aurelienlustrement.waveslaunchertv
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent

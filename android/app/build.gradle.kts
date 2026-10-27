@@ -24,7 +24,7 @@ plugins {
 }
 
 android {
-    namespace = "me.efesser.flauncher"
+    namespace = "com.aurelienlustrement.waveslaunchertv"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -34,7 +34,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "me.efesser.flauncher"
+        applicationId = "com.aurelienlustrement.waveslaunchertv"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
