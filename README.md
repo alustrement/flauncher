@@ -27,9 +27,13 @@ Waves Launcher TV is an open-source alternative launcher for Android TV, built w
 - English for any other language
 
 ## Screenshots
-|  |  |  |
-|--|--|--|
-| ![](screenshots/Screenshot_1624378896.png) | ![](screenshots/Screenshot_1624378921.png) | ![](screenshots/Screenshot_1624378938.png) |
+Taken on an NVIDIA Shield TV set to French.
+
+| Home screen | Categories |
+|--|--|
+| ![Now playing and recently played](screenshots/home.png) | ![Categories of apps](screenshots/categories.png) |
+| **All apps** | **Settings** |
+| ![All apps page](screenshots/all-apps.png) | ![Settings panel](screenshots/settings.png) |
 
 ## Installation
 These steps should work on any Android TV device, but they have only been tested on an NVIDIA Shield TV Pro (2019) running Android 11. The names of the settings and of the stock launcher differ from one device to another. The menus of the launcher are given with their English names.
