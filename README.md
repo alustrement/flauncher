@@ -1,13 +1,11 @@
 # Waves Launcher TV
 Waves Launcher TV is an open-source alternative launcher for Android TV, built with [Flutter](https://flutter.dev). It is a fork of [FLauncher](https://gitlab.com/flauncher/flauncher) by Étienne Fesser, with a calmer look and the media you play at its heart.
 
-Its interface is in French.
-
 ## Features
 
 ### Home screen
 - **Now playing**: the media playing on the TV, or on another device through Spotify Connect, shown at the top of the screen with its artwork through the waves, and controlled with the media keys of the remote
-- **Recent plays**: Android TV's "Play Next" programs, the last video watched and the last media of the apps playing in the background, such as Spotify, to resume them
+- **Recently played**: Android TV's "Play Next" programs, the last video watched and the last media of the apps playing in the background, such as Spotify, to resume them
 - **Categories** of apps, shown as rows or grids, sorted alphabetically or manually, with their row height and number of columns to choose
 - **All apps** page, opened from the top bar
 - Clock, in 12 or 24 hour format
@@ -24,13 +22,17 @@ Its interface is in French.
 - Shortcut to the Android settings
 - No ads, no analytics
 
+### Languages
+- English, French, German, Italian, Portuguese and Spanish, following the language of the device
+- English for any other language
+
 ## Screenshots
 |  |  |  |
 |--|--|--|
 | ![](screenshots/Screenshot_1624378896.png) | ![](screenshots/Screenshot_1624378921.png) | ![](screenshots/Screenshot_1624378938.png) |
 
 ## Installation
-These steps should work on any Android TV device, but they have only been tested on an NVIDIA Shield TV Pro (2019) running Android 11. The names of the settings and of the stock launcher differ from one device to another.
+These steps should work on any Android TV device, but they have only been tested on an NVIDIA Shield TV Pro (2019) running Android 11. The names of the settings and of the stock launcher differ from one device to another. The menus of the launcher are given with their English names.
 
 **:warning: You are doing this at your own risk: disabling the stock launcher is done with `adb`, and you'll be responsible in any case of malfunction on your device.**
 
@@ -64,16 +66,16 @@ $ adb shell pm disable-user --user 0 <stock launcher>
 Once disabled, the settings of the device only remain as a fallback home, e.g. `com.android.tv.settings` on the Shield.
 
 ### 4. Set Waves Launcher TV as default launcher
-This can be done from the settings of the launcher, in *Paramètres > Autorisations et launcher par défaut*, or with `adb`:
+This can be done from the settings of the launcher, in *Settings > Permissions and default launcher*, or with `adb`:
 ```shell
 $ adb shell cmd package set-home-activity com.aurelienlustrement.waveslaunchertv/.MainActivity
 ```
 
 ### 5. Grant the accesses
-The accesses the features need can be granted from the settings of the launcher, in *Paramètres > Autorisations et launcher par défaut*. Android TV devices often lack the settings screens of some of them though, which are then granted with `adb`:
+The accesses the features need can be granted from the settings of the launcher, in *Settings > Permissions and default launcher*. Android TV devices often lack the settings screens of some of them though, which are then granted with `adb`:
 
 ```shell
-# Recent plays: the TV listings
+# Recently played: the TV listings
 $ adb shell pm grant com.aurelienlustrement.waveslaunchertv android.permission.READ_TV_LISTINGS
 # Now playing: the notification access
 $ adb shell cmd notification allow_listener com.aurelienlustrement.waveslaunchertv/com.aurelienlustrement.waveslaunchertv.MediaNotificationListener
