@@ -106,7 +106,12 @@ class SettingsPanelPage extends StatelessWidget {
               children: [
                 Icon(Symbols.settings),
                 Container(width: 8),
-                Text(AppLocalizations.of(context).deviceSettings, style: Theme.of(context).textTheme.bodyMedium),
+                Flexible(
+                  child: Text(
+                    AppLocalizations.of(context).deviceSettings,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
               ],
             ),
             onPressed: () => context.read<AppsService>().openSettings(),
@@ -117,7 +122,9 @@ class SettingsPanelPage extends StatelessWidget {
               children: [
                 Icon(Symbols.info),
                 Container(width: 8),
-                Text(AppLocalizations.of(context).about, style: Theme.of(context).textTheme.bodyMedium),
+                Flexible(
+                  child: Text(AppLocalizations.of(context).about, style: Theme.of(context).textTheme.bodyMedium),
+                ),
               ],
             ),
             onPressed: () => showDialog(
